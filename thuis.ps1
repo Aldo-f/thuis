@@ -6,9 +6,6 @@ $global:settingsFilePath = 'settings.json'
 $global:patternExtension = '.[a-zA-Z0-9]{2,3}';
 $global:pattersResolutionFromName = "[_\-](\d{3,4}p)[_\-.]";
 
-# Get and set settings
-$global:settings = Set-Settings -filePath $global:settingsFilePath 
-
 # Function to initialize or update settingsFunction Set-Settings {
 Function Set-Settings {
     param (
@@ -57,17 +54,17 @@ Function Set-Settings {
     
     return $settings
 }
-    
 
+# Function to get the default resolution from settings
 Function Get-DefaultResolution {
     return $global:settings.resolutions[0]
 }
 
+# Function to get the resolution from string
 Function Get-ResolutionFromString {
-    param ($resolution); 
+    param ([string] $resolution); 
     return [int]($resolution -split 'x')[1]
 }
-
 
 # Function to generate a argumentList-item
 Function Get-ArgumentList {
@@ -111,7 +108,7 @@ Function Get-ClosestVideoStream {
     return $closestResolutionIndex
 }
 
-
+# Function to get all available resolution from MPD
 Function Get-Resolutions($mpd) {
     # Get Video streams
     $videoStreams = Get-StreamsInfo $mpd "Video"
@@ -131,7 +128,7 @@ Function Get-Resolutions($mpd) {
     return $resolutions
 }
 
-
+# Function to stream info by MPD and streamType
 Function Get-StreamsInfo($mpd, $streamType) {
     $key = $mpd + $streamType; 
 
@@ -166,7 +163,7 @@ Function Get-StreamsInfo($mpd, $streamType) {
     return $streamDetails
 }
 
-
+# Function to get exact video-stream; or the closest one
 Function Get-ChooseVideoStream($mpd, $resolution) {
     $resolutions = Get-Resolutions $mpd;
    
@@ -181,6 +178,7 @@ Function Get-ChooseVideoStream($mpd, $resolution) {
     return Get-ClosestVideoStream -resolution $resolution -resolutions $resolutions;
 }
 
+# Function to get exact video stream
 Function Get-ExactVideoStream() {
     param (
         [int] $resolution, 
@@ -201,7 +199,6 @@ Function Get-ExactVideoStream() {
         }
     }
 }
-
 
 # Function to process MPDs
 Function ProcessMPDs {
@@ -347,7 +344,6 @@ Function ProcessMPDs {
     Write-Host "List saved to $($global:listFilePath)."
 }
 
-
 # Function to process the argumentList.txt
 Function ProcessArgumentList {
     $argumentLists = Get-Content $global:argumentListFilePath | Where-Object { $_ -match '\S' }
@@ -406,7 +402,6 @@ Function ProcessArgumentList {
     }
 }
 
-
 # Function to process the list.txt
 Function ProcessList {
     Write-Host "Processing list..."
@@ -453,7 +448,6 @@ Function ProcessList {
     }
 }
 
-
 function StartProgram {
 
     # Check if 'list.txt' and 'argumentList.txt' does not exists
@@ -485,6 +479,9 @@ function StartProgram {
         }
     }
 }
+
+# Get and set settings
+$global:settings = Set-Settings -filePath $global:settingsFilePath 
 
 # Start it
 StartProgram
