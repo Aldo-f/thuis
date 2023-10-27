@@ -6,7 +6,7 @@ $global:settingsFilePath = 'settings.json'
 $global:patternExtension = '.[a-zA-Z0-9]{2,3}';
 $global:pattersResolutionFromName = "[_\-](\d{3,4}p)[_\-.]";
 
-# Function to initialize or update settingsFunction Set-Settings {
+# Function to initialize or update settings
 Function Set-Settings {
     param (
         [string] $filePath
@@ -28,27 +28,32 @@ Function Set-Settings {
     # Format resolutions for display
     $resolutionsDisplay = ($settings.resolutions -join ', ').Trim()
     $defaultResolutionsDisplay = ($defaults.resolutions -join ', ').Trim()
-    
-    # Prompt user to review and edit settings
-    $userChoice = Read-Host "Current Settings:`nDirectory: $($settings.directory)`nResolutions: $resolutionsDisplay`n`nAre these settings okay? (y/n)"
-    if ($userChoice -eq 'n') {
-        $directory = Read-Host "Enter new directory (default '$($defaults.directory)')"
-        if ([string]::IsNullOrWhiteSpace($directory) ) {
-            $settings.directory = $defaults.directory;
-        }
-        else {
-            $settings.directory = $directory;
-        }
 
-        $resolutions = Read-Host "Enter new resolutions (default '$($defaultResolutionsDisplay)')"
-        if ([string]::IsNullOrWhiteSpace($resolutions) ) {
-            $settings.resolutions = $defaults.resolutions;
+    do {
+        # Prompt user to review and edit settings
+        $userChoice = Read-Host "Current Settings:`nDirectory: $($settings.directory)`nResolutions: $resolutionsDisplay`n`nAre these settings okay? (Y/n)"
+        if ($userChoice -eq 'n') {
+            $directory = Read-Host "Enter new directory (default '$($defaults.directory)')"
+            if ([string]::IsNullOrWhiteSpace($directory) ) {
+                $settings.directory = $defaults.directory;
+            }
+            else {
+                $settings.directory = $directory;
+            }
+
+            $resolutions = Read-Host "Enter new resolutions (default '$($defaultResolutionsDisplay)')"
+            if ([string]::IsNullOrWhiteSpace($resolutions) ) {
+                $settings.resolutions = $defaults.resolutions;
+            }
+            else {
+                $settings.resolutions = $resolutions -split ',' | ForEach-Object { [int]$_ }        
+            }
+            
+            # Format resolutions for display
+            $resolutionsDisplay = ($settings.resolutions -join ', ').Trim()
         }
-        else {
-            $settings.resolutions = $resolutions -split ',' | ForEach-Object { [int]$_ }        
-        }
-    }
-    
+    } while ($userChoice -eq 'n')
+
     # Save settings to file
     ConvertTo-Json -InputObject $settings | Out-File -filePath $filePath
     
@@ -164,18 +169,24 @@ Function Get-StreamsInfo($mpd, $streamType) {
 }
 
 # Function to get exact video-stream; or the closest one
-Function Get-ChooseVideoStream($mpd, $resolution) {
+Function Get-ChooseVideoStream() {
+    param (
+        [string] $mpd,
+        [int] $resolution,
+        [string] $outputName = ""
+    )
+
     $resolutions = Get-Resolutions $mpd;
    
     # Find exact match
     $chosenVideoStream = Get-ExactVideoStream -resolution $resolution -resolutions $resolutions; 
 
-    if (![int]::IsNullOrEmpty) {
+    if (![string]::IsNullOrEmpty($chosenVideoStream)) {
         return $chosenVideoStream;
-    }
+    }    
 
-    # If no exact match found, find the closest resolution
-    return Get-ClosestVideoStream -resolution $resolution -resolutions $resolutions;
+    # If no exact match found, ask the user to choose
+    return Get-UserChosenVideoStream -resolutions $resolutions -outputName $outputName
 }
 
 # Function to get exact video stream
@@ -205,8 +216,6 @@ Function ProcessMPDs {
     # Initialize an array to store argument lists
     $lists = @()
  
-    $patternResolutionFromOutputName = $global:pattersResolutionFromName;
-
     # Check if the 'video' directory exists, if not, create it
     $mediaDirectory = $global:settings.directory;
     if (-not (Test-Path $mediaDirectory)) {
@@ -215,10 +224,9 @@ Function ProcessMPDs {
 
     # Check if 'list.txt' exists
     if (Test-Path $global:listFilePath) {
-        $choice = Read-Host "Found '$($global:listFilePath)'. Do you want to continue with the existing list? (y/n)"
-        if ($choice -eq 'y') {
+        if (AskYesOrNo "Found '$($global:listFilePath)'. Do you want to continue with the existing list? (Y/n)") {
             Write-Host "Continuing with the existing list..."
-            $lists = Get-Content $global:listFilePath
+            $lists = Get-CleanFileContent $global:listFilePath
         }
     }     
 
@@ -271,7 +279,7 @@ Function ProcessMPDs {
         } 
 
         # Check if $outputName contains a resolution (e.g., 720p)
-        $pattern = $patternResolutionFromOutputName
+        $pattern = $global:pattersResolutionFromName
         if ($outputName -match $pattern) {
             $resolutionsToFind = @([int]($matches[1] -replace '[^0-9]', ''))
         }
@@ -291,38 +299,7 @@ Function ProcessMPDs {
 
 
         if ($null -eq $exactVideoStream) {
-
-            # Display the available video streams to the user
-            Write-Host "Available Video Streams:"
-
-            for ($i = 0; $i -lt $resolutions.Count; $i++) {
-                $resolution = Get-ResolutionFromString $resolutions[$i];
-                Write-Host "$($i + 1): Resolution $resolution"           
-            }
-
-            # Get the default resolution from the array
-            $defaultResolution = Get-DefaultResolution;
-
-            do {
-                # Prompt the user to choose a video stream
-                $chosenVideoStream = Read-Host "Enter the number corresponding to your preferred video stream (leave empty to select closest to default $defaultResolution)";
-
-                # If user hits enter without choosing and $outputName doesn't contain a resolution pattern, use the closest resolution to the default height
-                if ([string]::IsNullOrWhiteSpace($chosenVideoStream) -and -not ($outputName -match $pattern)) {  
-                    $resolution = $defaultResolution
-                    $chosenVideoStream = Get-ClosestVideoStream -resolution $resolution -resolutions $resolutions
-                    $chosenVideoStream += 1;
-                }
-
-                $invalidChoose = $chosenVideoStream -lt 1 -or $chosenVideoStream -gt $resolutions.Count; 
-                if ($invalidChoose) {
-                    Write-Host "Invalid choice. Please enter a number between 1 and $($resolutions.Count)."
-                }
-
-            } while ($invalidChoose)
-
-            # Adjust to zero-based index
-            $chosenVideoStream -= 1;
+            $chosenVideoStream = Get-UserChosenVideoStream -resolutions $resolutions -outputName $outputName
         }
         else {
             $chosenVideoStream = $exactVideoStream
@@ -334,7 +311,7 @@ Function ProcessMPDs {
         Write-Host "You have chosen: Resolution $resolutionString"
 
         # Create the list
-        $resolutions = Get-ResolutionFromString resolutionString
+        $resolution = Get-ResolutionFromString $resolutionString
         $list = "$mpd $outputName $resolution";
         $lists += $list;
     }
@@ -344,11 +321,63 @@ Function ProcessMPDs {
     Write-Host "List saved to $($global:listFilePath)."
 }
 
+Function Get-UserChosenVideoStream {
+    param (
+        [string[]]$resolutions,
+        [string]$outputName = ""
+    )
+
+    # Display the available video streams to the user
+    $message = "Available Video Streams"
+    if (![string]::IsNullOrWhiteSpace($outputName)) {
+        $message += " for $outputName"
+    }
+    Write-Host "$message :"
+
+    for ($i = 0; $i -lt $resolutions.Count; $i++) {
+        $resolution = Get-ResolutionFromString $resolutions[$i];
+        Write-Host "$($i + 1): Resolution $resolution"           
+    }
+
+    # Get the default resolution from the array
+    $defaultResolution = Get-DefaultResolution;
+
+    # Prompt the user to choose a video stream
+    $streamPrompt = "Enter the number corresponding to your preferred video stream"
+    if (![string]::IsNullOrWhiteSpace($outputName)) {
+        $streamPrompt += " for $outputName"
+    }
+    $streamPrompt += " (leave empty to select closest to default $defaultResolution)"
+
+    do {
+        $chosenVideoStream = Read-Host "$streamPrompt"
+
+        # If user hits enter without choosing and $outputName doesn't contain a resolution pattern, use the closest resolution to the default height
+        if ([string]::IsNullOrWhiteSpace($chosenVideoStream) -and -not ($outputName -match $global:pattersResolutionFromName)) {  
+            $resolution = $defaultResolution
+            $chosenVideoStream = Get-ClosestVideoStream -resolution $resolution -resolutions $resolutions
+            $chosenVideoStream += 1;
+        }
+
+        $invalidChoose = $chosenVideoStream -lt 1 -or $chosenVideoStream -gt $resolutions.Count; 
+        if ($invalidChoose) {
+            Write-Host "Invalid choice. Please enter a number between 1 and $($resolutions.Count)."
+        }
+
+    } while ($invalidChoose)
+
+    # Adjust to zero-based index
+    $chosenVideoStream -= 1;
+
+    return $chosenVideoStream
+}
+
 # Function to process the argumentList.txt
 Function ProcessArgumentList {
     $argumentLists = Get-Content $global:argumentListFilePath | Where-Object { $_ -match '\S' }
 
     $filesToProcess = @()
+    $tableData = @()
 
     foreach ($command in $argumentLists) {
         # Extract the $outputName from the command
@@ -356,8 +385,7 @@ Function ProcessArgumentList {
 
         # Check if the file already exists
         if (Test-Path $outputName) {
-            $overwriteChoice = Read-Host "File $outputName already exists. Do you want to overwrite it? (y/n)"
-            if ($overwriteChoice -eq 'n') {
+            if (-not (AskYesOrNo "File $outputName already exists. Do you want to overwrite it? (Y/n)")) {
                 continue # Skip this file
             }
         }
@@ -381,31 +409,56 @@ Function ProcessArgumentList {
 
         # Print the resolution and filename for this command
         $outputName = $outputName -replace '.*/', ''
-        Write-Host "File: $outputName; Resolution: $resolution"
+        # Write-Host "File: $outputName; Resolution: $resolution"
+
+        # Add data to table
+        $tableData += [PSCustomObject]@{
+            Filename   = $outputName
+            Resolution = $resolution
+        }
 
         $filesToProcess += $command
     }
+
+    # Display table
+    $tableData | Format-Table -Property Filename, Resolution
 
     if ($filesToProcess.Count -eq 0) {
         Write-Host "No files to process."
         return;
     }
 
-    $choice = Read-Host "Do you want to proceed with processing? (y/n)"
-    if ($choice -eq 'y') {
+    if (AskYesOrNo "Do you want to proceed with processing? (Y/n)") {
         Write-Host "Starting processing..."
         $filesToProcess | ForEach-Object { Start-Process -FilePath ffmpeg.exe -ArgumentList $_ -Wait -NoNewWindow }
     }
     else {
-        Write-Host "Processing aborted by user."
-        return;
+        do {
+            if (AskYesOrNo "Exit program? (Y/n)") {
+                Exit
+            }
+            elseif (AskYesOrNo "Do you want to start again? (Y/n)") {
+                StartProgram
+            }
+        } while ($true)
     }
 }
 
 # Function to process the list.txt
 Function ProcessList {
+    # Check if $global:argumentListFilePath has existing data    
+    if ((Get-CleanFileContent $global:argumentListFilePath).Count -gt 0) {
+        if (AskYesOrNo "There is existing data inside $($global:argumentListFilePath). Do you want to clear all data before processing? (Y/n)") {
+            Set-Content -Path $global:argumentListFilePath -Value ''
+            Write-Host "Cleared existing data."
+        }
+        else {
+            Write-Host "We will add new data to the list."
+        }
+    }
+
     Write-Host "Processing list..."
-    $listContent = Get-Content $global:listFilePath
+    $listContent = Get-CleanFileContent $global:listFilePath
     foreach ($line in $listContent) {
 
         $splitLine = $line -split '\s+', 3
@@ -414,14 +467,14 @@ Function ProcessList {
         $resolution = $splitLine[2]
         
         if (-not [string]::IsNullOrWhiteSpace($resolution)) {
-            $chosenVideoStream = Get-ChooseVideoStream $mpd $resolution
+            $chosenVideoStream = Get-ChooseVideoStream -mpd $mpd -resolution $resolution -outputName $outputName
         }
         else {
             # Extract video stream based on filename pattern
             $pattern = $global:pattersResolutionFromName;
             if ($outputName -match $pattern) {
                 $resolution = $matches[1] -replace '[ _-]', '' -replace 'p', ''
-                $chosenVideoStream = Get-ChooseVideoStream $mpd $resolution
+                $chosenVideoStream = Get-ChooseVideoStream -mpd $mpd -resolution $resolution -outputName  $outputName
             }
             else {
                 # Use default resolution if pattern doesn't match
@@ -432,52 +485,101 @@ Function ProcessList {
 
         # Create the full argument list
         $ArgumentList = Get-ArgumentList -mpd $mpd -videoStream $chosenVideoStream -outputName $outputName
-        $argumentLists += $ArgumentList
+  
+        # Save content to the file after each iteration
+        Add-Content -Path $global:argumentListFilePath -Value $ArgumentList
     }
-    # Save content to the file after each iteration
-    $argumentLists | Out-File -FilePath $global:argumentListFilePath
-    Write-Host "List saved to $($global:argumentListFilePath)."
+    Write-Host "List saved to $($global:argumentListFilePath)."   
+}
 
-    $choice = Read-Host "Do you want to process the list now? (y/n)"
-    if ($choice -eq 'y') {
-        ProcessArgumentList
+# Function to get clen file content
+Function Get-CleanFileContent {
+    param (
+        [string]$filePath
+    )
+
+    # Check if file exists
+    if (Test-Path $filePath) {
+        $fileContent = Get-Content $filePath | ForEach-Object { $_.Trim() } | Where-Object { $_ -notmatch '^\s*[-#;](?=\s|$)' -and $_ -ne '' }
+
+        return [string[]]$fileContent    
     }
     else {
-        Write-Host "Processing aborted by user."
-        return  # Terminate the process
+        return [string[]]@()
     }
 }
 
-function StartProgram {
+# Function to ask a yes no question
+Function AskYesOrNo {
+    param (
+        [string] $question
+    )
 
-    # Check if 'list.txt' and 'argumentList.txt' does not exists
-    if (-not (Test-Path $global:listFilePath) -and -not (Test-Path $global:argumentListFilePath)) {
-        Write-Host "No '$($global:argumentListFilePath)' or '$($global:listFilePath)' found. Starting interactive mode..."
+    $match = [regex]::Match($question, '\(([YyNn])/[YyNn]\)')  # Extract the uppercase value between ()
+    $defaultChoice = 'Y'
+    if ($match.Success) {
+        $defaultChoice = $match.Groups[1].Value.ToUpper()
+    }
+
+    $choice = Read-Host "$question"
+    if ([string]::IsNullOrWhiteSpace($choice)) {
+        $choice = $defaultChoice  # Treat Enter as default choice
+    }
+    $choice = $choice.ToUpper()  # Convert to uppercase for case insensitivity
+
+    if ($choice -in 'Y', 'N') {
+        return ($choice -eq 'Y')
+    }
+    else {
+        Write-Host "Invalid input. Please enter 'Y' for Yes or 'N' for No."
+        return (AskYesOrNo $question)
+    }
+}
+
+# Function to start the program
+function StartProgram {
+    # Check if 'list.txt' and 'argumentList.txt' exists
+    $argumentListExists = (Get-CleanFileContent $global:argumentListFilePath).Count -gt 0
+    $listExists = (Get-CleanFileContent $global:listFilePath).Count -gt 0
+
+    if (-not ($listExists -or $argumentListExists)) {
+        Write-Host "No '$($global:argumentListFilePath)' or '$($global:listFilePath)' found."
+        Write-Host "Starting interactive mode..."
         ProcessMPDs
-    }  
+    }
+    else {
+        if ($listExists) {
+            Write-Host "Found '$($global:listFilePath)'."
+        }
+        if ($argumentListExists) {
+            Write-Host "Found '$($global:argumentListFilePath)'."
+        }
+        if (AskYesOrNo "Do you still want to start interactive mode? (y/N)") {
+            ProcessMPDs
+        }
+    }
 
     # Check if 'list.txt' exists
-    if (Test-Path $global:listFilePath) {
-        $choice = Read-Host "Found '$($global:listFilePath)'. Do you want to process it? (y/n)"
-        if ($choice -eq 'y') {
+    if ((Get-CleanFileContent $global:listFilePath).Count -gt 0) {
+        if (AskYesOrNo "Found '$($global:listFilePath)'. Do you want to process it? (Y/n)") {
             ProcessList
         }
     }
 
     # Check if 'argumentList.txt' exists
-    if (Test-Path $global:argumentListFilePath) {
-        $choice = Read-Host "Found '$($global:argumentListFilePath)'. Do you want to process it? (y/n)"
-        if ($choice -eq 'y') {
+    if ((Get-CleanFileContent $global:argumentListFilePath).Count -gt 0) {
+        if (AskYesOrNo "Found '$($global:argumentListFilePath)'. Do you want to process it? (Y/n)") {
             ProcessArgumentList
         }
-        elseif ($choice -eq 'n') {
-            ProcessMPDs
-            StartProgram
-        }
         else {
-            Write-Host "Invalid choice. Exiting."
+            if (AskYesOrNo "Exit program? (Y/n)") {
+                Exit
+            }
+            else {
+                StartProgram
+            }
         }
-    }
+    }    
 }
 
 # Get and set settings
