@@ -31,8 +31,8 @@ Function Set-Settings {
 
     do {
         # Prompt user to review and edit settings
-        $userChoice = Read-Host "Current Settings:`nDirectory: $($settings.directory)`nResolutions: $resolutionsDisplay`n`nAre these settings okay? (Y/n)"
-        if ($userChoice -eq 'n') {
+        $correct = AskYesOrNo "Current Settings:`nDirectory: $($settings.directory)`nResolutions: $resolutionsDisplay`n`nAre these settings okay? (Y/n)"
+        if (!$correct) {
             $directory = Read-Host "Enter new directory (default '$($defaults.directory)')"
             if ([string]::IsNullOrWhiteSpace($directory) ) {
                 $settings.directory = $defaults.directory;
@@ -52,7 +52,7 @@ Function Set-Settings {
             # Format resolutions for display
             $resolutionsDisplay = ($settings.resolutions -join ', ').Trim()
         }
-    } while ($userChoice -eq 'n')
+    } while (!$correct)
 
     # Save settings to file
     ConvertTo-Json -InputObject $settings | Out-File -filePath $filePath
@@ -206,7 +206,7 @@ Function Get-ExactVideoStream() {
     for ($i = 0; $i -lt $resolutions.Count; $i++) {
         $height = Get-ResolutionFromString $resolutions[$i];
         if ($height -eq $resolution) {
-            return $i  # Return the index directly
+            return $i # Return the index directly
         }
     }
 }
@@ -332,7 +332,17 @@ Function Get-UserChosenVideoStream {
     if (![string]::IsNullOrWhiteSpace($outputName)) {
         $message += " for $outputName"
     }
-    Write-Host "$message :"
+    Write-Host "{$message}:"
+
+    # $optionResolutionTable = @()
+    # for ($i = 0; $i -lt $resolutions.Count; $i++) {
+    #     $resolution = Get-ResolutionFromString $resolutions[$i];
+    #     $optionResolutionTable += [PSCustomObject]@{
+    #         Option     = ($i + 1).ToString()
+    #         Resolution = $resolution.ToString()
+    #     }
+    # }
+    # $optionResolutionTable | Format-Table -Property Option, Resolution
 
     for ($i = 0; $i -lt $resolutions.Count; $i++) {
         $resolution = Get-ResolutionFromString $resolutions[$i];
@@ -518,8 +528,13 @@ Function AskYesOrNo {
     $match = [regex]::Match($question, '\(([YyNn])/[YyNn]\)')  # Extract the uppercase value between ()
     $defaultChoice = 'Y'
     if ($match.Success) {
-        $defaultChoice = $match.Groups[1].Value.ToUpper()
-    }
+        if ($match.Groups[0].Value.Contains('N')) {
+            $defaultChoice = 'N'
+        }
+        else {
+            $defaultChoice = 'Y'
+        }
+    }    
 
     $choice = Read-Host "$question"
     if ([string]::IsNullOrWhiteSpace($choice)) {
@@ -535,6 +550,58 @@ Function AskYesOrNo {
         return (AskYesOrNo $question)
     }
 }
+
+# Function to check and try to install dependencies using multiple package managers, provide instructions if not successful
+
+Function CheckAndInstallDependency {
+    param (
+        [string] $dependencyName,
+        [string[]] $installCommands,
+        [string] $installInstructions
+    )
+
+    $dependencyInstalled = $null
+
+    try {
+        $dependencyInstalled = Get-Command $dependencyName -ErrorAction SilentlyContinue
+    }
+    catch {
+        $dependencyInstalled = $null
+    }
+
+    if (-not $dependencyInstalled) {
+        Write-Host "Dependency '$dependencyName' is not installed. Attempting to install..."
+
+        # Try to install the dependency using multiple package managers
+        foreach ($command in $installCommands) {
+            Invoke-Expression $command
+            # Check if the installation was successful
+            try {
+                $dependencyInstalled = Get-Command $dependencyName -ErrorAction SilentlyContinue
+            }
+            catch {
+                $dependencyInstalled = $null
+            }
+            if ($dependencyInstalled) {
+                Write-Host "Dependency '$dependencyName' was successfully installed."
+                break
+            }
+        }
+
+        if (-not $dependencyInstalled) {
+            # Provide instructions for manual installation
+            Write-Host $installInstructions
+            Write-Host "After installation, please run the script again."
+            Exit
+        }
+    }
+    else {
+        # Dependency is already installed.
+    }
+}
+
+
+
 
 # Function to start the program
 function StartProgram {
@@ -584,6 +651,15 @@ function StartProgram {
 
 # Get and set settings
 $global:settings = Set-Settings -filePath $global:settingsFilePath 
+
+# Check if all dependencies are met
+CheckAndInstallDependency -dependencyName "ffmpeg.exe" `
+    -installCommands @(
+    "choco install ffmpeg",
+    "scoop install ffmpeg",
+    "winget install ffmpeg"
+) `
+    -installInstructions "If package managers are not available, please download and install ffmpeg from https://www.ffmpeg.org/download.html"
 
 # Start it
 StartProgram
