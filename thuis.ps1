@@ -332,22 +332,18 @@ Function Get-UserChosenVideoStream {
     if (![string]::IsNullOrWhiteSpace($outputName)) {
         $message += " for $outputName"
     }
-    Write-Host "{$message}:"
+    $message += ':'
+    Write-Host $message
 
-    # $optionResolutionTable = @()
-    # for ($i = 0; $i -lt $resolutions.Count; $i++) {
-    #     $resolution = Get-ResolutionFromString $resolutions[$i];
-    #     $optionResolutionTable += [PSCustomObject]@{
-    #         Option     = ($i + 1).ToString()
-    #         Resolution = $resolution.ToString()
-    #     }
-    # }
-    # $optionResolutionTable | Format-Table -Property Option, Resolution
-
+    $tableData = @()
     for ($i = 0; $i -lt $resolutions.Count; $i++) {
-        $resolution = Get-ResolutionFromString $resolutions[$i];
-        Write-Host "$($i + 1): Resolution $resolution"           
+        # $resolution = Get-ResolutionFromString $resolutions[$i];
+        $tableData += [PSCustomObject]@{
+            Option     = ($i + 1).ToString()
+            Resolution = $resolutions[$i]
+        }
     }
+    $tableData | Format-Table -Property Option, Resolution | Out-String | Write-Host
 
     # Get the default resolution from the array
     $defaultResolution = Get-DefaultResolution;
@@ -357,7 +353,9 @@ Function Get-UserChosenVideoStream {
     if (![string]::IsNullOrWhiteSpace($outputName)) {
         $streamPrompt += " for $outputName"
     }
-    $streamPrompt += " (leave empty to select closest to default $defaultResolution)"
+    if (-not ($outputName -match $global:pattersResolutionFromName)) {
+        $streamPrompt += " (leave empty to select closest to default $defaultResolution)"
+    }
 
     do {
         $chosenVideoStream = Read-Host "$streamPrompt"
@@ -431,7 +429,7 @@ Function ProcessArgumentList {
     }
 
     # Display table
-    $tableData | Format-Table -Property Filename, Resolution
+    $tableData | Format-Table -Property Filename, Resolution | Out-String | Write-Host
 
     if ($filesToProcess.Count -eq 0) {
         Write-Host "No files to process."
