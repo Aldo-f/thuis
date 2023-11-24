@@ -245,7 +245,7 @@ Function ProcessMPDs {
         $mdArray = $mpd -split '[,;]'
 
         foreach ($mpd in $mdArray) {
-            $list = ProcessVideoStreams -mpd $mpd -usedIndices $usedIndices
+            $list = Get-ProcessVideoStreams -mpd $mpd -usedIndices $usedIndices
             $lists += $list
         }
     }
@@ -256,7 +256,7 @@ Function ProcessMPDs {
 }
 
 # Function to process video streams and obtain output name
-Function ProcessVideoStreams() {
+Function Get-ProcessVideoStreams() {
     param (
         [string] $mpd,
         [PSCustomObject] $usedIndices,
@@ -291,16 +291,6 @@ Function ProcessVideoStreams() {
     }
     else {
         # Generate the output name
-        $outputName = GenerateOutputName $usedIndices
-
-    }
-
-    # Ensure the user's input is not empty if $askQuestions is true
-    if ($askQuestions -and [string]::IsNullOrWhiteSpace($outputName)) {
-  
-    }
-    elseif (-not $askQuestions) {
-        # Generate the output name automatically
         $outputName = GenerateOutputName $usedIndices
     }
 
@@ -586,7 +576,7 @@ Function ProcessList {
     Write-Host "List saved to $($global:argumentListFilePath)."   
 }
 
-# Function to get clen file content
+# Function to get clean file content
 Function Get-CleanFileContent {
     param (
         [string]$filePath
@@ -702,7 +692,7 @@ Function ProcessCommandLineMPDs {
     }
 
     foreach ($mpdUrl in $mpdUrls) {
-        $list = ProcessVideoStreams -mpd $mpdUrl -usedIndices $usedIndices -askQuestions $askQuestions
+        $list = Get-ProcessVideoStreams -mpd $mpdUrl -usedIndices $usedIndices -askQuestions $askQuestions
         $lists += $list
     }
 
