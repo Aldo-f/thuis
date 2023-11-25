@@ -1,16 +1,18 @@
 # thuis
 
+'thuis', or 'To download video's by a `.mpd` link'.
+
+There are two ways to execute this program:
+
+- by terminal; with optional arguments
+- by clicking the thuis.bat file
+
 ```sh
-
 # interactive
-bash thuis.bat
-.\thuis.ps1
-
+thuis.bat
 ```
-
 
 ```sh
 # speedy
-.\thuis.ps1 -list .mpd,.mpd,.mpd
-
+thuis.bat -list .mpd,.mpd,.mpd
 ```
