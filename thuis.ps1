@@ -241,9 +241,7 @@ Function ProcessMPDs {
             break
         }
 
-        # Split the $mpd string by both ',' and ';'
-        $mdArray = $mpd -split '[,;]'
-
+        $mdArray = Get-MPDArray $mpd;
         foreach ($mpd in $mdArray) {
             $list = Get-ProcessVideoStreams -mpd $mpd -usedIndices $usedIndices
             $lists += $list
@@ -253,6 +251,19 @@ Function ProcessMPDs {
     # Save content to the file
     $lists | Out-File -FilePath $global:listFilePath
     Write-Host "List saved to $($global:listFilePath)."
+}
+
+Function Get-MPDArray($mpdArray) {
+    # Unify seperators
+    $mpd = $mpd.replace(';', ',')
+
+    # Remove double
+    $mpd = $mpd.replace(',,', ',')
+
+    # Split the $mpd string by ','
+    $mpdArray = $mpd -split '[,]'
+
+    return $mpdArray;
 }
 
 # Function to process video streams and obtain output name
@@ -676,7 +687,7 @@ Function CheckAndInstallDependency {
 # Function to process MPDs from command-line arguments
 Function ProcessCommandLineMPDs {
     param (
-        [string[]] $mpdUrls,
+        [string[]] $mpdArray,
         [bool] $askQuestions
     )
 
@@ -691,8 +702,8 @@ Function ProcessCommandLineMPDs {
         New-Item -ItemType Directory -Path $mediaDirectory | Out-Null
     }
 
-    foreach ($mpdUrl in $mpdUrls) {
-        $list = Get-ProcessVideoStreams -mpd $mpdUrl -usedIndices $usedIndices -askQuestions $askQuestions
+    foreach ($mpd in $mpdArray) {
+        $list = Get-ProcessVideoStreams -mpd $mpd -usedIndices $usedIndices -askQuestions $askQuestions
         $lists += $list
     }
 
@@ -754,8 +765,9 @@ $global:settings = Set-Settings -filePath $global:settingsFilePath
 CheckAndInstallDependency -dependencyName "ffmpeg.exe" `
     -installCommands @(
     "choco install ffmpeg",
-    "scoop install ffmpeg",
     "winget install ffmpeg"
+    "scoop install ffmpeg",
+    "(irm get.scoop.sh | iex) -and (scoop install ffmpeg)"
 ) `
     -installInstructions "If package managers are not available, please download and install ffmpeg from https://www.ffmpeg.org/download.html"
 
@@ -764,8 +776,9 @@ CheckAndInstallDependency -dependencyName "ffmpeg.exe" `
 if ($args -contains "-list") {
     $listUrlsIndex = $args.IndexOf("-list") + 1
     if ($listUrlsIndex -lt $args.Count) {
-        $mpdUrls = $args[$listUrlsIndex] -split '[;,]'
-        ProcessCommandLineMPDs -mpdUrls $mpdUrls -askQuestions $false
+        $mpd = $args[$listUrlsIndex]
+        $mpdArray = Get-MPDArray $mpd;
+        ProcessCommandLineMPDs -mpdArray $mpdArray -askQuestions $false
         ProcessList -askQuestions $false
         ProcessArgumentList
         Exit
