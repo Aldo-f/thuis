@@ -5,6 +5,7 @@ $global:listFilePath = 'list.txt'
 $global:settingsFilePath = 'settings.json'
 $global:patternExtension = '.[a-zA-Z0-9]{2,3}';
 $global:pattersResolutionFromName = "[_\-](\d{3,4}p)[_\-.]";
+$global:filename = '';
 
 # Function to initialize or update settings
 Function Initialize-OrUpdateSettings {
@@ -16,15 +17,23 @@ Function Initialize-OrUpdateSettings {
     $defaults = @{
         'directory'   = 'media'
         'resolutions' = @(720, 1080)
+        'filename'    = ''
     }
-
+    
     # If settings file exists, load it; otherwise, use defaults
     if (Test-Path $filePath) {
-        $settings = Get-Content $filePath | ConvertFrom-Json
+        $loadedSettings = Get-Content $filePath | ConvertFrom-Json
+    
+        # Merge loaded settings with defaults
+        $settings = $defaults.Clone()
+
+        foreach ($key in $loadedSettings.Keys) {
+            $settings[$key] = $loadedSettings[$key]
+        }
     }
-    else {  
-        $settings = $defaults;
-    }
+    else {
+        $settings = $defaults
+    }     
 
     if ($promptUser) {
         # Format resolutions for display
@@ -51,6 +60,9 @@ Function Initialize-OrUpdateSettings {
                     $settings.resolutions = $resolutions -split ',' | ForEach-Object { [int]$_ }        
                 }
 
+                $filename = Read-Host "Enter new filename (default '$($defaults.filename)')"
+                $settings.filename = $filename;
+                
                 # Format resolutions for display
                 $resolutionsDisplay = ($settings.resolutions -join ', ').Trim()
             }
@@ -87,7 +99,7 @@ Function Get-ArgumentList {
         $mediaDirectory = $global:settings.directory;
     }
 
-    $ArgumentList = "-v quiet -stats -i $mpd -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy $mediaDirectory/$outputName";
+    $ArgumentList = "-v quiet -stats -i $mpd -tag:v avc1 -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy $mediaDirectory/$outputName";
 
     return $ArgumentList;
 }
@@ -296,7 +308,7 @@ Function Get-ProcessVideoStreams() {
         # Ensure the user's input is not empty
         if ([string]::IsNullOrWhiteSpace($outputName)) {
             # Generate the output name
-            $outputName = GenerateOutputName $usedIndices
+            $outputName = GenerateOutputName -usedIndices $usedIndices -filename $global:settings.filename
         }
         else {
             # Check if the provided output name has an extension
@@ -308,7 +320,7 @@ Function Get-ProcessVideoStreams() {
     }
     else {
         # Generate the output name
-        $outputName = GenerateOutputName $usedIndices
+        $outputName = GenerateOutputName -usedIndices $usedIndices -filename $global:settings.filename
     }
 
     # Check if $outputName contains a resolution (e.g., 720p)
@@ -351,21 +363,56 @@ Function Get-ProcessVideoStreams() {
 }
 
 # Function to generate the output name
-Function GenerateOutputName($usedIndices) {
-    # Get the current date in the format 'y-m-d'
+function GenerateOutputName {
+    param (
+        [string]$filename = "",
+        [PSCustomObject]$usedIndices
+    )
+
+    # Function to increment index and generate filename
+    function IncrementAndGenerateFilename($prefix, $index) {
+        $outputFilename = "${prefix}$("{0:D3}" -f $index).mp4"
+
+        if ($usedIndices.Indices -notcontains $index -and -not (Test-Path (Join-Path $global:settings.directory $outputFilename))) {
+            $usedIndices.Indices += $index
+            return $outputFilename
+        }
+
+        $index++
+        return $null
+    }
+
+    if ($filename) {
+        # Check if the last part is a digit
+        $lastPart = $filename -replace '^.*[^0-9](\d+)$', '$1'
+
+        if ($lastPart -ne $filename) {
+            # Remove the last part from the filename
+            $filename = $filename -replace '\d+$'
+
+            # If the last part is a digit, use it as the starting index
+            $index = [int]$lastPart
+
+            do {
+                $outputFilename = IncrementAndGenerateFilename $filename $index
+
+                if ($outputFilename) {
+                    return $outputFilename
+                }
+
+                $index++
+            } while ($true)
+        }
+    }
+
+    # If no filename provided, use the existing logic
     $currentDate = Get-Date -Format 'y-M-d'
-    
-    # Find the next available index
     $index = 1
     do {
-        $filename = "${currentDate}_{0:D3}.mp4" -f $index
+        $outputFilename = IncrementAndGenerateFilename "${currentDate}_" $index
 
-        # Check if the index is not in the array and the file does not exist
-        if ($usedIndices.Indices -notcontains $index -and -not (Test-Path (Join-Path $global:settings.directory $filename))) {
-            # Add the used index to the array
-            $usedIndices.Indices += $index
-
-            return $filename
+        if ($outputFilename) {
+            return $outputFilename
         }
 
         $index++
@@ -852,6 +899,18 @@ Function ProcessCommandLineArguments {
                     Exit
                 }
             }
+
+            { $_ -in "-filename" } {
+                $i++
+                if ($i -lt $arguments.Count) {
+                    $global:settings.filename = $arguments[$i]
+                    Write-Host "Filename updated to $($global:settings.filename)"
+                }
+                else {
+                    Write-Host "Missing value for $arg."
+                    Exit
+                }
+            }            
         }
     }
 
