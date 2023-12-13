@@ -5,58 +5,73 @@ $global:listFilePath = 'list.txt'
 $global:settingsFilePath = 'settings.json'
 $global:patternExtension = '.[a-zA-Z0-9]{2,3}';
 $global:pattersResolutionFromName = "[_\-](\d{3,4}p)[_\-.]";
+$global:filename = '';
 
 # Function to initialize or update settings
-Function Set-Settings {
+Function Initialize-OrUpdateSettings {
     param (
-        [string] $filePath
+        [string] $filePath,
+        [bool] $promptUser = $true
     )
 
     $defaults = @{
         'directory'   = 'media'
         'resolutions' = @(720, 1080)
+        'filename'    = ''
     }
-
+    
     # If settings file exists, load it; otherwise, use defaults
     if (Test-Path $filePath) {
-        $settings = Get-Content $filePath | ConvertFrom-Json
-    }
-    else {  
-        $settings = $defaults;
-    }
+        $loadedSettings = Get-Content $filePath | ConvertFrom-Json
     
-    # Format resolutions for display
-    $resolutionsDisplay = ($settings.resolutions -join ', ').Trim()
-    $defaultResolutionsDisplay = ($defaults.resolutions -join ', ').Trim()
+        # Merge loaded settings with defaults
+        $settings = $defaults.Clone()
 
-    do {
-        # Prompt user to review and edit settings
-        $correct = AskYesOrNo "Current Settings:`nDirectory: $($settings.directory)`nResolutions: $resolutionsDisplay`n`nAre these settings okay? (Y/n)"
-        if (!$correct) {
-            $directory = Read-Host "Enter new directory (default '$($defaults.directory)')"
-            if ([string]::IsNullOrWhiteSpace($directory) ) {
-                $settings.directory = $defaults.directory;
-            }
-            else {
-                $settings.directory = $directory;
-            }
-
-            $resolutions = Read-Host "Enter new resolutions (default '$($defaultResolutionsDisplay)')"
-            if ([string]::IsNullOrWhiteSpace($resolutions) ) {
-                $settings.resolutions = $defaults.resolutions;
-            }
-            else {
-                $settings.resolutions = $resolutions -split ',' | ForEach-Object { [int]$_ }        
-            }
-            
-            # Format resolutions for display
-            $resolutionsDisplay = ($settings.resolutions -join ', ').Trim()
+        foreach ($key in $loadedSettings.Keys) {
+            $settings[$key] = $loadedSettings[$key]
         }
-    } while (!$correct)
+    }
+    else {
+        $settings = $defaults
+    }     
 
-    # Save settings to file
-    ConvertTo-Json -InputObject $settings | Out-File -filePath $filePath
-    
+    if ($promptUser) {
+        # Format resolutions for display
+        $resolutionsDisplay = ($settings.resolutions -join ', ').Trim()
+        $defaultResolutionsDisplay = ($defaults.resolutions -join ', ').Trim()
+
+        do {
+            # Prompt user to review and edit settings
+            $correct = AskYesOrNo "Current Settings:`nDirectory: $($settings.directory)`nResolutions: $resolutionsDisplay`n`nAre these settings okay? (Y/n)"
+            if (!$correct) {
+                $directory = Read-Host "Enter new directory (default '$($defaults.directory)')"
+                if ([string]::IsNullOrWhiteSpace($directory)) {
+                    $settings.directory = $defaults.directory;
+                }
+                else {
+                    $settings.directory = $directory;
+                }
+
+                $resolutions = Read-Host "Enter new resolutions (default '$($defaultResolutionsDisplay)')"
+                if ([string]::IsNullOrWhiteSpace($resolutions)) {
+                    $settings.resolutions = $defaults.resolutions;
+                }
+                else {
+                    $settings.resolutions = $resolutions -split ',' | ForEach-Object { [int]$_ }        
+                }
+
+                $filename = Read-Host "Enter new filename (default '$($defaults.filename)')"
+                $settings.filename = $filename;
+                
+                # Format resolutions for display
+                $resolutionsDisplay = ($settings.resolutions -join ', ').Trim()
+            }
+        } while (!$correct)
+
+        # Save settings to file
+        ConvertTo-Json -InputObject $settings | Out-File -filePath $filePath
+    }
+
     return $settings
 }
 
@@ -84,7 +99,7 @@ Function Get-ArgumentList {
         $mediaDirectory = $global:settings.directory;
     }
 
-    $ArgumentList = "-v quiet -stats -i $mpd -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy $mediaDirectory/$outputName";
+    $ArgumentList = "-v quiet -stats -i $mpd -tag:v avc1 -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy $mediaDirectory/$outputName";
 
     return $ArgumentList;
 }
@@ -218,7 +233,7 @@ Function ProcessMPDs {
     # Create an object to store used indices
     $usedIndices = [PSCustomObject]@{ Indices = @() }
  
-    # Check if the 'video' directory exists, if not, create it
+    # Check if the output directory exists, if not, create it
     $mediaDirectory = $global:settings.directory;
     if (-not (Test-Path $mediaDirectory)) {
         New-Item -ItemType Directory -Path $mediaDirectory | Out-Null
@@ -253,17 +268,20 @@ Function ProcessMPDs {
     Write-Host "List saved to $($global:listFilePath)."
 }
 
-Function Get-MPDArray($mpdArray) {
-    # Unify seperators
-    $mpd = $mpd.replace(';', ',')
+Function Get-MPDArray($mpd) {
+    # Unify separators
+    $mpd = $mpd -replace ';', ','
 
-    # Remove double
-    $mpd = $mpd.replace(',,', ',')
+    # Remove double commas
+    $mpd = $mpd -replace ',,', ','
 
-    # Split the $mpd string by ','
-    $mpdArray = $mpd -split '[,]'
+    # Split the $mpd string by ',' or ' '
+    $mpdArray = $mpd -split '[, ]'
 
-    return $mpdArray;
+    # Remove empty lines
+    $mpdArray = $mpdArray | Where-Object { $_ -ne '' }
+
+    return $mpdArray
 }
 
 # Function to process video streams and obtain output name
@@ -290,7 +308,7 @@ Function Get-ProcessVideoStreams() {
         # Ensure the user's input is not empty
         if ([string]::IsNullOrWhiteSpace($outputName)) {
             # Generate the output name
-            $outputName = GenerateOutputName $usedIndices
+            $outputName = GenerateOutputName -usedIndices $usedIndices -filename $global:settings.filename
         }
         else {
             # Check if the provided output name has an extension
@@ -302,7 +320,7 @@ Function Get-ProcessVideoStreams() {
     }
     else {
         # Generate the output name
-        $outputName = GenerateOutputName $usedIndices
+        $outputName = GenerateOutputName -usedIndices $usedIndices -filename $global:settings.filename
     }
 
     # Check if $outputName contains a resolution (e.g., 720p)
@@ -345,21 +363,56 @@ Function Get-ProcessVideoStreams() {
 }
 
 # Function to generate the output name
-Function GenerateOutputName($usedIndices) {
-    # Get the current date in the format 'y-m-d'
+function GenerateOutputName {
+    param (
+        [string]$filename = "",
+        [PSCustomObject]$usedIndices
+    )
+
+    # Function to increment index and generate filename
+    function IncrementAndGenerateFilename($prefix, $index) {
+        $outputFilename = "${prefix}$("{0:D3}" -f $index).mp4"
+
+        if ($usedIndices.Indices -notcontains $index -and -not (Test-Path (Join-Path $global:settings.directory $outputFilename))) {
+            $usedIndices.Indices += $index
+            return $outputFilename
+        }
+
+        $index++
+        return $null
+    }
+
+    if ($filename) {
+        # Check if the last part is a digit
+        $lastPart = $filename -replace '^.*[^0-9](\d+)$', '$1'
+
+        if ($lastPart -ne $filename) {
+            # Remove the last part from the filename
+            $filename = $filename -replace '\d+$'
+
+            # If the last part is a digit, use it as the starting index
+            $index = [int]$lastPart
+
+            do {
+                $outputFilename = IncrementAndGenerateFilename $filename $index
+
+                if ($outputFilename) {
+                    return $outputFilename
+                }
+
+                $index++
+            } while ($true)
+        }
+    }
+
+    # If no filename provided, use the existing logic
     $currentDate = Get-Date -Format 'y-M-d'
-    
-    # Find the next available index
     $index = 1
     do {
-        $filename = "${currentDate}_{0:D3}.mp4" -f $index
+        $outputFilename = IncrementAndGenerateFilename "${currentDate}_" $index
 
-        # Check if the index is not in the array and the file does not exist
-        if ($usedIndices.Indices -notcontains $index -and -not (Test-Path (Join-Path $global:settings.directory $filename))) {
-            # Add the used index to the array
-            $usedIndices.Indices += $index
-
-            return $filename
+        if ($outputFilename) {
+            return $outputFilename
         }
 
         $index++
@@ -483,7 +536,21 @@ Function ProcessArgumentList {
 
     if (AskYesOrNo "Do you want to proceed with processing? (Y/n)") {
         Write-Host "Starting processing..."
-        $filesToProcess | ForEach-Object { Start-Process -FilePath ffmpeg.exe -ArgumentList $_ -Wait -NoNewWindow }
+        $filesToProcess | ForEach-Object {
+            Start-Process -FilePath ffmpeg.exe -ArgumentList $_ -Wait -NoNewWindow
+        }
+          
+        # Notify the user when processing is complete
+        Write-Host "Processing complete. Check the output directory: $($global:settings.directory)"
+
+        # Ask if the user wants to remove the list files
+        if (AskYesOrNo "Do you want to remove the argumentList.txt and list.txt files? (Y/n)") {
+            Remove-Item -Path $global:argumentListFilePath, $global:listFilePath -Force
+            Write-Host "Textfiles removed."
+        }
+
+        # Ask if the user wants to open the folder
+        AskAndOpenOutputFolder -directory $directory
     }
     else {
         do {
@@ -494,6 +561,28 @@ Function ProcessArgumentList {
                 StartProgram
             }
         } while ($true)
+    }
+}
+
+# Function to ask if the user wants to open the output folder
+Function AskAndOpenOutputFolder {
+    param (
+        [string] $directory
+    )
+
+    # Check if the directory exists
+    if (-not (Test-Path $directory -PathType Container)) {
+        Write-Host "Error: The specified directory does not exist: $directory"
+        return
+    }
+
+    # Ask if the user wants to open the folder
+    if (AskYesOrNo "Do you want to open the output folder? (Y/n)") {
+        if (-not $directory.StartsWith('/')) {
+            $directory = Join-Path (Get-Location) $directory
+        }
+
+        Invoke-Item $directory
     }
 }
 
@@ -636,12 +725,9 @@ Function AskYesOrNo {
     }
 }
 
-# Function to check and try to install dependencies using multiple package managers, provide instructions if not successful
-Function CheckAndInstallDependency {
-    param (
-        [string] $dependencyName,
-        [string[]] $installCommands,
-        [string] $installInstructions
+Function DependencyInstalled() {
+    param(
+        [string] $dependencyName
     )
 
     $dependencyInstalled = $null
@@ -652,6 +738,19 @@ Function CheckAndInstallDependency {
     catch {
         $dependencyInstalled = $null
     }
+
+    return $dependencyInstalled;
+}
+
+# Function to check and try to install dependencies using multiple package managers, provide instructions if not successful
+Function CheckAndInstallDependency {
+    param (
+        [string] $dependencyName,
+        [string[]] $installCommands,
+        [string] $installInstructions
+    )
+
+    $dependencyInstalled = DependencyInstalled -dependencyName $dependencyName
 
     if (-not $dependencyInstalled) {
         Write-Host "Dependency '$dependencyName' is not installed. Attempting to install..."
@@ -696,7 +795,7 @@ Function ProcessCommandLineMPDs {
     # Create an object to store used indices
     $usedIndices = [PSCustomObject]@{ Indices = @() }
 
-    # Check if the 'media' directory exists, if not, create it
+    # Check if the output directory exists, if not, create it
     $mediaDirectory = $global:settings.directory;
     if (-not (Test-Path $mediaDirectory)) {
         New-Item -ItemType Directory -Path $mediaDirectory | Out-Null
@@ -758,8 +857,83 @@ function StartProgram {
     }    
 }
 
-# Get and set settings
-$global:settings = Set-Settings -filePath $global:settingsFilePath 
+# Function to process command-line arguments
+Function ProcessCommandLineArguments {
+    param (
+        [string[]] $arguments
+    )
+
+    $listIndex = $arguments.IndexOf("-list")
+
+    # Process each argument
+    for ($i = 0; $i -lt $arguments.Count; $i++) {
+        if ($i -eq $listIndex) {
+            # Skip -list, it will be processed at the end
+            $i++;
+            continue
+        }
+
+        $arg = $arguments[$i]
+
+        switch ($arg) {
+            { $_ -in "-directory", "-output", "-o" } {
+                $i++
+                if ($i -lt $arguments.Count) {
+                    $global:settings.directory = $arguments[$i]
+                    Write-Host "Output directory updated to $($global:settings.directory)"
+                }
+                else {
+                    Write-Host "Missing value for $arg."
+                    Exit
+                }
+            }
+
+            { $_ -in "-resolutions", "-p" } {
+                $i++
+                if ($i -lt $arguments.Count) {
+                    $global:settings.resolutions = @($arguments[$i] -split ',' | ForEach-Object { [int]$_ })
+                    Write-Host "Resolutions updated to $($global:settings.resolutions -join ', ')"
+                }
+                else {
+                    Write-Host "Missing value for $arg."
+                    Exit
+                }
+            }
+
+            { $_ -in "-filename" } {
+                $i++
+                if ($i -lt $arguments.Count) {
+                    $global:settings.filename = $arguments[$i]
+                    Write-Host "Filename updated to $($global:settings.filename)"
+                }
+                else {
+                    Write-Host "Missing value for $arg."
+                    Exit
+                }
+            }            
+        }
+    }
+
+    # Process -list if found
+    if ($listIndex -ge 0) {
+        $listUrlsIndex = $listIndex + 1
+        if ($listUrlsIndex -lt $arguments.Count) {
+            $mpd = $arguments[$listUrlsIndex]
+            $mpdArray = Get-MPDArray $mpd
+            ProcessCommandLineMPDs -mpdArray $mpdArray -askQuestions $false
+            ProcessList -askQuestions $false
+            ProcessArgumentList
+            Exit
+        }
+        else {
+            Write-Host "Missing URLs after -list argument."
+            Exit
+        }
+    }
+}
+
+# Check if arguments are provided
+$global:settings = Initialize-OrUpdateSettings -filePath $global:settingsFilePath -promptUser ($args.Count -eq 0)
 
 # Check if all dependencies are met
 CheckAndInstallDependency -dependencyName "ffmpeg.exe" `
@@ -771,23 +945,8 @@ CheckAndInstallDependency -dependencyName "ffmpeg.exe" `
 ) `
     -installInstructions "If package managers are not available, please download and install ffmpeg from https://www.ffmpeg.org/download.html"
 
-
-# Check if script is run with the -list argument
-if ($args -contains "-list") {
-    $listUrlsIndex = $args.IndexOf("-list") + 1
-    if ($listUrlsIndex -lt $args.Count) {
-        $mpd = $args[$listUrlsIndex]
-        $mpdArray = Get-MPDArray $mpd;
-        ProcessCommandLineMPDs -mpdArray $mpdArray -askQuestions $false
-        ProcessList -askQuestions $false
-        ProcessArgumentList
-        Exit
-    }
-    else {
-        Write-Host "Missing URLs after -list argument."
-        Exit
-    }
-}
+# Process command-line arguments before starting the program
+ProcessCommandLineArguments $args
 
 # Start it
 StartProgram
