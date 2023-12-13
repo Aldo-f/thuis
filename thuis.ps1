@@ -118,7 +118,7 @@ Function Get-ArgumentList {
         $mediaDirectory = $global:settings.directory;
     }
 
-    $ArgumentList = "-v quiet -stats -i $mpd -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy $mediaDirectory/$outputName";
+    $ArgumentList = "-v quiet -stats -i $mpd -crf 0 -aom-params lossless=1 -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy $mediaDirectory/$outputName";
 
     return $ArgumentList;
 }
@@ -1063,12 +1063,13 @@ Function ProcessCommandLineArguments {
 $global:settings = Initialize-OrUpdateSettings -filePath $global:settingsFilePath -promptUser ($args.Count -eq 0)
 
 # Check if all dependencies are met
+$ffmpegVersion = '6.1'
 CheckAndInstallDependency -dependencyName "ffmpeg.exe" `
     -installCommands @(
-    "choco install ffmpeg",
-    "winget install ffmpeg"
-    "scoop install ffmpeg",
-    "(irm get.scoop.sh | iex) -and (scoop install ffmpeg)"
+    "choco install ffmpeg --version $ffmpegVersion -y",
+    "winget install ffmpeg -v $ffmpegVersion"
+    "scoop install ffmpeg@$ffmpegVersion",
+    "(irm get.scoop.sh | iex) -and (scoop install ffmpeg@$ffmpegVersion)"
 ) `
     -installInstructions "If package managers are not available, please download and install ffmpeg from https://www.ffmpeg.org/download.html"
 
