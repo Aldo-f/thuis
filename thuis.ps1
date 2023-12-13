@@ -24,18 +24,30 @@ Function Initialize-OrUpdateSettings {
     
     # If settings file exists, load it; otherwise, use defaults
     if (Test-Path $filePath) {
-        $loadedSettings = Get-Content $filePath | ConvertFrom-Json
-    
+        # Convert JSON content to PowerShell object
+        $loadedSettings = Get-Content $filePath | Out-String | ConvertFrom-Json
+
+        # Convert the loaded settings to a hashtable
+        $loadedSettingsHashtable = @{}
+        foreach ($property in $loadedSettings.PSObject.Properties) {
+            $loadedSettingsHashtable[$property.Name] = $property.Value
+        }
+
         # Merge loaded settings with defaults
         $settings = $defaults.Clone()
 
-        foreach ($key in $loadedSettings.Keys) {
-            $settings[$key] = $loadedSettings[$key]
+        foreach ($key in $defaults.Keys) {
+            if ($loadedSettingsHashtable.ContainsKey($key)) {
+                $settings[$key] = $loadedSettingsHashtable[$key]
+            }
         }
+
+        # Convert the merged settings back to an object
+        $settings = New-Object PSObject -Property $settings
     }
     else {
         $settings = $defaults
-    }     
+    }
 
     if ($promptUser) {
         # Format resolutions for display
@@ -44,7 +56,7 @@ Function Initialize-OrUpdateSettings {
 
         do {
             # Prompt user to review and edit settings
-            $correct = AskYesOrNo "Current Settings:`nDirectory: $($settings.directory)`nResolutions: $resolutionsDisplay`n`nAre these settings okay? (Y/n)"
+            $correct = AskYesOrNo "Current Settings:`nDirectory: $($settings.directory)`nResolutions: $resolutionsDisplay`nFilename: $($settings.filename)`n`nAre these settings okay? (Y/n)"
             if (!$correct) {
                 $directory = Read-Host "Enter new directory (default '$($defaults.directory)')"
                 if ([string]::IsNullOrWhiteSpace($directory)) {
