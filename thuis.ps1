@@ -1,8 +1,10 @@
 # Global variables
-$global:cachedStreamInfo = @{}
-$global:argumentListFilePath = 'argumentList.txt'
-$global:listFilePath = 'list.txt'
-$global:settingsFilePath = 'settings.json'
+$global:cachedInfo = @{}
+$global:dataFolder = 'data';
+$global:argumentListFilePath = "$global:dataFolder/argumentList.txt"
+$global:listFilePath = "$global:dataFolder/list.txt"
+$global:settingsFilePath = "$global:dataFolder/settings.json"
+$global:cachedFilePath = "$global:dataFolder/cached_data.xml"
 $global:patternExtension = '.[a-zA-Z0-9]{2,3}';
 $global:pattersResolutionFromName = "[_\-](\d{3,4}p)[_\-.]";
 $global:filename = '';
@@ -61,7 +63,12 @@ Function Initialize-OrUpdateSettings {
                 }
 
                 $filename = Read-Host "Enter new filename (default '$($defaults.filename)')"
-                $settings.filename = $filename;
+                if ([string]::IsNullOrWhiteSpace($filename)) {
+                    $settings.filename = $defaults.filename;
+                }
+                else {
+                    $settings.filename = $filename;
+                }
                 
                 # Format resolutions for display
                 $resolutionsDisplay = ($settings.resolutions -join ', ').Trim()
@@ -99,7 +106,7 @@ Function Get-ArgumentList {
         $mediaDirectory = $global:settings.directory;
     }
 
-    $ArgumentList = "-v quiet -stats -i $mpd -tag:v avc1 -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy $mediaDirectory/$outputName";
+    $ArgumentList = "-v quiet -stats -i $mpd -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy $mediaDirectory/$outputName";
 
     return $ArgumentList;
 }
@@ -148,23 +155,59 @@ Function Get-Resolutions($mpd) {
     return $resolutions
 }
 
+# Function to get general ffprobe output
+Function Get-FfprobeOutput($mpd) {
+    $outputKey = $mpd + "_ffprobeOutput"
+
+    # Check if the ffprobe output is already cached
+    if ($cachedInfo.ContainsKey($outputKey)) {
+        return $cachedInfo[$outputKey]
+    }
+    else {
+        # Use ffprobe to get the general output
+        $ffprobeOutput = & ffprobe.exe $mpd 2>&1
+
+        # Check if ffprobeOutput is empty
+        if ([string]::IsNullOrWhiteSpace($ffprobeOutput)) {
+            Write-Host "Error: ffprobe output is empty. Make sure ffprobe is installed and accessible."
+            exit
+        }
+
+        # Cache the ffprobe output
+        $global:cachedInfo[$outputKey] = $ffprobeOutput
+
+        # Save cached data to a file
+        Save-CachedData
+
+        return $ffprobeOutput
+    }
+}
+
+# Function to save cached data to a file
+Function Save-CachedData {
+    $cachedInfo | Export-Clixml -Path $global:cachedFilePath
+}
+
+# Function to import cached data from a file
+Function Import-CachedData {
+    if (Test-Path $global:cachedFilePath) {
+        $global:cachedInfo = Import-Clixml -Path $global:cachedFilePath 
+        $null = $cachedInfo
+    }
+}
+
 # Function to stream info by MPD and streamType
 Function Get-StreamsInfo($mpd, $streamType) {
-    $key = $mpd + $streamType; 
+    # Key for cached stream information
+    $streamKey = $mpd + "_$streamType"
 
     # Check if the information is already cached
-    if ($cachedStreamInfo.ContainsKey($key)) {
-        return $cachedStreamInfo[$key]
+    if ($cachedInfo.ContainsKey($streamKey)) {
+        return $cachedInfo[$streamKey]
     }
 
-    # Use ffprobe to get specific streams and capture output
-    $ffprobeOutput = & ffprobe.exe $mpd 2>&1
-
-    # Check if ffprobeOutput is empty
-    if ([string]::IsNullOrWhiteSpace($ffprobeOutput)) {
-        Write-Host "Error: ffprobe output is empty. Make sure ffprobe is installed and accessible."
-        exit
-    }
+    # Get general ffprobe output
+    $ffprobeOutput = Get-FfprobeOutput $mpd
 
     # Parse the ffprobe output to extract stream information
     $streamsInfo = $ffprobeOutput | Select-String "Stream #\d+:\d+: ${streamType}:"
@@ -178,7 +221,10 @@ Function Get-StreamsInfo($mpd, $streamType) {
     }
 
     # Cache the information
-    $global:cachedStreamInfo[$key] = $streamDetails
+    $global:cachedInfo[$streamKey] = $streamDetails
+
+    # Save cached data to a file
+    Save-CachedData
 
     return $streamDetails
 }
@@ -256,7 +302,7 @@ Function ProcessMPDs {
             break
         }
 
-        $mdArray = Get-MPDArray $mpd;
+        [array]$mdArray = Get-MPDArray $mpd;
         foreach ($mpd in $mdArray) {
             $list = Get-ProcessVideoStreams -mpd $mpd -usedIndices $usedIndices
             $lists += $list
@@ -268,20 +314,16 @@ Function ProcessMPDs {
     Write-Host "List saved to $($global:listFilePath)."
 }
 
-Function Get-MPDArray($mpd) {
-    # Unify separators
-    $mpd = $mpd -replace ';', ','
+function Get-MPDArray($mpd) {
+    # Split the $mpd string by ',' or ';' or ' ' and remove empty entries
+    $mpdArray = $mpd -split '[,; ]' | Where-Object { $_ -ne '' }
 
-    # Remove double commas
-    $mpd = $mpd -replace ',,', ','
+    # Ensure $mpdArray is always an array
+    if ($mpdArray -isnot [System.Array]) {
+        $mpdArray = @($mpdArray)
+    }
 
-    # Split the $mpd string by ',' or ' '
-    $mpdArray = $mpd -split '[, ]'
-
-    # Remove empty lines
-    $mpdArray = $mpdArray | Where-Object { $_ -ne '' }
-
-    return $mpdArray
+    return [System.Array]$mpdArray
 }
 
 # Function to process video streams and obtain output name
@@ -353,7 +395,6 @@ Function Get-ProcessVideoStreams() {
     $resolutionString = $resolutions[$chosenVideoStream]
 
     if ($askQuestions) {
-
         Write-Host "You have chosen: Resolution $resolutionString"
     }
 
@@ -857,6 +898,65 @@ function StartProgram {
     }    
 }
 
+function Show-MPDInfo {
+    param (        
+        [string] $mpd
+    )
+
+    [array]$mpdArray = Get-MPDArray $mpd
+
+    # Process each MPD in the array
+    for ($index = 0; $index -lt $mpdArray.Count; $index++) {
+        $mpd = $mpdArray[$index]
+
+        Write-Output ""
+        Write-Output "Data for MPD-file: $($index + 1)"
+
+        $ffprobeOutput = Get-FfprobeOutput $mpd
+
+        # Extract relevant information from ffprobe output
+        $videoInfo = $ffprobeOutput | Select-String "Stream #\d+:\d+: Video:"
+        $audioInfo = $ffprobeOutput | Select-String "Stream #\d+:\d+: Audio:"
+        $subtitleInfo = $ffprobeOutput | Select-String "Stream #\d+:\d+: Subtitle:"
+
+        # Display information in a table
+        $tableData = [PSCustomObject]@{
+            'Video Streams'    = $videoInfo.Count
+            'Audio Streams'    = $audioInfo.Count
+            'Subtitle Streams' = $subtitleInfo.Count
+        }
+
+        $tableData | Format-Table -AutoSize | Write-Output
+
+        # Display detailed information for each stream type
+        if ($videoInfo.Count -gt 0) {
+            Write-Output ""
+            Write-Output "Video Streams:"
+            $videoInfo | Write-Output
+        }
+
+        if ($audioInfo.Count -gt 0) {
+            Write-Output ""
+            Write-Output "Audio Streams:"
+            $audioInfo | Write-Output
+        }
+
+        if ($subtitleInfo.Count -gt 0) {
+            Write-Output ""
+            Write-Output "Subtitle Streams:"
+            $subtitleInfo | Write-Output
+        }
+
+        if ($false) {
+            # Display detailed information for each stream type
+            Write-Output ""
+            Write-Output "Full ffprobe Output:"
+            $ffprobeOutput | Format-List | Out-String | Write-Output
+        }
+        
+    }
+}
+
 # Function to process command-line arguments
 Function ProcessCommandLineArguments {
     param (
@@ -864,6 +964,21 @@ Function ProcessCommandLineArguments {
     )
 
     $listIndex = $arguments.IndexOf("-list")
+    $infoIndex = $arguments.IndexOf("-info")
+
+    # Process -info if found
+    if ($infoIndex -ge 0) {
+        $mdsIndex = $infoIndex + 1
+        if ($mdsIndex -lt $arguments.Count) {
+            $mpd = $arguments[$mdsIndex]
+            Show-MPDInfo $mpd;
+            Exit;
+        }
+        else {
+            Write-Host "Missing MPDs after -info argument."
+            Exit
+        }
+    }
 
     # Process each argument
     for ($i = 0; $i -lt $arguments.Count; $i++) {
@@ -910,23 +1025,23 @@ Function ProcessCommandLineArguments {
                     Write-Host "Missing value for $arg."
                     Exit
                 }
-            }            
+            }
         }
     }
 
     # Process -list if found
     if ($listIndex -ge 0) {
-        $listUrlsIndex = $listIndex + 1
-        if ($listUrlsIndex -lt $arguments.Count) {
-            $mpd = $arguments[$listUrlsIndex]
-            $mpdArray = Get-MPDArray $mpd
+        $mdsIndex = $listIndex + 1
+        if ($mdsIndex -lt $arguments.Count) {
+            $mpd = $arguments[$mdsIndex]
+            [array]$mpdArray = Get-MPDArray $mpd
             ProcessCommandLineMPDs -mpdArray $mpdArray -askQuestions $false
             ProcessList -askQuestions $false
             ProcessArgumentList
             Exit
         }
         else {
-            Write-Host "Missing URLs after -list argument."
+            Write-Host "Missing MPDs after -list argument."
             Exit
         }
     }
@@ -944,6 +1059,9 @@ CheckAndInstallDependency -dependencyName "ffmpeg.exe" `
     "(irm get.scoop.sh | iex) -and (scoop install ffmpeg)"
 ) `
     -installInstructions "If package managers are not available, please download and install ffmpeg from https://www.ffmpeg.org/download.html"
+
+# Import cached data when the script starts
+Import-CachedData
 
 # Process command-line arguments before starting the program
 ProcessCommandLineArguments $args
