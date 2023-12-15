@@ -87,6 +87,12 @@ Function Initialize-OrUpdateSettings {
             }
         } while (!$correct)
 
+        # Ensure the directory of the file path exists before writing to the file
+        $directory = Split-Path $filePath
+        if (-not (Test-Path $directory)) {
+            New-Item -ItemType Directory -Path $directory | Out-Null
+        }
+
         # Save settings to file
         ConvertTo-Json -InputObject $settings | Out-File -filePath $filePath
     }
@@ -118,7 +124,7 @@ Function Get-ArgumentList {
         $mediaDirectory = $global:settings.directory;
     }
 
-    $ArgumentList = "-v quiet -stats -i $mpd -crf 0 -aom-params lossless=1 -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy $mediaDirectory/$outputName";
+    $ArgumentList = "-v quiet -stats -i $mpd -map 0:v:$videoStream -c:v copy -map 0:a -crf 0 -aom-params lossless=1 -tag:v avc1 -c:a -crf 0 -aom-params lossless=1 -tag:v avc1 copy $mediaDirectory/$outputName";
 
     return $ArgumentList;
 }
