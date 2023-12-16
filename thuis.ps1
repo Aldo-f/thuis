@@ -118,7 +118,7 @@ Function Get-ArgumentList {
         $mediaDirectory = $global:settings.directory;
     }
 
-    $ArgumentList = "-v quiet -stats -i $mpd -crf 0 -aom-params lossless=1 -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy $mediaDirectory/$outputName";
+    $ArgumentList = "-v quiet -stats -i $mpd -crf 0 -aom-params lossless=1 -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy -tag:v avc1 $mediaDirectory/$outputName";
 
     return $ArgumentList;
 }
