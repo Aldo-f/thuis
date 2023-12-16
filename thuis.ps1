@@ -87,6 +87,12 @@ Function Initialize-OrUpdateSettings {
             }
         } while (!$correct)
 
+        # Ensure the directory of the file path exists before writing to the file
+        $directory = Split-Path $filePath
+        if (-not (Test-Path $directory)) {
+            New-Item -ItemType Directory -Path $directory | Out-Null
+        }
+
         # Save settings to file
         ConvertTo-Json -InputObject $settings | Out-File -filePath $filePath
     }
