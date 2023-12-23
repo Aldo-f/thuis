@@ -18,4 +18,6 @@ thuis.ps1
 thuis.ps1 -list .mpd,.mpd,.mpd
 thuis.ps1 -filename thuis-s01a001 -list .mpd,.mpd,.mpd
 thuis.ps1 -p 1080 -list .mpd,.mpd,.mpd
+# info
+thuis.ps1 -info .mpd,.mpd,.mpd
 ```
