@@ -89,9 +89,7 @@ Function Initialize-OrUpdateSettings {
 
         # Ensure the directory of the file path exists before writing to the file
         $directory = Split-Path $filePath
-        if (-not (Test-Path $directory)) {
-            New-Item -ItemType Directory -Path $directory | Out-Null
-        }
+        New-PathIfNotExists -Path $directory
 
         # Save settings to file
         ConvertTo-Json -InputObject $settings | Out-File -filePath $filePath
@@ -203,12 +201,38 @@ Function Get-FfprobeOutput($mpd) {
 
 # Function to save cached data to a file
 Function Save-CachedData {
+    New-PathIfNotExists -Path $global:cachedFilePath
     $cachedInfo | Export-Clixml -Path $global:cachedFilePath
+}
+
+function New-PathIfNotExists {
+    param (
+        [string]$Path
+    )
+
+    # If the path has an extension, it's a file; otherwise, it's a directory
+    $isFile = [System.IO.Path]::HasExtension($Path)
+
+    # If it's a file, create the directory if it doesn't exist and then create the file
+    if ($isFile) {
+        $directory = [System.IO.Path]::GetDirectoryName($Path)
+        if (-not (Test-Path $directory -PathType Container)) {
+            New-Item -ItemType Directory -Path $directory | Out-Null
+        }
+        if (-not (Test-Path $Path -PathType Leaf)) {
+            New-Item -ItemType File -Path $Path | Out-Null
+        }
+    }
+    # If it's a directory, create the directory if it doesn't exist
+    elseif (-not (Test-Path $Path -PathType Container)) {
+        New-Item -ItemType Directory -Path $Path | Out-Null
+    }
 }
 
 # Function to import cached data from a file
 Function Import-CachedData {
     if (Test-Path $global:cachedFilePath) {
+        New-PathIfNotExists -Path $global:cachedFilePath
         $global:cachedInfo = Import-Clixml -Path $global:cachedFilePath 
         $null = $cachedInfo
     }
@@ -297,11 +321,8 @@ Function ProcessMPDs {
     # Create an object to store used indices
     $usedIndices = [PSCustomObject]@{ Indices = @() }
  
-    # Check if the output directory exists, if not, create it
-    $mediaDirectory = $global:settings.directory;
-    if (-not (Test-Path $mediaDirectory)) {
-        New-Item -ItemType Directory -Path $mediaDirectory | Out-Null
-    }
+    # Check if the output directory exists, if not, create it    
+    New-PathIfNotExists -Path $global:settings.directory 
 
     # Check if 'list.txt' exists
     if (Test-Path $global:listFilePath) {
@@ -556,10 +577,8 @@ Function ProcessArgumentList {
         }
 
         # Extract the directory from the $outputName and create it if not exists
-        $directory = GetDirectory -command $command -outputName $outputName; 
-        if (-not (Test-Path $directory)) {
-            New-Item -ItemType Directory -Path $directory | Out-Null
-        } 
+        $directory = GetDirectory -command $command -outputName $outputName;
+        New-PathIfNotExists -Path $directory
 
         # Extract the video stream index from the command
         $streamIndex = [regex]::Match($command, '0:v:(\d+)').Groups[1].Value
@@ -855,10 +874,7 @@ Function ProcessCommandLineMPDs {
     $usedIndices = [PSCustomObject]@{ Indices = @() }
 
     # Check if the output directory exists, if not, create it
-    $mediaDirectory = $global:settings.directory;
-    if (-not (Test-Path $mediaDirectory)) {
-        New-Item -ItemType Directory -Path $mediaDirectory | Out-Null
-    }
+    New-PathIfNotExists -Path $global:settings.directory
 
     foreach ($mpd in $mpdArray) {
         $list = Get-ProcessVideoStreams -mpd $mpd -usedIndices $usedIndices -askQuestions $askQuestions
