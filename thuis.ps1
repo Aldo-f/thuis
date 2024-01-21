@@ -1,157 +1,125 @@
 # Global variables
 $global:cachedInfo = @{}
-$global:dataFolder = 'data';
-$global:argumentListFilePath = "$global:dataFolder/argumentList.txt"
-$global:listFilePath = "$global:dataFolder/list.txt"
-$global:settingsFilePath = "$global:dataFolder/settings.json"
-$global:cachedFilePath = "$global:dataFolder/cached_data.xml"
-$global:patternExtension = '.[a-zA-Z0-9]{2,3}';
-$global:pattersResolutionFromName = "[_\-](\d{3,4}p)[_\-.]";
-$global:filename = '';
+$global:defaultLogLevel = 'quiet'
+$global:validLogLevels = @("quiet", "panic", "fatal", "error", "warning", "info", "verbose", "debug")
 
-# Function to initialize or update settings
-Function Initialize-OrUpdateSettings {
+# Function to process command-line arguments
+Function ProcessCommandLineArguments {
     param (
-        [string] $filePath,
-        [bool] $promptUser = $true
+        [string[]] $arguments
     )
 
-    $defaults = @{
-        'directory'   = 'media'
-        'resolutions' = @(720, 1080)
-        'filename'    = ''
+    $settings = @{
+        list        = $null
+        resolutions = '1080'
+        filename    = $null
+        directory   = 'media'
+        info        = $null
+        log_level   = $global:defaultLogLevel
+        interactive = $false
     }
-    
-    # If settings file exists, load it; otherwise, use defaults
-    if (Test-Path $filePath) {
-        # Convert JSON content to PowerShell object
-        $loadedSettings = Get-Content $filePath | Out-String | ConvertFrom-Json
 
-        # Convert the loaded settings to a hashtable
-        $loadedSettingsHashtable = @{}
-        foreach ($property in $loadedSettings.PSObject.Properties) {
-            $loadedSettingsHashtable[$property.Name] = $property.Value
-        }
+    # Process each argument
+    for ($i = 0; $i -lt $arguments.Count; $i++) {
+        $arg = $arguments[$i]
 
-        # Merge loaded settings with defaults
-        $settings = $defaults.Clone()
-
-        foreach ($key in $defaults.Keys) {
-            if ($loadedSettingsHashtable.ContainsKey($key)) {
-                $settings[$key] = $loadedSettingsHashtable[$key]
+        switch -regex ($arg) {
+            "^\-list$" { $settings.list = $arguments[++$i] }
+            "^\-resolutions$|^\-p$" { $settings.resolutions = $arguments[++$i] }
+            "^\-filename$" { $settings.filename = $arguments[++$i] }
+            "^\-info$" { $settings.filename = $arguments[++$i] }
+            "^\-interactive$" { $settings.interactive = $true }
+            "^\-log_level$|^-v" {
+                $logLevel = $arguments[++$i].ToLower()
+                if ($global:validLogLevels -contains $logLevel) {
+                    $settings.log_level = $logLevel
+                }
+                else {
+                    Write-Host "Invalid log level. Valid log levels are: $($global:validLogLevels -join ', ')"
+                    exit 1
+                }
             }
+            "^[^-]" { $settings.list = $arg }
         }
-
-        # Convert the merged settings back to an object
-        $settings = New-Object PSObject -Property $settings
-    }
-    else {
-        $settings = $defaults
-    }
-
-    if ($promptUser) {
-        # Format resolutions for display
-        $resolutionsDisplay = ($settings.resolutions -join ', ').Trim()
-        $defaultResolutionsDisplay = ($defaults.resolutions -join ', ').Trim()
-
-        do {
-            # Prompt user to review and edit settings
-            $correct = AskYesOrNo "Current Settings:`nDirectory: $($settings.directory)`nResolutions: $resolutionsDisplay`nFilename: $($settings.filename)`n`nAre these settings okay? (Y/n)"
-            if (!$correct) {
-                $directory = Read-Host "Enter new directory (default '$($defaults.directory)')"
-                if ([string]::IsNullOrWhiteSpace($directory)) {
-                    $settings.directory = $defaults.directory;
-                }
-                else {
-                    $settings.directory = $directory;
-                }
-
-                $resolutions = Read-Host "Enter new resolutions (default '$($defaultResolutionsDisplay)')"
-                if ([string]::IsNullOrWhiteSpace($resolutions)) {
-                    $settings.resolutions = $defaults.resolutions;
-                }
-                else {
-                    $settings.resolutions = $resolutions -split ',' | ForEach-Object { [int]$_ }        
-                }
-
-                $filename = Read-Host "Enter new filename (default '$($defaults.filename)')"
-                if ([string]::IsNullOrWhiteSpace($filename)) {
-                    $settings.filename = $defaults.filename;
-                }
-                else {
-                    $settings.filename = $filename;
-                }
-                
-                # Format resolutions for display
-                $resolutionsDisplay = ($settings.resolutions -join ', ').Trim()
-            }
-        } while (!$correct)
-
-        # Ensure the directory of the file path exists before writing to the file
-        $directory = Split-Path $filePath
-        New-PathIfNotExists -Path $directory
-
-        # Save settings to file
-        ConvertTo-Json -InputObject $settings | Out-File -filePath $filePath
     }
 
     return $settings
 }
 
-# Function to get the default resolution from settings
-Function Get-DefaultResolution {
-    return $global:settings.resolutions[0]
-}
-
-# Function to get the resolution from string
-Function Get-ResolutionFromString {
-    param ([string] $resolution); 
-    return [int]($resolution -split 'x')[1]
-}
-
-# Function to generate a argumentList-item
-Function Get-ArgumentList {
+# Function to write to terminal based on log level
+Function Write-Log {
     param (
-        [string] $mpd,
-        [int] $videoStream,
-        [string] $outputName,
-        [string] $mediaDirectory
+        [string] $message,
+        [string] $logLevel
     )
 
-    if ([string]::IsNullOrWhiteSpace($mediaDirectory)) {
-        $mediaDirectory = $global:settings.directory;
+    # Valid log levels
+    $validLogLevels = @("quiet", "panic", "fatal", "error", "warning", "info", "verbose", "debug")
+
+    # Set log level to default if not provided or invalid
+    if (-not $global:validLogLevels -contains $logLevel) {
+        $logLevel = $global:defaultLogLevel
     }
 
-    $ArgumentList = "-v quiet -stats -i $mpd -crf 0 -aom-params lossless=1 -map 0:v:$videoStream -c:v copy -map 0:a -c:a copy -tag:v avc1 $mediaDirectory/$outputName";
+    # Determine whether to write based on log level
+    $writeLog = $validLogLevels.IndexOf($settings.log_level) -ge $validLogLevels.IndexOf($logLevel)
 
-    return $ArgumentList;
+    if ($writeLog) {
+        Write-Host $message
+    }
 }
 
-# Function to get the index of the closest video stream to the target resolution
-Function Get-ClosestVideoStream {
+# Function to increment the output filename
+function GenerateOutputName {
     param (
-        [int] $resolution,
-        [array] $resolutions
+        [string]$filename = "",
+        [string]$directory = "",
+        [PSCustomObject]$usedIndices
     )
 
-    $closestResolutionIndex = 0
-    $closestResolutionDiff = [math]::abs((Get-ResolutionFromString $resolutions[0]) - $resolution)
+    function IncrementAndGenerateFilename($prefix, $index, $extension) {
+        $outputFilename = "${prefix}$("{0:D3}" -f $index)$extension"
 
-    for ($i = 0; $i -lt $resolutions.Count; $i++) {
-        $currentResolution = $resolutions[$i]
-        $resolutionInt = Get-ResolutionFromString $currentResolution
-        $diff = [math]::abs($resolutionInt - $resolution)
-
-        if ($diff -lt $closestResolutionDiff) {
-            $closestResolutionIndex = $i
-            $closestResolutionDiff = $diff
+        if ($usedIndices.Indices -notcontains $index -and -not (Test-Path (Join-Path $directory $outputFilename))) {
+            $usedIndices.Indices += $index
+            return $outputFilename
         }
+
+        $index++
+        return $null
     }
 
-    return $closestResolutionIndex
+    $lastPartAndExtension = $filename -replace '^.*[^0-9](\d+)(\.[^.]+)$', '$1$2'
+    $extension = $filename -replace '^.*(\.[^.]+)$', '$1'
+
+    if ($lastPartAndExtension -ne $filename) {
+        $prefix = $filename -replace '\d+(\.[^.]+)$', ''
+        $index = [int]($lastPartAndExtension -replace '\..*$')
+    
+        do {
+            $outputFilename = IncrementAndGenerateFilename $prefix $index $extension
+    
+            if ($outputFilename) {
+                return $outputFilename
+            }
+    
+            $index++
+        } while ($true)
+    }   
+    
+    $currentDate = Get-Date -Format 'y-M-d'
+    $index = 1
+    do {
+        $outputFilename = IncrementAndGenerateFilename "${currentDate}_" $index ".mp4"
+
+        if ($outputFilename) {
+            return $outputFilename
+        }
+
+        $index++
+    } while ($true)
 }
 
-# Function to get all available resolution from MPD
 Function Get-Resolutions($mpd) {
     # Get Video streams
     $videoStreams = Get-StreamsInfo $mpd "Video"
@@ -171,71 +139,24 @@ Function Get-Resolutions($mpd) {
     return $resolutions
 }
 
-# Function to get general ffprobe output
-Function Get-FfprobeOutput($mpd) {
-    $outputKey = $mpd + "_ffprobeOutput"
+# Function to get all available audio from MPD
+Function Get-Audios($mpd) {
+    # Get Audio streams
+    $audioStream = Get-StreamsInfo $mpd "Audio"
 
-    # Check if the ffprobe output is already cached
-    if ($cachedInfo.ContainsKey($outputKey)) {
-        return $cachedInfo[$outputKey]
-    }
-    else {
-        # Use ffprobe to get the general output
-        $ffprobeOutput = & ffprobe.exe $mpd 2>&1
+    # Initialize an array to store audios
+    $audios = @()
 
-        # Check if ffprobeOutput is empty
-        if ([string]::IsNullOrWhiteSpace($ffprobeOutput)) {
-            Write-Host "Error: ffprobe output is empty. Make sure ffprobe is installed and accessible."
-            exit
-        }
-
-        # Cache the ffprobe output
-        $global:cachedInfo[$outputKey] = $ffprobeOutput
-
-        # Save cached data to a file
-        Save-CachedData
-
-        return $ffprobeOutput
-    }
-}
-
-# Function to save cached data to a file
-Function Save-CachedData {
-    New-PathIfNotExists -Path $global:cachedFilePath
-    $cachedInfo | Export-Clixml -Path $global:cachedFilePath
-}
-
-function New-PathIfNotExists {
-    param (
-        [string]$Path
-    )
-
-    # If the path has an extension, it's a file; otherwise, it's a directory
-    $isFile = [System.IO.Path]::HasExtension($Path)
-
-    # If it's a file, create the directory if it doesn't exist and then create the file
-    if ($isFile) {
-        $directory = [System.IO.Path]::GetDirectoryName($Path)
-        if (-not (Test-Path $directory -PathType Container)) {
-            New-Item -ItemType Directory -Path $directory | Out-Null
-        }
-        if (-not (Test-Path $Path -PathType Leaf)) {
-            New-Item -ItemType File -Path $Path | Out-Null
+    for ($i = 0; $i -lt $audioStream.Count; $i++) {
+        $line = $audioStream[$i].ToString()
+        $extractedAudio = $line -match '\d{3,4}x\d{3,4}' | Out-Null
+        if ($matches.Count -gt 0) {
+            $extractedAudio = $matches[0]
+            $audios += $extractedAudio  # Store audio in the array
         }
     }
-    # If it's a directory, create the directory if it doesn't exist
-    elseif (-not (Test-Path $Path -PathType Container)) {
-        New-Item -ItemType Directory -Path $Path | Out-Null
-    }
-}
 
-# Function to import cached data from a file
-Function Import-CachedData {
-    if (Test-Path $global:cachedFilePath) {
-        New-PathIfNotExists -Path $global:cachedFilePath
-        $global:cachedInfo = Import-Clixml -Path $global:cachedFilePath 
-        $null = $cachedInfo
-    }
+    return $audios
 }
 
 # Function to stream info by MPD and streamType
@@ -265,671 +186,7 @@ Function Get-StreamsInfo($mpd, $streamType) {
     # Cache the information
     $global:cachedInfo[$streamKey] = $streamDetails
 
-    # Save cached data to a file
-    Save-CachedData
-
     return $streamDetails
-}
-
-# Function to get exact video-stream; or the closest one
-Function Get-ChooseVideoStream() {
-    param (
-        [string] $mpd,
-        [int] $resolution,
-        [string] $outputName = ""
-    )
-
-    $resolutions = Get-Resolutions $mpd;
-   
-    # Find exact match
-    $chosenVideoStream = Get-ExactVideoStream -resolution $resolution -resolutions $resolutions; 
-
-    if (![string]::IsNullOrEmpty($chosenVideoStream)) {
-        return $chosenVideoStream;
-    }    
-
-    # If no exact match found, ask the user to choose
-    return Get-UserChosenVideoStream -resolutions $resolutions -outputName $outputName
-}
-
-# Function to get exact video stream
-Function Get-ExactVideoStream() {
-    param (
-        [int] $resolution, 
-        [array] $resolutions, 
-        [string] $mpd
-    )
-
-    # If $resolutions is empty and $mpd is provided, get the resolutions from the $mpd
-    if (-not $resolutions -and $mpd) {
-        $resolutions = Get-Resolutions $mpd;
-    }
-
-    # If the resolution matches, return the corresponding stream number
-    for ($i = 0; $i -lt $resolutions.Count; $i++) {
-        $height = Get-ResolutionFromString $resolutions[$i];
-        if ($height -eq $resolution) {
-            return $i # Return the index directly
-        }
-    }
-}
-
-# Function to process MPDs
-Function ProcessMPDs {
-    # Initialize an array to store argument lists
-    $lists = @()
-    # Create an object to store used indices
-    $usedIndices = [PSCustomObject]@{ Indices = @() }
- 
-    # Check if the output directory exists, if not, create it    
-    New-PathIfNotExists -Path $global:settings.directory 
-
-    # Check if 'list.txt' exists
-    if (Test-Path $global:listFilePath) {
-        if (AskYesOrNo "Found '$($global:listFilePath)'. Do you want to continue with the existing list? (Y/n)") {
-            Write-Host "Continuing with the existing list..."
-            $lists = Get-CleanFileContent $global:listFilePath
-        }
-    }
-
-    while ($true) {
-        # Prompt user for MPD URL
-        $mpd = Read-Host "Enter the .mpd (leave empty to finish)"
-
-        # Check if user wants to stop adding MPDs
-        if ([string]::IsNullOrEmpty($mpd)) {
-            break
-        }
-
-        [array]$mdArray = Get-MPDArray $mpd;
-        foreach ($mpd in $mdArray) {
-            $list = Get-ProcessVideoStreams -mpd $mpd -usedIndices $usedIndices
-            $lists += $list
-        }
-    }
-
-    # Save content to the file
-    $lists | Out-File -FilePath $global:listFilePath
-    Write-Host "List saved to $($global:listFilePath)."
-}
-
-function Get-MPDArray($mpd) {
-    # Split the $mpd string by ',' or ';' or ' ' and remove empty entries
-    $mpdArray = $mpd -split '[,; ]' | Where-Object { $_ -ne '' }
-
-    # Ensure $mpdArray is always an array
-    if ($mpdArray -isnot [System.Array]) {
-        $mpdArray = @($mpdArray)
-    }
-
-    return [System.Array]$mpdArray
-}
-
-# Function to process video streams and obtain output name
-Function Get-ProcessVideoStreams() {
-    param (
-        [string] $mpd,
-        [PSCustomObject] $usedIndices,
-        [bool] $askQuestions = $true
-    )
-
-    # Get Video streams and resolutions
-    $resolutions = Get-Resolutions $mpd
-
-    # Check if there are available video streams
-    if ($resolutions.Count -eq 0) {
-        Write-Host "No valid video streams found. Please try a different .mpd-file"
-        return $null
-    }
-
-    if ($askQuestions) {
-        # Prompt the user for an output name
-        $outputName = Read-Host "Enter the desired output name (without extension)"
-
-        # Ensure the user's input is not empty
-        if ([string]::IsNullOrWhiteSpace($outputName)) {
-            # Generate the output name
-            $outputName = GenerateOutputName -usedIndices $usedIndices -filename $global:settings.filename
-        }
-        else {
-            # Check if the provided output name has an extension
-            if ($outputName -notmatch "$global:patternExtension$") {
-                # If no extension found, add .mp4
-                $outputName += ".mp4"
-            }
-        } 
-    }
-    else {
-        # Generate the output name
-        $outputName = GenerateOutputName -usedIndices $usedIndices -filename $global:settings.filename
-    }
-
-    # Check if $outputName contains a resolution (e.g., 720p)
-    $pattern = $global:pattersResolutionFromName
-    if ($outputName -match $pattern) {
-        $resolutionsToFind = @([int]($matches[1] -replace '[^0-9]', ''))
-    }
-    else {
-        $resolutionsToFind = $global:settings.resolutions
-    }
-
-    # Get exact video stream if resolution is provided
-    foreach ($resolution in $resolutionsToFind) {
-        if ($null -ne $resolution) {
-            $exactVideoStream = Get-ExactVideoStream -mpd $mpd -resolution $resolution
-            if ($null -ne $exactVideoStream) {
-                break
-            }
-        }
-    }
-
-    if ($null -eq $exactVideoStream) {
-        $chosenVideoStream = Get-UserChosenVideoStream -resolutions $resolutions -outputName $outputName
-    }
-    else {
-        $chosenVideoStream = $exactVideoStream
-    }
-
-    # Extract the resolution from the chosen stream information using the array
-    $resolutionString = $resolutions[$chosenVideoStream]
-
-    if ($askQuestions) {
-        Write-Host "You have chosen: Resolution $resolutionString"
-    }
-
-    # Create the list
-    $resolution = Get-ResolutionFromString $resolutionString
-    return "$mpd $outputName $resolution"
-}
-
-# Function to generate the output name
-function GenerateOutputName {
-    param (
-        [string]$filename = "",
-        [PSCustomObject]$usedIndices
-    )
-
-    # Function to increment index and generate filename
-    function IncrementAndGenerateFilename($prefix, $index) {
-        $outputFilename = "${prefix}$("{0:D3}" -f $index).mp4"
-
-        if ($usedIndices.Indices -notcontains $index -and -not (Test-Path (Join-Path $global:settings.directory $outputFilename))) {
-            $usedIndices.Indices += $index
-            return $outputFilename
-        }
-
-        $index++
-        return $null
-    }
-
-    if ($filename) {
-        # Check if the last part is a digit
-        $lastPart = $filename -replace '^.*[^0-9](\d+)$', '$1'
-
-        if ($lastPart -ne $filename) {
-            # Remove the last part from the filename
-            $filename = $filename -replace '\d+$'
-
-            # If the last part is a digit, use it as the starting index
-            $index = [int]$lastPart
-
-            do {
-                $outputFilename = IncrementAndGenerateFilename $filename $index
-
-                if ($outputFilename) {
-                    return $outputFilename
-                }
-
-                $index++
-            } while ($true)
-        }
-    }
-
-    # If no filename provided, use the existing logic
-    $currentDate = Get-Date -Format 'y-M-d'
-    $index = 1
-    do {
-        $outputFilename = IncrementAndGenerateFilename "${currentDate}_" $index
-
-        if ($outputFilename) {
-            return $outputFilename
-        }
-
-        $index++
-    } while ($true)
-}
-
-Function Get-UserChosenVideoStream {
-    param (
-        [string[]]$resolutions,
-        [string]$outputName = ""
-    )
-
-    # Display the available video streams to the user
-    $message = "Available Video Streams"
-    if (![string]::IsNullOrWhiteSpace($outputName)) {
-        $message += " for $outputName"
-    }
-    $message += ':'
-    Write-Host $message
-
-    $tableData = @()
-    for ($i = 0; $i -lt $resolutions.Count; $i++) {
-        # $resolution = Get-ResolutionFromString $resolutions[$i];
-        $tableData += [PSCustomObject]@{
-            Option     = ($i + 1).ToString()
-            Resolution = $resolutions[$i]
-        }
-    }
-    $tableData | Format-Table -Property Option, Resolution | Out-String | Write-Host
-
-    # Get the default resolution from the array
-    $defaultResolution = Get-DefaultResolution;
-
-    # Prompt the user to choose a video stream
-    $streamPrompt = "Enter the number corresponding to your preferred video stream"
-    if (![string]::IsNullOrWhiteSpace($outputName)) {
-        $streamPrompt += " for $outputName"
-    }
-    if (-not ($outputName -match $global:pattersResolutionFromName)) {
-        $streamPrompt += " (leave empty to select closest to default $defaultResolution)"
-    }
-
-    do {
-        $chosenVideoStream = Read-Host "$streamPrompt"
-
-        # If user hits enter without choosing and $outputName doesn't contain a resolution pattern, use the closest resolution to the default height
-        if ([string]::IsNullOrWhiteSpace($chosenVideoStream) -and -not ($outputName -match $global:pattersResolutionFromName)) {  
-            $resolution = $defaultResolution
-            $chosenVideoStream = Get-ClosestVideoStream -resolution $resolution -resolutions $resolutions
-            $chosenVideoStream += 1;
-        }
-
-        $invalidChoose = $chosenVideoStream -lt 1 -or $chosenVideoStream -gt $resolutions.Count; 
-        if ($invalidChoose) {
-            Write-Host "Invalid choice. Please enter a number between 1 and $($resolutions.Count)."
-        }
-
-    } while ($invalidChoose)
-
-    # Adjust to zero-based index
-    $chosenVideoStream -= 1;
-
-    return $chosenVideoStream
-}
-
-# Function to process the argumentList.txt
-Function ProcessArgumentList {
-    $argumentLists = Get-Content $global:argumentListFilePath | Where-Object { $_ -match '\S' }
-
-    $filesToProcess = @()
-    $tableData = @()
-
-    foreach ($command in $argumentLists) {
-        # Extract the $outputName from the command
-        $outputName = GetOutputName -command $command;     
-
-        # Check if the file already exists
-        if (Test-Path $outputName) {
-            if (-not (AskYesOrNo "File $outputName already exists. Do you want to overwrite it? (Y/n)")) {
-                continue # Skip this file
-            }
-        }
-
-        # Extract the directory from the $outputName and create it if not exists
-        $directory = GetDirectory -command $command -outputName $outputName;
-        New-PathIfNotExists -Path $directory
-
-        # Extract the video stream index from the command
-        $streamIndex = [regex]::Match($command, '0:v:(\d+)').Groups[1].Value
-
-        # Extract the $mpd from the command
-        $mpd = $command -replace '.*-i\s+([^\s]+).*', '$1'
-
-        $resolutions = Get-Resolutions $mpd;
-
-        # Retrieve the resolution based on the stream index
-        $resolution = $resolutions[$streamIndex]
-
-        # Print the resolution and filename for this command
-        $outputName = $outputName -replace '.*/', ''
-        # Write-Host "File: $outputName; Resolution: $resolution"
-
-        # Add data to table
-        $tableData += [PSCustomObject]@{
-            Filename   = $outputName
-            Resolution = $resolution
-        }
-
-        $filesToProcess += $command
-    }
-
-    # Display table
-    $tableData | Format-Table -Property Filename, Resolution | Out-String | Write-Host
-
-    if ($filesToProcess.Count -eq 0) {
-        Write-Host "No files to process."
-        return;
-    }
-
-    if (AskYesOrNo "Do you want to proceed with processing? (Y/n)") {
-        Write-Host "Starting processing..."
-        $filesToProcess | ForEach-Object {
-            Start-Process -FilePath ffmpeg.exe -ArgumentList $_ -Wait -NoNewWindow
-        }
-          
-        # Notify the user when processing is complete
-        Write-Host "Processing complete. Check the output directory: $($global:settings.directory)"
-
-        # Ask if the user wants to remove the list files
-        if (AskYesOrNo "Do you want to remove the argumentList.txt and list.txt files? (Y/n)") {
-            Remove-Item -Path $global:argumentListFilePath, $global:listFilePath -Force
-            Write-Host "Textfiles removed."
-        }
-
-        # Ask if the user wants to open the folder
-        AskAndOpenOutputFolder -directory $directory
-    }
-    else {
-        do {
-            if (AskYesOrNo "Exit program? (Y/n)") {
-                Exit
-            }
-            elseif (AskYesOrNo "Do you want to start again? (Y/n)") {
-                StartProgram
-            }
-        } while ($true)
-    }
-}
-
-# Function to ask if the user wants to open the output folder
-Function AskAndOpenOutputFolder {
-    param (
-        [string] $directory
-    )
-
-    # Check if the directory exists
-    if (-not (Test-Path $directory -PathType Container)) {
-        Write-Host "Error: The specified directory does not exist: $directory"
-        return
-    }
-
-    # Ask if the user wants to open the folder
-    if (AskYesOrNo "Do you want to open the output folder? (Y/n)") {
-        if (-not $directory.StartsWith('/')) {
-            $directory = Join-Path (Get-Location) $directory
-        }
-
-        Invoke-Item $directory
-    }
-}
-
-Function GetOutputName() {
-    param (
-        [string]$command
-    )
-
-    # Explode by space
-    $parts = $command -split ' '
-
-    # Get the last part
-    $lastPart = $parts[-1]
-
-    return $lastPart;
-}
-
-# Function to extract media directory from a URL
-Function GetDirectory() {
-    param (
-        [string]$command,
-        [string]$outputName = ""
-    )
-
-    if ($outputName -eq "") {
-        $outputName = GetOutputName -command $command
-    }
-
-    # Remove all after the last '/'
-    $directory = $outputName -replace '/.*', ''
-
-    return $directory
-}
-
-# Function to process the list.txt
-Function ProcessList {
-    param (
-        [bool] $askQuestions = $true
-    )
-
-    # Check if $global:argumentListFilePath has existing data    
-    if ((Get-CleanFileContent $global:argumentListFilePath).Count -gt 0) {
-        if ($askQuestions) {            
-            if (AskYesOrNo "There is existing data inside $($global:argumentListFilePath). Do you want to clear all data before processing? (Y/n)") {
-                Set-Content -Path $global:argumentListFilePath -Value ''
-                Write-Host "Cleared existing data."
-            }
-            else {
-                Write-Host "We will add new data to the list."
-            }
-        }
-        else {
-            # Clear without question
-            Set-Content -Path $global:argumentListFilePath -Value ''
-        }
-
-    }
-
-    Write-Host "Processing list..."
-    $listContent = Get-CleanFileContent $global:listFilePath
-    foreach ($line in $listContent) {
-
-        $splitLine = $line -split '\s+', 3
-        $mpd = $splitLine[0]
-        $outputName = $splitLine[1]
-        $resolution = $splitLine[2]
-        
-        if (-not [string]::IsNullOrWhiteSpace($resolution)) {
-            $chosenVideoStream = Get-ChooseVideoStream -mpd $mpd -resolution $resolution -outputName $outputName
-        }
-        else {
-            # Extract video stream based on filename pattern
-            $pattern = $global:pattersResolutionFromName;
-            if ($outputName -match $pattern) {
-                $resolution = $matches[1] -replace '[ _-]', '' -replace 'p', ''
-                $chosenVideoStream = Get-ChooseVideoStream -mpd $mpd -resolution $resolution -outputName  $outputName
-            }
-            else {
-                # Use default resolution if pattern doesn't match
-                $resolution = Get-DefaultResolution;
-                $chosenVideoStream = Get-ClosestVideoStream -resolution $resolution -resolutions (Get-Resolutions $mpd)
-            } 
-        }
-
-        # Create the full argument list
-        $ArgumentList = Get-ArgumentList -mpd $mpd -videoStream $chosenVideoStream -outputName $outputName
-  
-        # Save content to the file after each iteration
-        Add-Content -Path $global:argumentListFilePath -Value $ArgumentList
-    }
-    Write-Host "List saved to $($global:argumentListFilePath)."   
-}
-
-# Function to get clean file content
-Function Get-CleanFileContent {
-    param (
-        [string]$filePath
-    )
-
-    # Check if file exists
-    if (Test-Path $filePath) {
-        $fileContent = Get-Content $filePath | ForEach-Object { $_.Trim() } | Where-Object { $_ -notmatch '^\s*[-#;](?=\s|$)' -and $_ -ne '' }
-
-        return [string[]]$fileContent    
-    }
-    else {
-        return [string[]]@()
-    }
-}
-
-# Function to ask a yes no question
-Function AskYesOrNo {
-    param (
-        [string] $question
-    )
-
-    $match = [regex]::Match($question, '\(([YyNn])/[YyNn]\)')  # Extract the uppercase value between ()
-    $defaultChoice = 'Y'
-    if ($match.Success) {
-        if ($match.Groups[0].Value.Contains('N')) {
-            $defaultChoice = 'N'
-        }
-        else {
-            $defaultChoice = 'Y'
-        }
-    }    
-
-    $choice = Read-Host "$question"
-    if ([string]::IsNullOrWhiteSpace($choice)) {
-        $choice = $defaultChoice  # Treat Enter as default choice
-    }
-    $choice = $choice.ToUpper()  # Convert to uppercase for case insensitivity
-
-    if ($choice -in 'Y', 'N') {
-        return ($choice -eq 'Y')
-    }
-    else {
-        Write-Host "Invalid input. Please enter 'Y' for Yes or 'N' for No."
-        return (AskYesOrNo $question)
-    }
-}
-
-Function DependencyInstalled() {
-    param(
-        [string] $dependencyName
-    )
-
-    $dependencyInstalled = $null
-
-    try {
-        $dependencyInstalled = Get-Command $dependencyName -ErrorAction SilentlyContinue
-    }
-    catch {
-        $dependencyInstalled = $null
-    }
-
-    return $dependencyInstalled;
-}
-
-# Function to check and try to install dependencies using multiple package managers, provide instructions if not successful
-Function CheckAndInstallDependency {
-    param (
-        [string] $dependencyName,
-        [string[]] $installCommands,
-        [string] $installInstructions
-    )
-
-    $dependencyInstalled = DependencyInstalled -dependencyName $dependencyName
-
-    if (-not $dependencyInstalled) {
-        Write-Host "Dependency '$dependencyName' is not installed. Attempting to install..."
-
-        # Try to install the dependency using multiple package managers
-        foreach ($command in $installCommands) {
-            Invoke-Expression $command
-            # Check if the installation was successful
-            try {
-                $dependencyInstalled = Get-Command $dependencyName -ErrorAction SilentlyContinue
-            }
-            catch {
-                $dependencyInstalled = $null
-            }
-            if ($dependencyInstalled) {
-                Write-Host "Dependency '$dependencyName' was successfully installed."
-                break
-            }
-        }
-
-        if (-not $dependencyInstalled) {
-            # Provide instructions for manual installation
-            Write-Host $installInstructions
-            Write-Host "After installation, please run the script again."
-            Exit
-        }
-    }
-    else {
-        # Dependency is already installed.
-    }
-}
-
-# Function to process MPDs from command-line arguments
-Function ProcessCommandLineMPDs {
-    param (
-        [string[]] $mpdArray,
-        [bool] $askQuestions
-    )
-
-    # Initialize an array to store argument lists
-    $lists = @()
-    # Create an object to store used indices
-    $usedIndices = [PSCustomObject]@{ Indices = @() }
-
-    # Check if the output directory exists, if not, create it
-    New-PathIfNotExists -Path $global:settings.directory
-
-    foreach ($mpd in $mpdArray) {
-        $list = Get-ProcessVideoStreams -mpd $mpd -usedIndices $usedIndices -askQuestions $askQuestions
-        $lists += $list
-    }
-
-    # Save content to the file
-    $lists | Out-File -FilePath $global:listFilePath
-    Write-Host "List saved to $($global:listFilePath)."
-}
-
-# Function to start the program
-function StartProgram {
-    # Check if 'list.txt' and 'argumentList.txt' exists
-    $argumentListExists = (Get-CleanFileContent $global:argumentListFilePath).Count -gt 0
-    $listExists = (Get-CleanFileContent $global:listFilePath).Count -gt 0
-
-    if (-not ($listExists -or $argumentListExists)) {
-        Write-Host "No '$($global:argumentListFilePath)' or '$($global:listFilePath)' found."
-        Write-Host "Starting interactive mode..."
-        ProcessMPDs
-    }
-    else {
-        if ($listExists) {
-            Write-Host "Found '$($global:listFilePath)'."
-        }
-        if ($argumentListExists) {
-            Write-Host "Found '$($global:argumentListFilePath)'."
-        }
-        if (AskYesOrNo "Do you still want to start interactive mode? (y/N)") {
-            ProcessMPDs
-        }
-    }
-
-    # Check if 'list.txt' exists
-    if ((Get-CleanFileContent $global:listFilePath).Count -gt 0) {
-        if (AskYesOrNo "Found '$($global:listFilePath)'. Do you want to process it? (Y/n)") {
-            ProcessList
-        }
-    }
-
-    # Check if 'argumentList.txt' exists
-    if ((Get-CleanFileContent $global:argumentListFilePath).Count -gt 0) {
-        if (AskYesOrNo "Found '$($global:argumentListFilePath)'. Do you want to process it? (Y/n)") {
-            ProcessArgumentList
-        }
-        else {
-            if (AskYesOrNo "Exit program? (Y/n)") {
-                Exit
-            }
-            else {
-                StartProgram
-            }
-        }
-    }    
 }
 
 function Show-MPDInfo {
@@ -986,103 +243,330 @@ function Show-MPDInfo {
             Write-Output ""
             Write-Output "Full ffprobe Output:"
             $ffprobeOutput | Format-List | Out-String | Write-Output
-        }
-        
+        }        
     }
 }
 
-# Function to process command-line arguments
-Function ProcessCommandLineArguments {
+# Function to get general ffprobe output
+Function Get-FfprobeOutput($mpd) {
+    $outputKey = $mpd + "_ffprobeOutput"
+
+    # Check if the ffprobe output is already cached
+    if ($global:cachedInfo.ContainsKey($outputKey)) {
+        return $global:cachedInfo[$outputKey]
+    }
+    else {
+        # Use ffprobe to get the general output
+        $ffprobeOutput = & ffprobe.exe $mpd 2>&1
+
+        # Check if ffprobeOutput is empty
+        if ([string]::IsNullOrWhiteSpace($ffprobeOutput)) {
+            Write-Log "Error: ffprobe output is empty. Make sure ffprobe is installed and accessible." -logLevel 'error'
+            exit
+        }
+
+        # Cache the ffprobe output
+        $global:cachedInfo[$outputKey] = $ffprobeOutput        
+
+        return $ffprobeOutput
+    }
+}
+Function Get-StreamInfo($mpd) {
+    # Check if the information is already cached
+    $streamKey = $mpd + "_streamInfo"
+    if ($cachedInfo.ContainsKey($streamKey)) {
+        return $cachedInfo[$streamKey]
+    }
+
+    # Use ffprobe to get the general output
+    $ffprobeOutput = Get-FfprobeOutput -mpd $mpd
+
+    # Use a regular expression to match lines starting with "Stream #X:Y:"
+    $streamLines = $ffprobeOutput -match '^Stream #\d+:\d+:'
+
+    # Extract the stream information from each line
+    $streamInfo = $streamLines | ForEach-Object {
+        # Use regex to extract stream type and language code (if present)
+        if ($_ -match '^Stream #\d+:\d+: (\w+)(\(\w+\))?:') {
+            $streamType = $matches[1]
+            $languageCode = $matches[2] -replace '(\(|\))', ''
+            [PSCustomObject]@{
+                Type         = $streamType
+                LanguageCode = $languageCode
+            }
+        }
+    }
+
+    # Cache the information
+    $cachedInfo[$streamKey] = $streamInfo
+
+    return $streamInfo
+}
+
+
+# Function to gather information about input files
+function GetInputFileInfo {
     param (
-        [string[]] $arguments
+        [string]$inputFile,
+        [string]$filename,
+        [string]$directory,
+        [PSCustomObject]$usedIndices
     )
 
-    $listIndex = $arguments.IndexOf("-list")
-    $infoIndex = $arguments.IndexOf("-info")
+    # Use Get-FfprobeOutput to get the general ffprobe output
+    $ffprobeOutput = Get-FfprobeOutput $inputFile
 
-    # Process -info if found
-    if ($infoIndex -ge 0) {
-        $mdsIndex = $infoIndex + 1
-        if ($mdsIndex -lt $arguments.Count) {
-            $mpd = $arguments[$mdsIndex]
-            Show-MPDInfo $mpd;
-            Exit;
+    # Echo the ffprobe output
+    Write-Log "FFprobe Output:" -logLevel 'debug'
+    $ffprobeOutput -split "`n" | ForEach-Object { Write-Log $_ -logLevel 'debug' }
+
+    # Split the output into lines
+    $ffprobeOutputLines = $ffprobeOutput -split "`n"
+
+    # Initialize an array to store stream details
+    $streamDetails = @()
+
+    # Loop through each line to extract stream details
+    foreach ($line in $ffprobeOutputLines) {
+        if ($line -match 'Stream #\d+:(\d+): (\w+): (.+), (\d+)x(\d+)') {
+            $streamNumber = $matches[1]
+            $streamType = $matches[2]
+            $codecInfo = $matches[3]
+            $width = $matches[4]
+            $height = $matches[5]
+    
+            # Create an object for the stream and add it to the array
+            $streamObject = [PSCustomObject]@{
+                StreamNumber = $streamNumber
+                StreamType   = $streamType
+                CodecInfo    = $codecInfo
+                Resolution   = "${width}x${height}"
+                FullDetails  = $line.Trim()
+            }
+            $streamDetails += $streamObject
         }
-        else {
-            Write-Host "Missing MPDs after -info argument."
+        elseif ($line -match 'Stream #\d+:(\d+): (\w+): (.+)') {
+            $streamNumber = $matches[1]
+            $streamType = $matches[2]
+            $codecInfo = $matches[3]
+    
+            # Create an object for the stream and add it to the array
+            $streamObject = [PSCustomObject]@{
+                StreamNumber = $streamNumber
+                StreamType   = $streamType
+                CodecInfo    = $codecInfo
+                FullDetails  = $line.Trim()
+            }
+            $streamDetails += $streamObject
+        }
+        elseif ($line -match 'Stream #\d+:(\d+)(\(\w+\))?: (\w+): (.+)') {
+            $streamNumber = $matches[1]
+            $languageCode = $matches[2] -replace '(\(|\))', ''
+            $streamType = $matches[3]
+            $codecInfo = $matches[4]
+
+            # Create an object for the stream and add it to the array
+            $streamObject = [PSCustomObject]@{
+                StreamNumber = $streamNumber
+                LanguageCode = $languageCode
+                StreamType   = $streamType
+                CodecInfo    = $codecInfo
+                FullDetails  = $line.Trim()
+            }
+            $streamDetails += $streamObject
+        }
+    }    
+
+    # Determine the codec type from stream details
+    $codecType = $streamDetails | Where-Object { $_.StreamType -eq 'Video' -or $_.StreamType -eq 'Audio' } | Select-Object -ExpandProperty StreamType
+
+    $fileInfo = [PSCustomObject]@{
+        InputFile     = $inputFile
+        Filename      = $filename
+        Directory     = $directory
+        UsedIndices   = $usedIndices
+        IsVideo       = $codecType -contains 'Video' -or $codecType -contains 'Subtitle'
+        IsAudio       = [bool]($codecType -contains 'Audio' -and $codecType -notcontains 'Video')
+        StreamDetails = $streamDetails
+        OutputFile    = $null
+        FfmpegCommand = $null
+        VideoStream   = $null
+    }
+
+    # Function to get the most correct video stream number based on resolution
+    Function Get-VideoStreamNumber {
+        param (
+            [string] $resolution,
+            [array] $streamDetails
+        )
+
+        # Filter video streams
+        $videoStreams = $streamDetails | Where-Object { $_.StreamType -eq 'Video' }
+
+        # Order video streams based on height from high to low
+        $videoStreams = $videoStreams | Sort-Object { [int]($_.Resolution -split 'x')[1] } -Descending
+
+        # Check if the resolution is specified
+        if (-not [string]::IsNullOrWhiteSpace($resolution)) {
+            $targetHeight = [int]$resolution
+
+            # Find the closest or equal resolution
+            $closestStream = $null
+            $videoStreams | ForEach-Object {
+                $streamHeight = [int]($_.Resolution -split 'x')[1]
+                if ($streamHeight -ge $targetHeight) {
+                    $closestStream = $_
+                }
+            }
+
+            if ($closestStream) {
+                return $closestStream
+            }
+        }
+
+        # If no matching or smaller resolution is found, return the stream number of the highest resolution
+        return $videoStreams[0]
+    }
+
+    if ($fileInfo.IsVideo) {
+        # Get the most correct video stream number based on resolutions
+        $fileInfo.VideoStream = Get-VideoStreamNumber -resolution $settings.resolutions -streamDetails $streamDetails
+
+        $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp4" -directory $directory -usedIndices $usedIndices
+        $fileInfo.FfmpegCommand = "ffmpeg.exe -v quiet -stats -i `"$inputFile`" -crf 0 -aom-params lossless=1 -map 0:v:$($fileInfo.VideoStream.StreamNumber) -map 0:a -c:a copy -tag:v avc1 `"$($fileInfo.Directory)/$($fileInfo.OutputFile)`""
+    }
+    elseif ($fileInfo.IsAudio) {
+        $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp3" -directory $directory -usedIndices $usedIndices
+        $fileInfo.FfmpegCommand = "ffmpeg.exe -v quiet -stats -i `"$inputFile`" `"$($fileInfo.Directory)/$($fileInfo.OutputFile)`""
+    }
+
+    return $fileInfo
+}
+
+# Function to process input files
+function ProcessInputFile {
+    param (
+        [PSCustomObject]$fileInfo
+    )
+
+    # Check if the media folder exists, create it if not
+    if (-not (Test-Path -Path $fileInfo.Directory)) {
+        New-Item -ItemType Directory -Path $fileInfo.Directory
+        Write-Host "Output-folder created."
+    }
+
+    # Echo the command
+    Write-Log "Running ffmpeg with the following command:" -logLevel 'verbose'
+    Write-Log $fileInfo.FfmpegCommand  -logLevel 'verbose'
+
+    # Uncomment the line below to run your custom ffmpeg command with variables
+    Invoke-Expression $fileInfo.FfmpegCommand
+
+    # Send a response with the path when the file has been downloaded
+    Write-Host "File has been downloaded successfully to: $($fileInfo.OutputFile)"
+}
+
+# Function to check and try to install dependencies using multiple package managers, provide instructions if not successful
+Function CheckAndInstallDependency {
+    param (
+        [string] $dependencyName,
+        [string[]] $installCommands,
+        [string] $installInstructions
+    )    
+    Function DependencyInstalled() {
+        param(
+            [string] $dependencyName
+        )
+
+        $dependencyInstalled = $null
+
+        try {
+            $dependencyInstalled = Get-Command $dependencyName -ErrorAction SilentlyContinue
+        }
+        catch {
+            $dependencyInstalled = $null
+        }
+
+        return $dependencyInstalled;
+    }
+
+    $dependencyInstalled = DependencyInstalled -dependencyName $dependencyName
+
+    if (-not $dependencyInstalled) {
+        Write-Host "Dependency '$dependencyName' is not installed. Attempting to install..."
+
+        # Try to install the dependency using multiple package managers
+        foreach ($command in $installCommands) {
+            Invoke-Expression $command
+            # Check if the installation was successful
+            try {
+                $dependencyInstalled = Get-Command $dependencyName -ErrorAction SilentlyContinue
+            }
+            catch {
+                $dependencyInstalled = $null
+            }
+            if ($dependencyInstalled) {
+                Write-Host "Dependency '$dependencyName' was successfully installed."
+                break
+            }
+        }
+
+        if (-not $dependencyInstalled) {
+            # Provide instructions for manual installation
+            Write-Host $installInstructions
+            Write-Host "After installation, please run the script again."
             Exit
         }
     }
-
-    # Process each argument
-    for ($i = 0; $i -lt $arguments.Count; $i++) {
-        if ($i -eq $listIndex) {
-            # Skip -list, it will be processed at the end
-            $i++;
-            continue
-        }
-
-        $arg = $arguments[$i]
-
-        switch ($arg) {
-            { $_ -in "-directory", "-output", "-o" } {
-                $i++
-                if ($i -lt $arguments.Count) {
-                    $global:settings.directory = $arguments[$i]
-                    Write-Host "Output directory updated to $($global:settings.directory)"
-                }
-                else {
-                    Write-Host "Missing value for $arg."
-                    Exit
-                }
-            }
-
-            { $_ -in "-resolutions", "-p" } {
-                $i++
-                if ($i -lt $arguments.Count) {
-                    $global:settings.resolutions = @($arguments[$i] -split ',' | ForEach-Object { [int]$_ })
-                    Write-Host "Resolutions updated to $($global:settings.resolutions -join ', ')"
-                }
-                else {
-                    Write-Host "Missing value for $arg."
-                    Exit
-                }
-            }
-
-            { $_ -in "-filename" } {
-                $i++
-                if ($i -lt $arguments.Count) {
-                    $global:settings.filename = $arguments[$i]
-                    Write-Host "Filename updated to $($global:settings.filename)"
-                }
-                else {
-                    Write-Host "Missing value for $arg."
-                    Exit
-                }
-            }
-        }
-    }
-
-    # Process -list if found
-    if ($listIndex -ge 0) {
-        $mdsIndex = $listIndex + 1
-        if ($mdsIndex -lt $arguments.Count) {
-            $mpd = $arguments[$mdsIndex]
-            [array]$mpdArray = Get-MPDArray $mpd
-            ProcessCommandLineMPDs -mpdArray $mpdArray -askQuestions $false
-            ProcessList -askQuestions $false
-            ProcessArgumentList
-            Exit
-        }
-        else {
-            Write-Host "Missing MPDs after -list argument."
-            Exit
-        }
+    else {
+        # Dependency is already installed.
     }
 }
 
-# Check if arguments are provided
-$global:settings = Initialize-OrUpdateSettings -filePath $global:settingsFilePath -promptUser ($args.Count -eq 0)
+# Function to ask a yes no question
+Function AskYesOrNo {
+    param (
+        [string] $question
+    )
+
+    $match = [regex]::Match($question, '\(([YyNn])/[YyNn]\)')  # Extract the uppercase value between ()
+    $defaultChoice = 'Y'
+    if ($match.Success) {
+        if ($match.Groups[0].Value.Contains('N')) {
+            $defaultChoice = 'N'
+        }
+        else {
+            $defaultChoice = 'Y'
+        }
+    }    
+
+    $choice = Read-Host "$question"
+    if ([string]::IsNullOrWhiteSpace($choice)) {
+        $choice = $defaultChoice  # Treat Enter as default choice
+    }
+    $choice = $choice.ToUpper()  # Convert to uppercase for case insensitivity
+
+    if ($choice -in 'Y', 'N') {
+        return ($choice -eq 'Y')
+    }
+    else {
+        Write-Host "Invalid input. Please enter 'Y' for Yes or 'N' for No."
+        return (AskYesOrNo $question)
+    }
+}
+
+# Function to split a string into an array
+function SplitString($string) {
+    # Split the $string string by ',' or ';' or ' ' and remove empty entries
+    $array = $string -split '[,; ]' | Where-Object { $_ -ne '' }
+
+    # Ensure $array is always an array
+    if ($array -isnot [System.Array]) {
+        $array = @($array)
+    }
+
+    return [System.Array]$array
+}
 
 # Check if all dependencies are met
 $ffmpegVersion = '6.1'
@@ -1095,11 +579,80 @@ CheckAndInstallDependency -dependencyName "ffmpeg.exe" `
 ) `
     -installInstructions "If package managers are not available, please download and install ffmpeg from https://www.ffmpeg.org/download.html"
 
-# Import cached data when the script starts
-Import-CachedData
 
-# Process command-line arguments before starting the program
-ProcessCommandLineArguments $args
+# Process command-line arguments
+$settings = ProcessCommandLineArguments -arguments $args
 
-# Start it
-StartProgram
+# Check if no input file and -list is provided
+if ($settings.list -eq "" -or $null -eq $settings.list) {
+    Write-Host "Error: No input file or -list provided."
+    Write-Host "Usage: ./thuis.ps1 [-list <mpd_files>] [-resolutions <preferred_resolution>] [-filename <output_filename>] [-info <info_argument>] [-log_level <log_level>] [-interactive]"
+    exit 1
+}
+
+# Split the list of mpd files
+$mpdFiles = SplitString $settings.list
+
+# Define a variable to store used indices
+$usedIndices = [PSCustomObject]@{ Indices = @() }
+
+# Gather information about input files
+$filesInfo = foreach ($inputFile in $mpdFiles) {
+    GetInputFileInfo -inputFile $inputFile -filename $settings.filename -directory $settings.directory -usedIndices $usedIndices
+}
+
+Function Show-FilesInfo {
+    param (
+        [object] $info,
+        [string] $logLevel
+    )
+
+    $videoData = [array]($info | Where-Object { $_.IsVideo } | ForEach-Object { 
+            [PSCustomObject]@{
+                'Output File' = $_.OutputFile
+                'Directory'   = $_.Directory
+                'Type'        = 'Video'
+                'Resolution'  = $_.VideoStream.Resolution
+                'Command'     = $_.FfmpegCommand
+            }
+        })
+
+    $audioData = [array]($info | Where-Object { $_.IsAudio } | ForEach-Object { 
+            [PSCustomObject]@{
+                'Output File' = $_.OutputFile
+                'Directory'   = $_.Directory
+                'Type'        = 'Audio'
+                'Command'     = $_.FfmpegCommand
+            }
+        })
+
+    if ($videoData.Count -ge 0) {
+        Write-Log "Video Files to be created:" -logLevel $logLevel
+        Write-Log ($videoData | Format-Table -AutoSize | Out-String) -logLevel $logLevel
+    }
+
+    if ($audioData.Count -ge 0) {
+        Write-Log "Audio Files to be created:" -logLevel $logLevel
+        Write-Log ($audioData | Format-Table -AutoSize | Out-String) -logLevel $logLevel
+    }
+}
+
+# Show information about the files that will be created
+if ($settings.interactive) {
+    Show-FilesInfo -info $filesInfo -logLevel "quiet"
+
+    # If in interactive mode, ask for confirmation
+    if (-not (AskYesOrNo "Are you ready to start processing these MPD-files? (Y/n)")) {
+        exit
+    }
+}
+else {
+    Show-FilesInfo -info $filesInfo -logLevel "quiet"
+}
+
+# Process input files
+foreach ($fileInfo in $filesInfo) {
+    ProcessInputFile -fileInfo $fileInfo
+}
+
+# End of script
