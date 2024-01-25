@@ -466,63 +466,6 @@ function ProcessInputFile {
     Write-Host "File has been downloaded successfully to: $($fileInfo.OutputFile)"
 }
 
-# Function to check and try to install dependencies using multiple package managers, provide instructions if not successful
-Function CheckAndInstallDependency {
-    param (
-        [string] $dependencyName,
-        [string[]] $installCommands,
-        [string] $installInstructions
-    )    
-    Function DependencyInstalled() {
-        param(
-            [string] $dependencyName
-        )
-
-        $dependencyInstalled = $null
-
-        try {
-            $dependencyInstalled = Get-Command $dependencyName -ErrorAction SilentlyContinue
-        }
-        catch {
-            $dependencyInstalled = $null
-        }
-
-        return $dependencyInstalled;
-    }
-
-    $dependencyInstalled = DependencyInstalled -dependencyName $dependencyName
-
-    if (-not $dependencyInstalled) {
-        Write-Host "Dependency '$dependencyName' is not installed. Attempting to install..."
-
-        # Try to install the dependency using multiple package managers
-        foreach ($command in $installCommands) {
-            Invoke-Expression $command
-            # Check if the installation was successful
-            try {
-                $dependencyInstalled = Get-Command $dependencyName -ErrorAction SilentlyContinue
-            }
-            catch {
-                $dependencyInstalled = $null
-            }
-            if ($dependencyInstalled) {
-                Write-Host "Dependency '$dependencyName' was successfully installed."
-                break
-            }
-        }
-
-        if (-not $dependencyInstalled) {
-            # Provide instructions for manual installation
-            Write-Host $installInstructions
-            Write-Host "After installation, please run the script again."
-            Exit
-        }
-    }
-    else {
-        # Dependency is already installed.
-    }
-}
-
 # Function to ask a yes no question
 Function AskYesOrNo {
     param (
@@ -568,39 +511,7 @@ function SplitString($string) {
     return [System.Array]$array
 }
 
-# Check if all dependencies are met
-$ffmpegVersion = '6.1'
-CheckAndInstallDependency -dependencyName "ffmpeg.exe" `
-    -installCommands @(
-    "choco install ffmpeg --version $ffmpegVersion -y",
-    "winget install ffmpeg -v $ffmpegVersion"
-    "scoop install ffmpeg@$ffmpegVersion",
-    "(irm get.scoop.sh | iex) -and (scoop install ffmpeg@$ffmpegVersion)"
-) `
-    -installInstructions "If package managers are not available, please download and install ffmpeg from https://www.ffmpeg.org/download.html"
-
-
-# Process command-line arguments
-$settings = ProcessCommandLineArguments -arguments $args
-
-# Check if no input file and -list is provided
-if ($settings.list -eq "" -or $null -eq $settings.list) {
-    Write-Host "Error: No input file or -list provided."
-    Write-Host "Usage: ./thuis.ps1 [-list <mpd_files>] [-resolutions <preferred_resolution>] [-filename <output_filename>] [-info <info_argument>] [-log_level <log_level>] [-interactive]"
-    exit 1
-}
-
-# Split the list of mpd files
-$mpdFiles = SplitString $settings.list
-
-# Define a variable to store used indices
-$usedIndices = [PSCustomObject]@{ Indices = @() }
-
-# Gather information about input files
-$filesInfo = foreach ($inputFile in $mpdFiles) {
-    GetInputFileInfo -inputFile $inputFile -filename $settings.filename -directory $settings.directory -usedIndices $usedIndices
-}
-
+# Function to shown info about the files that we wish to process
 Function Show-FilesInfo {
     param (
         [object] $info,
@@ -626,18 +537,143 @@ Function Show-FilesInfo {
             }
         })
 
-    if ($videoData.Count -ge 0) {
+    if ($null -ne $videoData -and $videoData.Count -ge 0) {
         Write-Log "Video Files to be created:" -logLevel $logLevel
         Write-Log ($videoData | Format-Table -AutoSize | Out-String) -logLevel $logLevel
     }
 
-    if ($audioData.Count -ge 0) {
+    if ($null -ne $audioData -and $audioData.Count -ge 0) {
         Write-Log "Audio Files to be created:" -logLevel $logLevel
         Write-Log ($audioData | Format-Table -AutoSize | Out-String) -logLevel $logLevel
     }
 }
 
+function Install-FFmpeg {
+    # Check if ffmpeg is present
+    if (Get-Command ffmpeg -ErrorAction SilentlyContinue) {
+        Write-Log "FFmpeg is already installed." -logLevel 'info'
+        return
+    }
+
+    Write-Log "FFmpeg not found. Checking for existing package managers..." -logLevel 'warning'
+    Write-Log $env:OS -logLevel 'debug'
+
+    function Install-Dependency {
+        param (
+            [string]$Command,
+            [string]$DependencyName,
+            [string]$InstallInstructions
+        )
+    
+        # Execute the installation command
+        Invoke-Expression $Command
+    
+        # Check if the dependency was successfully installed
+        try {
+            $dependencyInstalled = Get-Command $DependencyName -ErrorAction SilentlyContinue
+        }
+        catch {
+            $dependencyInstalled = $null
+        }
+    
+        if ($dependencyInstalled) {
+            Write-Host "Dependency '$DependencyName' was successfully installed."
+        }
+        else {
+            # Provide instructions for manual installation
+            Write-Host "Please install FFmpeg manually."
+            Write-Host "After installation, please run the script again."
+            Exit
+        }
+    }
+    
+    # Defaults
+    $installCommand = $null
+    $dependencyName = "ffmpeg"    
+    
+    if ($env:OS -eq 'Windows_NT') {
+        # Install for Windows
+        if (Get-Command scoop -ErrorAction SilentlyContinue) {
+            $installCommand = "scoop install ffmpeg";
+        }
+        elseif (Get-Command winget -ErrorAction SilentlyContinue) {
+            $installCommand = "winget install ffmpeg"            
+        }
+        elseif (Get-Command choco -ErrorAction SilentlyContinue) {          
+            $installCommand = "choco install ffmpeg"
+        }
+        elseif (!Get-Command choco -ErrorAction SilentlyContinue) {
+            # Install for Windows with Chocolately (if none of the above package managers are found)
+            Write-Log "Chocolately is not installed. Installing..." -logLevel 'warning'
+            Set-ExecutionPolicy Bypass -Scope Process -Force; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+            $installCommand = "choco install ffmpeg"
+        }        
+   
+    }
+    elseif ($env:OS -eq 'linux-gnu') {
+        # Install for Linux
+        if (Get-Command apt-get -ErrorAction SilentlyContinue) {
+            $installCommand = "sudo apt-get install ffmpeg"
+        }
+        elseif (Get-Command yum -ErrorAction SilentlyContinue) {
+            $installCommand = "sudo yum install ffmpeg"
+        }
+        else {
+            Write-Log "Package manager not found. Please install FFmpeg manually." -logLevel 'error'
+        }
+   
+    }
+    elseif ($env:OS -eq 'darwin*') {
+        # Install for Apple with Homebrew
+        if (Test-Path (Get-Command brew -ErrorAction SilentlyContinue)) {
+            $installCommand = "brew install ffmpeg"
+        }
+        else {
+            Write-Log "Homebrew not installed. Please install Homebrew and FFmpeg manually." -logLevel 'error'
+        }   
+    }
+    else {
+        Write-Log "Operating system not supported." -logLevel 'error'
+    }
+
+    if ($null -ne $installCommand) {
+        Install-Dependency -Command $installCommand -DependencyName $dependencyName -InstallInstructions $instructions
+    }
+}    
+
+# Call the function to install FFmpeg
+Install-FFmpeg
+
+# Process command-line arguments
+$settings = ProcessCommandLineArguments -arguments $args
+
+# Check if no input file and -list is provided
+if ($settings.list -eq "" -or $null -eq $settings.list) {
+    Write-Host "Error: No input file or -list provided."
+    Write-Host "Usage: ./thuis.ps1 [-list <mpd_files>] [-resolutions <preferred_resolution>] [-filename <output_filename>] [-info <info_argument>] [-log_level <log_level>] [-interactive]"
+    exit 1    
+}
+
+# Call the function to install FFmpeg
+Install-FFmpeg
+
+# Split the list of mpd files
+$mpdFiles = SplitString $settings.list
+
+# Define a variable to store used indices
+$usedIndices = [PSCustomObject]@{ Indices = @() }
+
+# Gather information about input files
+$filesInfo = foreach ($inputFile in $mpdFiles) {
+    GetInputFileInfo -inputFile $inputFile -filename $settings.filename -directory $settings.directory -usedIndices $usedIndices
+}
+
 # Show information about the files that will be created
+if ($settings.info) {
+    Show-FilesInfo -info $filesInfo -logLevel "quiet"
+    exit
+}
+
 if ($settings.interactive) {
     Show-FilesInfo -info $filesInfo -logLevel "quiet"
 
