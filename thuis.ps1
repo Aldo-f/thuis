@@ -26,8 +26,9 @@ Function ProcessCommandLineArguments {
         switch -regex ($arg) {
             "^\-list$" { $settings.list = $arguments[++$i] }
             "^\-resolutions$|^\-p$" { $settings.resolutions = $arguments[++$i] }
+            "^\-directory$" { $settings.directory = $arguments[++$i] }
             "^\-filename$" { $settings.filename = $arguments[++$i] }
-            "^\-info$" { $settings.filename = $arguments[++$i] }
+            "^\-info$" { $settings.info = $true }
             "^\-interactive$" { $settings.interactive = $true }
             "^\-log_level$|^-v" {
                 $logLevel = $arguments[++$i].ToLower()
@@ -120,133 +121,6 @@ function GenerateOutputName {
     } while ($true)
 }
 
-Function Get-Resolutions($mpd) {
-    # Get Video streams
-    $videoStreams = Get-StreamsInfo $mpd "Video"
-
-    # Initialize an array to store resolutions
-    $resolutions = @()
-
-    for ($i = 0; $i -lt $videoStreams.Count; $i++) {
-        $line = $videoStreams[$i].ToString()
-        $extractedResolution = $line -match '\d{3,4}x\d{3,4}' | Out-Null
-        if ($matches.Count -gt 0) {
-            $extractedResolution = $matches[0]
-            $resolutions += $extractedResolution  # Store resolution in the array
-        }
-    }
-
-    return $resolutions
-}
-
-# Function to get all available audio from MPD
-Function Get-Audios($mpd) {
-    # Get Audio streams
-    $audioStream = Get-StreamsInfo $mpd "Audio"
-
-    # Initialize an array to store audios
-    $audios = @()
-
-    for ($i = 0; $i -lt $audioStream.Count; $i++) {
-        $line = $audioStream[$i].ToString()
-        $extractedAudio = $line -match '\d{3,4}x\d{3,4}' | Out-Null
-        if ($matches.Count -gt 0) {
-            $extractedAudio = $matches[0]
-            $audios += $extractedAudio  # Store audio in the array
-        }
-    }
-
-    return $audios
-}
-
-# Function to stream info by MPD and streamType
-Function Get-StreamsInfo($mpd, $streamType) {
-    # Key for cached stream information
-    $streamKey = $mpd + "_$streamType"
-
-    # Check if the information is already cached
-    if ($cachedInfo.ContainsKey($streamKey)) {
-        return $cachedInfo[$streamKey]
-    }
-
-    # Get general ffprobe output
-    $ffprobeOutput = Get-FfprobeOutput $mpd
-
-    # Parse the ffprobe output to extract stream information
-    $streamsInfo = $ffprobeOutput | Select-String "Stream #\d+:\d+: ${streamType}:"
-
-    # Initialize an array to store stream information
-    $streamDetails = @()
-
-    foreach ($streamInfo in $streamsInfo) {
-        $line = $streamInfo.ToString()
-        $streamDetails += $line
-    }
-
-    # Cache the information
-    $global:cachedInfo[$streamKey] = $streamDetails
-
-    return $streamDetails
-}
-
-function Show-MPDInfo {
-    param (        
-        [string] $mpd
-    )
-
-    [array]$mpdArray = Get-MPDArray $mpd
-
-    # Process each MPD in the array
-    for ($index = 0; $index -lt $mpdArray.Count; $index++) {
-        $mpd = $mpdArray[$index]
-
-        Write-Output ""
-        Write-Output "Data for MPD-file: $($index + 1)"
-
-        $ffprobeOutput = Get-FfprobeOutput $mpd
-
-        # Extract relevant information from ffprobe output
-        $videoInfo = $ffprobeOutput | Select-String "Stream #\d+:\d+: Video:"
-        $audioInfo = $ffprobeOutput | Select-String "Stream #\d+:\d+: Audio:"
-        $subtitleInfo = $ffprobeOutput | Select-String "Stream #\d+:\d+: Subtitle:"
-
-        # Display information in a table
-        $tableData = [PSCustomObject]@{
-            'Video Streams'    = $videoInfo.Count
-            'Audio Streams'    = $audioInfo.Count
-            'Subtitle Streams' = $subtitleInfo.Count
-        }
-
-        $tableData | Format-Table -AutoSize | Write-Output
-
-        # Display detailed information for each stream type
-        if ($videoInfo.Count -gt 0) {
-            Write-Output ""
-            Write-Output "Video Streams:"
-            $videoInfo | Write-Output
-        }
-
-        if ($audioInfo.Count -gt 0) {
-            Write-Output ""
-            Write-Output "Audio Streams:"
-            $audioInfo | Write-Output
-        }
-
-        if ($subtitleInfo.Count -gt 0) {
-            Write-Output ""
-            Write-Output "Subtitle Streams:"
-            $subtitleInfo | Write-Output
-        }
-
-        if ($false) {
-            # Display detailed information for each stream type
-            Write-Output ""
-            Write-Output "Full ffprobe Output:"
-            $ffprobeOutput | Format-List | Out-String | Write-Output
-        }        
-    }
-}
-
 # Function to get general ffprobe output
 Function Get-FfprobeOutput($mpd) {
     $outputKey = $mpd + "_ffprobeOutput"
@@ -257,8 +131,8 @@ Function Get-FfprobeOutput($mpd) {
     }
     else {
         # Use ffprobe to get the general output
-        $ffprobeOutput = & ffprobe.exe $mpd 2>&1
-
+        $ffprobeOutput = & "ffprobe" $mpd 2>&1
+    
         # Check if ffprobeOutput is empty
         if ([string]::IsNullOrWhiteSpace($ffprobeOutput)) {
             Write-Log "Error: ffprobe output is empty. Make sure ffprobe is installed and accessible." -logLevel 'error'
@@ -271,6 +145,7 @@ Function Get-FfprobeOutput($mpd) {
         return $ffprobeOutput
     }
 }
+
 Function Get-StreamInfo($mpd) {
     # Check if the information is already cached
     $streamKey = $mpd + "_streamInfo"
@@ -302,7 +177,6 @@ Function Get-StreamInfo($mpd) {
 
     return $streamInfo
 }
-
 
 # Function to gather information about input files
 function GetInputFileInfo {
@@ -433,11 +307,11 @@ function GetInputFileInfo {
         $fileInfo.VideoStream = Get-VideoStreamNumber -resolution $settings.resolutions -streamDetails $streamDetails
 
         $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp4" -directory $directory -usedIndices $usedIndices
-        $fileInfo.FfmpegCommand = "ffmpeg.exe -v quiet -stats -i `"$inputFile`" -crf 0 -aom-params lossless=1 -map 0:v:$($fileInfo.VideoStream.StreamNumber) -map 0:a -c:a copy -tag:v avc1 `"$($fileInfo.Directory)/$($fileInfo.OutputFile)`""
+        $fileInfo.FfmpegCommand = "ffmpeg -v quiet -stats -i `"$inputFile`" -crf 0 -aom-params lossless=1 -map 0:v:$($fileInfo.VideoStream.StreamNumber) -map 0:a -c:a copy -tag:v avc1 `"$PSScriptRoot\$($fileInfo.Directory)\$($fileInfo.OutputFile)`""
     }
     elseif ($fileInfo.IsAudio) {
         $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp3" -directory $directory -usedIndices $usedIndices
-        $fileInfo.FfmpegCommand = "ffmpeg.exe -v quiet -stats -i `"$inputFile`" `"$($fileInfo.Directory)/$($fileInfo.OutputFile)`""
+        $fileInfo.FfmpegCommand = "ffmpeg -v quiet -stats -i `"$inputFile`" `"$PSScriptRoot\$($fileInfo.Directory)\$($fileInfo.OutputFile)`""
     }
 
     return $fileInfo
@@ -452,75 +326,18 @@ function ProcessInputFile {
     # Check if the media folder exists, create it if not
     if (-not (Test-Path -Path $fileInfo.Directory)) {
         New-Item -ItemType Directory -Path $fileInfo.Directory
-        Write-Host "Output-folder created."
+        Write-Log "Output-folder created."  -logLevel 'verbose'
     }
 
     # Echo the command
     Write-Log "Running ffmpeg with the following command:" -logLevel 'verbose'
     Write-Log $fileInfo.FfmpegCommand  -logLevel 'verbose'
 
-    # Uncomment the line below to run your custom ffmpeg command with variables
+    # Run the ffmpeg command with variables
     Invoke-Expression $fileInfo.FfmpegCommand
 
     # Send a response with the path when the file has been downloaded
-    Write-Host "File has been downloaded successfully to: $($fileInfo.OutputFile)"
-}
-
-# Function to check and try to install dependencies using multiple package managers, provide instructions if not successful
-Function CheckAndInstallDependency {
-    param (
-        [string] $dependencyName,
-        [string[]] $installCommands,
-        [string] $installInstructions
-    )    
-    Function DependencyInstalled() {
-        param(
-            [string] $dependencyName
-        )
-
-        $dependencyInstalled = $null
-
-        try {
-            $dependencyInstalled = Get-Command $dependencyName -ErrorAction SilentlyContinue
-        }
-        catch {
-            $dependencyInstalled = $null
-        }
-
-        return $dependencyInstalled;
-    }
-
-    $dependencyInstalled = DependencyInstalled -dependencyName $dependencyName
-
-    if (-not $dependencyInstalled) {
-        Write-Host "Dependency '$dependencyName' is not installed. Attempting to install..."
-
-        # Try to install the dependency using multiple package managers
-        foreach ($command in $installCommands) {
-            Invoke-Expression $command
-            # Check if the installation was successful
-            try {
-                $dependencyInstalled = Get-Command $dependencyName -ErrorAction SilentlyContinue
-            }
-            catch {
-                $dependencyInstalled = $null
-            }
-            if ($dependencyInstalled) {
-                Write-Host "Dependency '$dependencyName' was successfully installed."
-                break
-            }
-        }
-
-        if (-not $dependencyInstalled) {
-            # Provide instructions for manual installation
-            Write-Host $installInstructions
-            Write-Host "After installation, please run the script again."
-            Exit
-        }
-    }
-    else {
-        # Dependency is already installed.
-    }
+    Write-Host "File has been downloaded successfully to: `"$PSScriptRoot\$($fileInfo.Directory)\$($fileInfo.OutputFile)`""
 }
 
 # Function to ask a yes no question
@@ -568,17 +385,159 @@ function SplitString($string) {
     return [System.Array]$array
 }
 
-# Check if all dependencies are met
-$ffmpegVersion = '6.1'
-CheckAndInstallDependency -dependencyName "ffmpeg.exe" `
-    -installCommands @(
-    "choco install ffmpeg --version $ffmpegVersion -y",
-    "winget install ffmpeg -v $ffmpegVersion"
-    "scoop install ffmpeg@$ffmpegVersion",
-    "(irm get.scoop.sh | iex) -and (scoop install ffmpeg@$ffmpegVersion)"
-) `
-    -installInstructions "If package managers are not available, please download and install ffmpeg from https://www.ffmpeg.org/download.html"
+# Function to shown info about the files that we wish to process
+Function Show-FilesInfo {
+    param (
+        [object] $info,
+        [string] $logLevel
+    )
 
+    $videoData = [array]($info | Where-Object { $_.IsVideo } | ForEach-Object { 
+            $dataObject = @{
+                'Output File' = $_.OutputFile
+                'Directory'   = $_.Directory
+                'Type'        = 'Video'
+                'Resolution'  = $_.VideoStream.Resolution
+            }
+            if ($logLevel -eq 'debug') {
+                $dataObject['Command'] = $_.FfmpegCommand
+            }
+            [PSCustomObject]$dataObject
+        })
+
+    $audioData = [array]($info | Where-Object { $_.IsAudio } | ForEach-Object { 
+            $dataObject = @{
+                'Output File' = $_.OutputFile
+                'Directory'   = $_.Directory
+                'Type'        = 'Audio'
+            }
+            if ($logLevel -eq 'debug') {
+                $dataObject['Command'] = $_.FfmpegCommand
+            }
+            [PSCustomObject]$dataObject
+        })
+
+    Function Write-Data {
+        param(
+            [array] $data, 
+            [string] $logLevel
+        )
+
+        if ($logLevel -eq 'debug') {
+            Write-Log ($data | Format-List | Out-String) -logLevel $logLevel
+        }
+        else {
+            Write-Log ($data | Format-Table -AutoSize | Out-String) -logLevel $logLevel
+        }
+    }
+
+    if ($null -ne $videoData -and $videoData.Count -ge 0) {
+        Write-Log "Video Files to be created:" -logLevel $logLevel
+        Write-Data -data $videoData -logLevel $logLevel
+    }
+
+    if ($null -ne $audioData -and $audioData.Count -ge 0) {
+        Write-Log "Audio Files to be created:" -logLevel $logLevel
+        Write-Data -data $audioData -logLevel $logLevel
+    }
+}
+
+# Function to install FFmpeg based on OS
+function Install-FFmpeg {
+    # Check if ffmpeg is present
+    if (Get-Command ffmpeg -ErrorAction SilentlyContinue) {
+        Write-Log "FFmpeg is already installed." -logLevel 'info'
+        return
+    }
+
+    Write-Log "FFmpeg not found. Checking for existing package managers..." -logLevel 'warning'
+    Write-Log $env:OS -logLevel 'debug'
+
+    function Install-Dependency {
+        param (
+            [string]$Command,
+            [string]$DependencyName,
+            [string]$InstallInstructions
+        )
+    
+        # Execute the installation command
+        Invoke-Expression $Command
+    
+        # Check if the dependency was successfully installed
+        try {
+            $dependencyInstalled = Get-Command $DependencyName -ErrorAction SilentlyContinue
+        }
+        catch {
+            $dependencyInstalled = $null
+        }
+    
+        if ($dependencyInstalled) {
+            Write-Host "Dependency '$DependencyName' was successfully installed."
+        }
+        else {
+            # Provide instructions for manual installation
+            Write-Host "Please install FFmpeg manually."
+            Write-Host "After installation, please run the script again."
+            Exit
+        }
+    }
+    
+    # Defaults
+    $installCommand = $null
+    $dependencyName = "ffmpeg"    
+    
+    if ($IsWindows) {
+        # Install for Windows
+        if (Get-Command scoop -ErrorAction SilentlyContinue) {
+            $installCommand = "scoop install ffmpeg";
+        }
+        elseif (Get-Command winget -ErrorAction SilentlyContinue) {
+            $installCommand = "winget install ffmpeg"            
+        }
+        elseif (Get-Command choco -ErrorAction SilentlyContinue) {          
+            $installCommand = "choco install ffmpeg"
+        }
+        elseif (!Get-Command choco -ErrorAction SilentlyContinue) {
+            # Install for Windows with Chocolately (if none of the above package managers are found)
+            Write-Log "Chocolately is not installed. Installing..." -logLevel 'warning'
+            Set-ExecutionPolicy Bypass -Scope Process -Force; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+            $installCommand = "choco install ffmpeg"
+        }        
+   
+    }
+    elseif ($IsLinux) {
+        # Install for Linux
+        if (Get-Command apt-get -ErrorAction SilentlyContinue) {
+            $installCommand = "sudo apt-get install ffmpeg"
+        }
+        elseif (Get-Command yum -ErrorAction SilentlyContinue) {
+            $installCommand = "sudo yum install ffmpeg"
+        }
+        else {
+            Write-Log "Package manager not found. Please install FFmpeg manually." -logLevel 'error'
+        }
+   
+    }
+    elseif ($IsMacOS) {
+        # Install for Apple with Homebrew
+        if (Get-Command brew -ErrorAction SilentlyContinue) {
+            $installCommand = "brew install ffmpeg"
+        }
+        else {
+            Write-Log "Homebrew not installed. Please install Homebrew and FFmpeg manually." -logLevel 'error'
+        }   
+    }
+    else {
+        Write-Log "Operating system not supported." -logLevel 'error'
+    }
+
+    if ($null -ne $installCommand) {
+        Install-Dependency -Command $installCommand -DependencyName $dependencyName -InstallInstructions $instructions
+    }
+}    
+
+# Call the function to install FFmpeg
+Install-FFmpeg
 
 # Process command-line arguments
 $settings = ProcessCommandLineArguments -arguments $args
@@ -586,8 +545,8 @@ $settings = ProcessCommandLineArguments -arguments $args
 # Check if no input file and -list is provided
 if ($settings.list -eq "" -or $null -eq $settings.list) {
     Write-Host "Error: No input file or -list provided."
-    Write-Host "Usage: ./thuis.ps1 [-list <mpd_files>] [-resolutions <preferred_resolution>] [-filename <output_filename>] [-info <info_argument>] [-log_level <log_level>] [-interactive]"
-    exit 1
+    Write-Host "Usage: ./thuis.ps1 [-list <mpd_files>] [-resolutions <preferred_resolution>] [-filename <output_filename>] [-info <info_argument>] [-log_level <log_level>] [-interactive] [-directory <directory_argument>]"
+    exit 1    
 }
 
 # Split the list of mpd files
@@ -601,43 +560,12 @@ $filesInfo = foreach ($inputFile in $mpdFiles) {
     GetInputFileInfo -inputFile $inputFile -filename $settings.filename -directory $settings.directory -usedIndices $usedIndices
 }
 
-Function Show-FilesInfo {
-    param (
-        [object] $info,
-        [string] $logLevel
-    )
-
-    $videoData = [array]($info | Where-Object { $_.IsVideo } | ForEach-Object { 
-            [PSCustomObject]@{
-                'Output File' = $_.OutputFile
-                'Directory'   = $_.Directory
-                'Type'        = 'Video'
-                'Resolution'  = $_.VideoStream.Resolution
-                'Command'     = $_.FfmpegCommand
-            }
-        })
-
-    $audioData = [array]($info | Where-Object { $_.IsAudio } | ForEach-Object { 
-            [PSCustomObject]@{
-                'Output File' = $_.OutputFile
-                'Directory'   = $_.Directory
-                'Type'        = 'Audio'
-                'Command'     = $_.FfmpegCommand
-            }
-        })
-
-    if ($videoData.Count -ge 0) {
-        Write-Log "Video Files to be created:" -logLevel $logLevel
-        Write-Log ($videoData | Format-Table -AutoSize | Out-String) -logLevel $logLevel
-    }
-
-    if ($audioData.Count -ge 0) {
-        Write-Log "Audio Files to be created:" -logLevel $logLevel
-        Write-Log ($audioData | Format-Table -AutoSize | Out-String) -logLevel $logLevel
-    }
+# Show information about the files that will be created
+if ($settings.info) {
+    Show-FilesInfo -info $filesInfo -logLevel $settings.log_level
+    exit
 }
 
-# Show information about the files that will be created
 if ($settings.interactive) {
     Show-FilesInfo -info $filesInfo -logLevel "quiet"
 
