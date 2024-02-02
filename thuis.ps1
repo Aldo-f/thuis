@@ -42,6 +42,41 @@ Function ProcessCommandLineArguments {
             }
             "^[^-]" { $settings.list = $arg }
         }
+
+        # Prompt for missing settings if in interactive mode
+        if ($settings.interactive) {
+
+            if ($null -ne $settings.list) {
+                if (-not (AskYesOrNo "List of mpd files is currently '$($settings.list)'; is this correct? (Y/n)")) {
+                    $settings.list = Read-Host "Enter the list of .mpd files (separated by commas)"
+                }
+            }
+            else {
+                $settings.list = Read-Host "Enter the list of .mpd files (separated by commas)"
+            }            
+    
+            if (-not (AskYesOrNo "Resolution is currently '$($settings.resolutions)'; is this correct? (Y/n)")) {
+                $settings.resolutions = Read-Host "Enter the preferred resolution"
+            }
+
+            if (-not (AskYesOrNo "Output directory is currently '$($settings.directory)'; is this correct? (Y/n)")) {
+                $settings.directory = Read-Host "Enter the output directory"
+            }    
+            
+            if ($null -ne $settings.list) {
+                if (-not (AskYesOrNo "The output filename is currently '$($settings.filename)'; is this correct? (Y/n)")) {
+                    $settings.filename = Read-Host "Enter the output filename"
+                }
+            }
+            else {
+                $settings.filename = Read-Host "Enter the output filename"
+            }  
+
+            if (-not (AskYesOrNo "Log level is currently '$($settings.log_level)'; is this correct? (Y/n)")) {
+                $settings.log_level = Read-Host "Enter the log level (e.g., verbose, debug, info)"
+            }   
+        }
+
     }
 
     return $settings
@@ -79,7 +114,7 @@ function GenerateOutputName {
     )
 
     function IncrementAndGenerateFilename($prefix, $index, $extension) {
-        $outputFilename = "${prefix}$("{0:D3}" -f $index)$extension"
+        $outputFilename = "${prefix}$("{0:D3}" -f $index).$extension"
 
         if ($usedIndices.Indices -notcontains $index -and -not (Test-Path (Join-Path $directory $outputFilename))) {
             $usedIndices.Indices += $index
@@ -90,10 +125,34 @@ function GenerateOutputName {
         return $null
     }
 
-    $lastPartAndExtension = $filename -replace '^.*[^0-9](\d+)(\.[^.]+)$', '$1$2'
-    $extension = $filename -replace '^.*(\.[^.]+)$', '$1'
+    # Extract parts from the filename 
+    $filenameParts = $filename -split '\.'
+    $extension = $filenameParts[-1]
+    $filenameBase = $filenameParts[-2]
 
+    if ($filenameBase -eq "") {
+        # No filename provided, generate some based current time
+        $currentDate = Get-Date -Format 'yyyy-MM-dd'
+        $index = 1
+        do {
+            $outputFilename = IncrementAndGenerateFilename "${currentDate}-" $index $extension
+ 
+            if ($outputFilename) {
+                return $outputFilename
+            }
+ 
+            $index++
+        } while ($true)
+    }
+    
+    # If no numbers were found at the end, add '-001'
+    if (-not ($filenameBase -match '\d+$')) {
+        $filename = "$filenameBase-001.$extension"
+    }
+
+    $lastPartAndExtension = $filename -replace '^.*[^0-9](\d+)(\.[^.]+)$', '$1$2'
     if ($lastPartAndExtension -ne $filename) {
+        # The filename is structured with numbers at the end
         $prefix = $filename -replace '\d+(\.[^.]+)$', ''
         $index = [int]($lastPartAndExtension -replace '\..*$')
     
@@ -106,19 +165,7 @@ function GenerateOutputName {
     
             $index++
         } while ($true)
-    }   
-    
-    $currentDate = Get-Date -Format 'y-M-d'
-    $index = 1
-    do {
-        $outputFilename = IncrementAndGenerateFilename "${currentDate}_" $index ".mp4"
-
-        if ($outputFilename) {
-            return $outputFilename
-        }
-
-        $index++
-    } while ($true)
+    }
 }
 
 # Function to get general ffprobe output
@@ -144,38 +191,6 @@ Function Get-FfprobeOutput($mpd) {
 
         return $ffprobeOutput
     }
-}
-
-Function Get-StreamInfo($mpd) {
-    # Check if the information is already cached
-    $streamKey = $mpd + "_streamInfo"
-    if ($cachedInfo.ContainsKey($streamKey)) {
-        return $cachedInfo[$streamKey]
-    }
-
-    # Use ffprobe to get the general output
-    $ffprobeOutput = Get-FfprobeOutput -mpd $mpd
-
-    # Use a regular expression to match lines starting with "Stream #X:Y:"
-    $streamLines = $ffprobeOutput -match '^Stream #\d+:\d+:'
-
-    # Extract the stream information from each line
-    $streamInfo = $streamLines | ForEach-Object {
-        # Use regex to extract stream type and language code (if present)
-        if ($_ -match '^Stream #\d+:\d+: (\w+)(\(\w+\))?:') {
-            $streamType = $matches[1]
-            $languageCode = $matches[2] -replace '(\(|\))', ''
-            [PSCustomObject]@{
-                Type         = $streamType
-                LanguageCode = $languageCode
-            }
-        }
-    }
-
-    # Cache the information
-    $cachedInfo[$streamKey] = $streamInfo
-
-    return $streamInfo
 }
 
 # Function to gather information about input files
@@ -545,7 +560,7 @@ $settings = ProcessCommandLineArguments -arguments $args
 # Check if no input file and -list is provided
 if ($settings.list -eq "" -or $null -eq $settings.list) {
     Write-Host "Error: No input file or -list provided."
-    Write-Host "Usage: ./thuis.ps1 [-list <mpd_files>] [-resolutions <preferred_resolution>] [-filename <output_filename>] [-info <info_argument>] [-log_level <log_level>] [-interactive] [-directory <directory_argument>]"
+    Write-Host "Usage: pwsh thuis.ps1 [-list <mpd_files>] [-resolutions <preferred_resolution>] [-filename <output_filename>] [-info <info_argument>] [-log_level <log_level>] [-interactive] [-directory <directory_argument>]"
     exit 1    
 }
 
