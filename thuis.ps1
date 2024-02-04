@@ -193,6 +193,51 @@ Function Get-FfprobeOutput($mpd) {
     }
 }
 
+# Function to build the command in a safe manner
+function Build-FfmpegArguments {
+    param (
+        [string]$inputFile,
+        [PSCustomObject]$videoStream,
+        [PSCustomObject]$audioStream = $null,
+        [string]$outputFile,
+        [string]$directory,
+        [bool]$isVideo,
+        [bool]$isAudio
+    )
+
+    $outputPath = Get-OutputPath -outputFile $outputFile
+    $argumentsList = @('-v', $settings.log_level, '-stats', '-i', "`"$inputFile`"")
+
+    if ($isVideo) {
+        $argumentsList += '-crf', '0', '-aom-params', 'lossless=1', "-map", "0:v:$($videoStream.StreamNumber)", '-map', '0:a', '-c:a', 'copy', '-tag:v', 'avc1', "`"$outputPath`""
+    }
+    elseif ($isAudio) {
+        if ($null -ne $audioStream ) {
+            $argumentsList += "-map", "0:a:$($audioStream.StreamNumber)"
+        }
+        $argumentsList += "`"$outputPath`""
+    }
+
+    return [PSCustomObject]@{
+        Arguments = $argumentsList
+    }
+}
+
+# Function to get the base OutputPath
+Function Get-OutputPath {
+    param(
+        [string] $outputFile,
+        [string] $directory = $null
+    )
+
+    if (-not $directory) {
+        $directory = $settings.directory
+    }
+
+    $outputPath = Join-Path -Path $PSScriptRoot -ChildPath $directory -AdditionalChildPath $outputFile
+    return $outputPath;
+}
+
 # Function to gather information about input files
 function GetInputFileInfo {
     param (
@@ -212,12 +257,20 @@ function GetInputFileInfo {
     # Split the output into lines
     $ffprobeOutputLines = $ffprobeOutput -split "`n"
 
+    # Initialize file variables
+    $duration = $null
+
     # Initialize an array to store stream details
     $streamDetails = @()
 
     # Loop through each line to extract stream details
     foreach ($line in $ffprobeOutputLines) {
-        if ($line -match 'Stream #\d+:(\d+): (\w+): (.+), (\d+)x(\d+)') {
+        if ($line -match 'Duration: (\d+:\d+:\d+\.\d+)') {
+            # Extract duration
+            $duration = $matches[1]
+        }
+        elseif ($line -match 'Stream #\d+:(\d+): (\w+): (.+), (\d+)x(\d+)') {
+            # Video
             $streamNumber = $matches[1]
             $streamType = $matches[2]
             $codecInfo = $matches[3]
@@ -235,6 +288,7 @@ function GetInputFileInfo {
             $streamDetails += $streamObject
         }
         elseif ($line -match 'Stream #\d+:(\d+): (\w+): (.+)') {
+            # Audio
             $streamNumber = $matches[1]
             $streamType = $matches[2]
             $codecInfo = $matches[3]
@@ -249,6 +303,7 @@ function GetInputFileInfo {
             $streamDetails += $streamObject
         }
         elseif ($line -match 'Stream #\d+:(\d+)(\(\w+\))?: (\w+): (.+)') {
+            # Subtitles
             $streamNumber = $matches[1]
             $languageCode = $matches[2] -replace '(\(|\))', ''
             $streamType = $matches[3]
@@ -257,14 +312,14 @@ function GetInputFileInfo {
             # Create an object for the stream and add it to the array
             $streamObject = [PSCustomObject]@{
                 StreamNumber = $streamNumber
-                LanguageCode = $languageCode
                 StreamType   = $streamType
                 CodecInfo    = $codecInfo
+                LanguageCode = $languageCode
                 FullDetails  = $line.Trim()
             }
             $streamDetails += $streamObject
         }
-    }    
+    }
 
     # Determine the codec type from stream details
     $codecType = $streamDetails | Where-Object { $_.StreamType -eq 'Video' -or $_.StreamType -eq 'Audio' } | Select-Object -ExpandProperty StreamType
@@ -273,13 +328,16 @@ function GetInputFileInfo {
         InputFile     = $inputFile
         Filename      = $filename
         Directory     = $directory
+        Duration      = $duration 
         UsedIndices   = $usedIndices
         IsVideo       = $codecType -contains 'Video' -or $codecType -contains 'Subtitle'
         IsAudio       = [bool]($codecType -contains 'Audio' -and $codecType -notcontains 'Video')
         StreamDetails = $streamDetails
         OutputFile    = $null
+        OutputPath    = $null
         FfmpegCommand = $null
         VideoStream   = $null
+        AudioStream   = $null
     }
 
     # Function to get the most correct video stream number based on resolution
@@ -317,42 +375,55 @@ function GetInputFileInfo {
         return $videoStreams[0]
     }
 
+    
     if ($fileInfo.IsVideo) {
-        # Get the most correct video stream number based on resolutions
+        # Get the most correct video stream based on resolutions
         $fileInfo.VideoStream = Get-VideoStreamNumber -resolution $settings.resolutions -streamDetails $streamDetails
-
         $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp4" -directory $directory -usedIndices $usedIndices
-        $fileInfo.FfmpegCommand = "ffmpeg -v quiet -stats -i `"$inputFile`" -crf 0 -aom-params lossless=1 -map 0:v:$($fileInfo.VideoStream.StreamNumber) -map 0:a -c:a copy -tag:v avc1 `"$PSScriptRoot\$($fileInfo.Directory)\$($fileInfo.OutputFile)`""
+        
+        # Generate FFmpeg arguments
+        $ffmpegArgs = Build-FfmpegArguments -inputFile $fileInfo.InputFile -videoStream $fileInfo.VideoStream -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory -isVideo $true -isAudio $false
+        $fileInfo.FfmpegCommand = $ffmpegArgs.Arguments -join ' '
     }
-    elseif ($fileInfo.IsAudio) {
+    elseif ($fileInfo.IsAudio) {    
+        # Get the first audio stream
+        $fileInfo.AudioStream = ($streamDetails | Where-Object { $_.StreamType -eq 'Audio' } )
         $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp3" -directory $directory -usedIndices $usedIndices
-        $fileInfo.FfmpegCommand = "ffmpeg -v quiet -stats -i `"$inputFile`" `"$PSScriptRoot\$($fileInfo.Directory)\$($fileInfo.OutputFile)`""
+
+        # Generate FFmpeg arguments
+        $ffmpegArgs = Build-FfmpegArguments -inputFile $fileInfo.InputFile -audioStream $fileInfo.AudioStream -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory -isVideo $false -isAudio $true
+        $fileInfo.FfmpegCommand = $ffmpegArgs.Arguments -join ' '
     }
+
+    # Get the OutputPath
+    $fileInfo.OutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile
 
     return $fileInfo
 }
 
-# Function to process input files
-function ProcessInputFile {
+# Function to start downloading the files after getting all required data
+function Start-DownloadingFiles {    
     param (
-        [PSCustomObject]$fileInfo
+        [array] $filesInfo
     )
 
-    # Check if the media folder exists, create it if not
-    if (-not (Test-Path -Path $fileInfo.Directory)) {
-        New-Item -ItemType Directory -Path $fileInfo.Directory
-        Write-Log "Output-folder created."  -logLevel 'verbose'
+    # Create the output folder if it doesn't exist
+    if (-not (Test-Path -Path $settings.Directory)) {
+        New-Item -ItemType Directory -Path $settings.Directory | Out-Null
+        Write-Log "Output-folder created." -logLevel 'verbose'
     }
 
-    # Echo the command
-    Write-Log "Running ffmpeg with the following command:" -logLevel 'verbose'
-    Write-Log $fileInfo.FfmpegCommand  -logLevel 'verbose'
+    $filesInfo | ForEach-Object {
+        # Echo the command
+        Write-Log "Running ffmpeg with the following command:" -logLevel 'verbose'
+        Write-Log $ffmpegCommand -logLevel 'verbose'
+        
+        # Run the ffmpeg command with variables
+        Start-Process -FilePath ffmpeg -ArgumentList $_.FfmpegCommand -Wait -NoNewWindow
 
-    # Run the ffmpeg command with variables
-    Invoke-Expression $fileInfo.FfmpegCommand
-
-    # Send a response with the path when the file has been downloaded
-    Write-Host "File has been downloaded successfully to: `"$PSScriptRoot\$($fileInfo.Directory)\$($fileInfo.OutputFile)`""
+        # Send a response with the path when the file has been downloaded
+        Write-Host "File has been downloaded successfully to: `"$($_.OutputPath)`""
+    }
 }
 
 # Function to ask a yes no question
@@ -413,6 +484,7 @@ Function Show-FilesInfo {
                 'Directory'   = $_.Directory
                 'Type'        = 'Video'
                 'Resolution'  = $_.VideoStream.Resolution
+                'Duration'    = $_.Duration
             }
             if ($logLevel -eq 'debug') {
                 $dataObject['Command'] = $_.FfmpegCommand
@@ -425,6 +497,7 @@ Function Show-FilesInfo {
                 'Output File' = $_.OutputFile
                 'Directory'   = $_.Directory
                 'Type'        = 'Audio'
+                'Duration'    = $_.Duration
             }
             if ($logLevel -eq 'debug') {
                 $dataObject['Command'] = $_.FfmpegCommand
@@ -593,9 +666,7 @@ else {
     Show-FilesInfo -info $filesInfo -logLevel "quiet"
 }
 
-# Process input files
-foreach ($fileInfo in $filesInfo) {
-    ProcessInputFile -fileInfo $fileInfo
-}
+# Call the function to start downling all files
+Start-DownloadingFiles -filesInfo $filesInfo
 
 # End of script
