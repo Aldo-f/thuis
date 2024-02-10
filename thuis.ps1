@@ -57,7 +57,7 @@ Function ProcessCommandLineArguments {
                 }
 
                 $fileCount = $mpdFiles.Count
-                $confirmation = AskYesOrNo "You've requested to download $fileCount file(s). Is this correct?"
+                $confirmation = AskYesOrNo "You've requested to download $fileCount file(s). Is this correct? (Y/n)"
                 if (-not $confirmation) {
                     $settings.list = Read-Host "Enter the list of .mpd files (separated by commas)"
                 }
@@ -400,28 +400,41 @@ function GetInputFileInfo {
         return $videoStreams[0]
     }
 
-    
-    if ($fileInfo.IsVideo) {
-        # Get the most correct video stream based on resolutions
-        $fileInfo.VideoStream = Get-VideoStreamNumber -resolution $settings.resolutions -streamDetails $streamDetails
-        $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp4" -directory $directory -usedIndices $usedIndices
+    if ($fileInfo.InputFile -match '\.mpd') {
+        # .mpd
+        if ($fileInfo.IsVideo) {
+            # Get the most correct video stream based on resolutions
+            $fileInfo.VideoStream = Get-VideoStreamNumber -resolution $settings.resolutions -streamDetails $streamDetails
+            $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp4" -directory $directory -usedIndices $usedIndices
         
-        # Generate FFmpeg arguments
-        $ffmpegArgs = Build-FfmpegArguments -inputFile $fileInfo.InputFile -videoStream $fileInfo.VideoStream -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory -isVideo $true -isAudio $false
-        $fileInfo.FfmpegCommand = $ffmpegArgs.Arguments -join ' '
+            # Generate FFmpeg arguments
+            $ffmpegArgs = Build-FfmpegArguments -inputFile $fileInfo.InputFile -videoStream $fileInfo.VideoStream -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory -isVideo $true -isAudio $false
+            $fileInfo.FfmpegCommand = $ffmpegArgs.Arguments -join ' '
+        }
+        elseif ($fileInfo.IsAudio) {    
+            # Get the first audio stream
+            $fileInfo.AudioStream = ($streamDetails | Where-Object { $_.StreamType -eq 'Audio' } )
+            $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp3" -directory $directory -usedIndices $usedIndices
+    
+            # Generate FFmpeg arguments
+            $ffmpegArgs = Build-FfmpegArguments -inputFile $fileInfo.InputFile -audioStream $fileInfo.AudioStream -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory -isVideo $false -isAudio $true
+            $fileInfo.FfmpegCommand = $ffmpegArgs.Arguments -join ' '
+        }
     }
-    elseif ($fileInfo.IsAudio) {    
-        # Get the first audio stream
-        $fileInfo.AudioStream = ($streamDetails | Where-Object { $_.StreamType -eq 'Audio' } )
-        $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp3" -directory $directory -usedIndices $usedIndices
-
-        # Generate FFmpeg arguments
-        $ffmpegArgs = Build-FfmpegArguments -inputFile $fileInfo.InputFile -audioStream $fileInfo.AudioStream -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory -isVideo $false -isAudio $true
-        $fileInfo.FfmpegCommand = $ffmpegArgs.Arguments -join ' '
+    elseif ($fileInfo.InputFile -match '\.m3u8?$') {
+        # .m3u8 (playlist)
+        $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp4" -directory $directory -usedIndices $usedIndices
+        $fileInfo.OutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory
+        $fileInfo.FfmpegCommand = "-v $($settings.log_level) -i $($fileInfo.InputFile) -bsf:a aac_adtstoasc -vcodec copy -c copy -crf 50 $($fileInfo.OutputPath)"
     }
+    else {
+        throw "Unsupported file type. Only .mpd, .m3u8 or .m3u files are supported."
+    }    
 
     # Get the OutputPath
-    $fileInfo.OutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory
+    if (-not $fileInfo.OutputPath) {
+        $fileInfo.OutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory
+    }
 
     return $fileInfo
 }
@@ -441,7 +454,7 @@ function Start-DownloadingFiles {
     $filesInfo | ForEach-Object {
         # Echo the command
         Write-Log "Running ffmpeg with the following command:" -logLevel 'verbose'
-        Write-Log $ffmpegCommand -logLevel 'verbose'
+        Write-Log $_.ffmpegCommand -logLevel 'verbose'
         
         # Run the ffmpeg command with variables
         Start-Process -FilePath ffmpeg -ArgumentList $_.FfmpegCommand -Wait -NoNewWindow
@@ -647,7 +660,7 @@ function Install-FFmpeg {
     if ($null -ne $installCommand) {
         Install-Dependency -Command $installCommand -DependencyName $dependencyName -InstallInstructions $instructions
     }
-}    
+}
 
 # Call the function to install FFmpeg
 Install-FFmpeg
@@ -683,7 +696,7 @@ if ($settings.interactive) {
     Show-FilesInfo -info $filesInfo -logLevel "quiet"
 
     # If in interactive mode, ask for confirmation
-    if (-not (AskYesOrNo "Are you ready to start processing these MPD-files? (Y/n)")) {
+    if (-not (AskYesOrNo "Are you ready to start downloading? (Y/n)")) {
         exit
     }
 }

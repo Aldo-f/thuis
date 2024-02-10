@@ -1,10 +1,10 @@
 # thuis
 
-**thuis** is a command-line utility for downloading video or audio content from `.mpd` (Media Presentation Description) links. It offers flexibility by allowing users to specify custom settings for their downloads.
+**thuis** is a command-line utility for downloading video or audio content from `.mpd` (Media Presentation Description), `.m3u8`, `.m3u` or URLs pointing to these types of files. It offers flexibility by allowing users to specify custom settings for their downloads.
 
 ## Features
 
-- **Download Video or Audio:** Easily fetch content using `.mpd` links.
+- **Download Video or Audio:** Easily fetch content using `.mpd`, `.m3u8`, `.m3u` or URL links.
 - **Customizable Downloads:** Specify lists, preferred resolutions, and output filenames.
 - **Detailed Logging:** Configure log levels to get the right amount of information.
 - **Interactive Mode:** Optionally run in an interactive mode for dynamic configuration.
@@ -15,11 +15,11 @@ Execute `thuis.ps1` from the terminal using the syntax below to start downloadin
 
 ```sh
 
-# Download with a custom list of .mpd files
-pwsh thuis.ps1 -list <mpd_files> # a list of mpd-url separated by a comma
+# Download with a custom list of .mpd, .m3u8, .m3u files, or URLs
+pwsh thuis.ps1 -list <media_files_or_urls> # a list of files or URLs separated by a comma
 
 # Comprehensive options for advanced usage
-pwsh thuis.ps1 -list <mpd_files> -resolutions <preferred_resolution> -filename <output_filename> -info <info_argument> -log_level <log_level> -interactive
+pwsh thuis.ps1 -list <media_files_or_urls> -resolutions <preferred_resolution> -filename <output_filename> -directory <directory> -info <info_argument> -log_level <log_level> -interactive
 
 ```
 
@@ -68,4 +68,6 @@ brew update brew install ffmpeg
 
 
 ## TODO:
-- [ ] Enhance interactive mode to be truly dynamic, prompting the user to update or add missing settings as needed.
+- [x] Enhance interactive mode to be truly dynamic, prompting the user to update or add missing settings as needed.
+- [ ] Test processing `.m3u` to `.mp4`.
+- [ ] Make use of the existing settings to specify the requested resolution for `.m3u8` and `.m3u`
