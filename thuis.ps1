@@ -46,17 +46,27 @@ Function ProcessCommandLineArguments {
         # Prompt for missing settings if in interactive mode
         if ($settings.interactive) {
 
-            if ($null -ne $settings.list) {
-                if (-not (AskYesOrNo "List of mpd files is currently '$($settings.list)'; is this correct? (Y/n)")) {
+            $confirmation = $false
+            do {
+                if ($null -ne $settings.list) {
+                    $mpdFiles = SplitString $settings.list
+                }
+                else {
+                    $settings.list = Read-Host "Enter the list of .mpd files (separated by commas)"
+                    $mpdFiles = SplitString $settings.list
+                }
+
+                $fileCount = $mpdFiles.Count
+                $confirmation = AskYesOrNo "You've requested to download $fileCount file(s). Is this correct?"
+                if (-not $confirmation) {
                     $settings.list = Read-Host "Enter the list of .mpd files (separated by commas)"
                 }
-            }
-            else {
-                $settings.list = Read-Host "Enter the list of .mpd files (separated by commas)"
-            }            
+
+            } while (-not $confirmation)
     
-            if (-not (AskYesOrNo "Resolution is currently '$($settings.resolutions)'; is this correct? (Y/n)")) {
-                $settings.resolutions = Read-Host "Enter the preferred resolution"
+            if (-not (AskYesOrNo "Resolution is currently '$($settings.resolutions)'. Is this correct? (Y/n)")) {
+                Write-Host "Enter the preferred resolution. Example values: 1080 (Full HD), 720 (HD), 480 (SD), 360, 270."
+                $settings.resolutions = Read-Host "Available resolutions: 1080, 720, 480, 360, 270"
             }
 
             if (-not (AskYesOrNo "Output directory is currently '$($settings.directory)'; is this correct? (Y/n)")) {
@@ -72,9 +82,24 @@ Function ProcessCommandLineArguments {
                 $settings.filename = Read-Host "Enter the output filename"
             }  
 
-            if (-not (AskYesOrNo "Log level is currently '$($settings.log_level)'; is this correct? (Y/n)")) {
-                $settings.log_level = Read-Host "Enter the log level (e.g., verbose, debug, info)"
-            }   
+            do {
+                if (-not (AskYesOrNo "Log level is currently '$($settings.log_level)'; is this correct? (Y/n)")) {
+                    Write-Host "Enter the log level. Possible values: quiet, panic, fatal, error, warning, info, verbose, debug."
+                    $inputLogLevel = Read-Host "Enter log level"
+                    
+                    if ($global:validLogLevels -contains $inputLogLevel.ToLower()) {
+                        $settings.log_level = $inputLogLevel.ToLower()
+                        $isValidLogLevel = $true
+                    }
+                    else {
+                        Write-Host "Invalid log level entered. Please enter one of the valid log levels: quiet, panic, fatal, error, warning, info, verbose, debug."
+                        $isValidLogLevel = $false
+                    }
+                }
+                else {
+                    $isValidLogLevel = $true
+                }
+            } while (-not $isValidLogLevel)
         }
 
     }
@@ -205,7 +230,7 @@ function Build-FfmpegArguments {
         [bool]$isAudio
     )
 
-    $outputPath = Get-OutputPath -outputFile $outputFile
+    $outputPath = Get-OutputPath -outputFile $outputFile -directory $directory
     $argumentsList = @('-v', $settings.log_level, '-stats', '-i', "`"$inputFile`"")
 
     if ($isVideo) {
@@ -235,7 +260,7 @@ Function Get-OutputPath {
     }
 
     $outputPath = Join-Path -Path $PSScriptRoot -ChildPath $directory -AdditionalChildPath $outputFile
-    return $outputPath;
+    return [string] $outputPath;
 }
 
 # Function to gather information about input files
@@ -396,7 +421,7 @@ function GetInputFileInfo {
     }
 
     # Get the OutputPath
-    $fileInfo.OutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile
+    $fileInfo.OutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory
 
     return $fileInfo
 }
