@@ -42,66 +42,65 @@ Function ProcessCommandLineArguments {
             }
             "^[^-]" { $settings.list = $arg }
         }
+    }
 
-        # Prompt for missing settings if in interactive mode
-        if ($settings.interactive) {
+    # Prompt for missing settings if in interactive mode
+    if ($settings.interactive) {
 
-            $confirmation = $false
-            do {
-                if ($null -ne $settings.list) {
-                    $mpdFiles = SplitString $settings.list
-                }
-                else {
-                    $settings.list = Read-Host "Enter the list of .mpd files (separated by commas)"
-                    $mpdFiles = SplitString $settings.list
-                }
-
-                $fileCount = $mpdFiles.Count
-                $confirmation = AskYesOrNo "You've requested to download $fileCount file(s). Is this correct?"
-                if (-not $confirmation) {
-                    $settings.list = Read-Host "Enter the list of .mpd files (separated by commas)"
-                }
-
-            } while (-not $confirmation)
-    
-            if (-not (AskYesOrNo "Resolution is currently '$($settings.resolutions)'. Is this correct? (Y/n)")) {
-                Write-Host "Enter the preferred resolution. Example values: 1080 (Full HD), 720 (HD), 480 (SD), 360, 270."
-                $settings.resolutions = Read-Host "Available resolutions: 1080, 720, 480, 360, 270"
+        $confirmation = $false
+        do {
+            if ($null -ne $settings.list) {
+                $mpdFiles = SplitString $settings.list
+            }
+            else {
+                $settings.list = Read-Host "Enter the list of .mpd files (separated by commas)"
+                $mpdFiles = SplitString $settings.list
             }
 
-            if (-not (AskYesOrNo "Output directory is currently '$($settings.directory)'; is this correct? (Y/n)")) {
-                $settings.directory = Read-Host "Enter the output directory"
-            }    
+            $fileCount = $mpdFiles.Count
+            $confirmation = AskYesOrNo "You've requested to download $fileCount file(s). Is this correct? (Y/n)"
+            if (-not $confirmation) {
+                $settings.list = Read-Host "Enter the list of .mpd files (separated by commas)"
+            }
+
+        } while (-not $confirmation)
+    
+        if (-not (AskYesOrNo "Resolution is currently '$($settings.resolutions)'. Is this correct? (Y/n)")) {
+            Write-Host "Enter the preferred resolution. Example values: 1080 (Full HD), 720 (HD), 480 (SD), 360, 270."
+            $settings.resolutions = Read-Host "Available resolutions: 1080, 720, 480, 360, 270"
+        }
+
+        if (-not (AskYesOrNo "Output directory is currently '$($settings.directory)'; is this correct? (Y/n)")) {
+            $settings.directory = Read-Host "Enter the output directory"
+        }    
             
-            if ($null -ne $settings.list) {
-                if (-not (AskYesOrNo "The output filename is currently '$($settings.filename)'; is this correct? (Y/n)")) {
-                    $settings.filename = Read-Host "Enter the output filename"
+        if ($null -ne $settings.list) {
+            if (-not (AskYesOrNo "The output filename is currently '$($settings.filename)'; is this correct? (Y/n)")) {
+                $settings.filename = Read-Host "Enter the output filename"
+            }
+        }
+        else {
+            $settings.filename = Read-Host "Enter the output filename"
+        }  
+
+        do {
+            if (-not (AskYesOrNo "Log level is currently '$($settings.log_level)'; is this correct? (Y/n)")) {
+                Write-Host "Enter the log level. Possible values: quiet, panic, fatal, error, warning, info, verbose, debug."
+                $inputLogLevel = Read-Host "Enter log level"
+                    
+                if ($global:validLogLevels -contains $inputLogLevel.ToLower()) {
+                    $settings.log_level = $inputLogLevel.ToLower()
+                    $isValidLogLevel = $true
+                }
+                else {
+                    Write-Host "Invalid log level entered. Please enter one of the valid log levels: quiet, panic, fatal, error, warning, info, verbose, debug."
+                    $isValidLogLevel = $false
                 }
             }
             else {
-                $settings.filename = Read-Host "Enter the output filename"
-            }  
-
-            do {
-                if (-not (AskYesOrNo "Log level is currently '$($settings.log_level)'; is this correct? (Y/n)")) {
-                    Write-Host "Enter the log level. Possible values: quiet, panic, fatal, error, warning, info, verbose, debug."
-                    $inputLogLevel = Read-Host "Enter log level"
-                    
-                    if ($global:validLogLevels -contains $inputLogLevel.ToLower()) {
-                        $settings.log_level = $inputLogLevel.ToLower()
-                        $isValidLogLevel = $true
-                    }
-                    else {
-                        Write-Host "Invalid log level entered. Please enter one of the valid log levels: quiet, panic, fatal, error, warning, info, verbose, debug."
-                        $isValidLogLevel = $false
-                    }
-                }
-                else {
-                    $isValidLogLevel = $true
-                }
-            } while (-not $isValidLogLevel)
-        }
-
+                $isValidLogLevel = $true
+            }
+        } while (-not $isValidLogLevel)
     }
 
     return $settings
@@ -111,7 +110,7 @@ Function ProcessCommandLineArguments {
 Function Write-Log {
     param (
         [string] $message,
-        [string] $logLevel
+        [string] $logLevel = 'info'
     )
 
     # Valid log levels
@@ -219,7 +218,7 @@ Function Get-FfprobeOutput($mpd) {
 }
 
 # Function to build the command in a safe manner
-function Build-FfmpegArguments {
+function Get-FfmpegArguments {
     param (
         [string]$inputFile,
         [PSCustomObject]$videoStream,
@@ -227,21 +226,37 @@ function Build-FfmpegArguments {
         [string]$outputFile,
         [string]$directory,
         [bool]$isVideo,
-        [bool]$isAudio
+        [bool]$isAudio, 
+        [bool]$includeSubtitle = $true
     )
 
     $outputPath = Get-OutputPath -outputFile $outputFile -directory $directory
-    $argumentsList = @('-v', $settings.log_level, '-stats', '-i', "`"$inputFile`"")
+    $argumentsList = @(
+        '-v', $settings.log_level,
+        '-stats',
+        '-i', "`"$inputFile`""
+    )
 
     if ($isVideo) {
-        $argumentsList += '-crf', '0', '-aom-params', 'lossless=1', "-map", "0:v:$($videoStream.StreamNumber)", '-map', '0:a', '-c:a', 'copy', '-tag:v', 'avc1', "`"$outputPath`""
+        $argumentsList += (
+            '-crf', '0',
+            '-aom-params', 'lossless=1',
+            "-map", "0:v:$($videoStream.StreamNumber)",
+            '-map', '0:a',
+            '-c:a', 'copy',
+            '-tag:v', 'avc1'
+        )
+        if ($includeSubtitle) {
+            $argumentsList += '-c:s', 'mov_text'
+        }
     }
     elseif ($isAudio) {
-        if ($null -ne $audioStream ) {
+        if ($null -ne $audioStream) {
             $argumentsList += "-map", "0:a:$($audioStream.StreamNumber)"
         }
-        $argumentsList += "`"$outputPath`""
     }
+
+    $argumentsList += $outputPath
 
     return [PSCustomObject]@{
         Arguments = $argumentsList
@@ -252,15 +267,24 @@ function Build-FfmpegArguments {
 Function Get-OutputPath {
     param(
         [string] $outputFile,
-        [string] $directory = $null
+        [string] $directory = $null, 
+        [bool] $startFromRoot = $false
     )
 
     if (-not $directory) {
         $directory = $settings.directory
     }
 
-    $outputPath = Join-Path -Path $PSScriptRoot -ChildPath $directory -AdditionalChildPath $outputFile
-    return [string] $outputPath;
+    $pathComponents = @()
+    
+    if ($startFromRoot) {
+        $pathComponents += $PSScriptRoot
+    }
+
+    $pathComponents += $directory, $outputFile
+
+    $outputPath = $pathComponents -join [IO.Path]::DirectorySeparatorChar
+    return [string] $outputPath
 }
 
 # Function to gather information about input files
@@ -350,19 +374,20 @@ function GetInputFileInfo {
     $codecType = $streamDetails | Where-Object { $_.StreamType -eq 'Video' -or $_.StreamType -eq 'Audio' } | Select-Object -ExpandProperty StreamType
 
     $fileInfo = [PSCustomObject]@{
-        InputFile     = $inputFile
-        Filename      = $filename
-        Directory     = $directory
-        Duration      = $duration 
-        UsedIndices   = $usedIndices
-        IsVideo       = $codecType -contains 'Video' -or $codecType -contains 'Subtitle'
-        IsAudio       = [bool]($codecType -contains 'Audio' -and $codecType -notcontains 'Video')
-        StreamDetails = $streamDetails
-        OutputFile    = $null
-        OutputPath    = $null
-        FfmpegCommand = $null
-        VideoStream   = $null
-        AudioStream   = $null
+        InputFile      = $inputFile
+        Filename       = $filename
+        Directory      = $directory
+        Duration       = $duration 
+        UsedIndices    = $usedIndices
+        IsVideo        = $codecType -contains 'Video' -or $codecType -contains 'Subtitle'
+        IsAudio        = [bool]($codecType -contains 'Audio' -and $codecType -notcontains 'Video')
+        StreamDetails  = $streamDetails
+        OutputFile     = $null
+        OutputPath     = $null
+        RootOutputPath = $null
+        FfmpegCommand  = $null
+        VideoStream    = $null
+        AudioStream    = $null
     }
 
     # Function to get the most correct video stream number based on resolution
@@ -400,28 +425,43 @@ function GetInputFileInfo {
         return $videoStreams[0]
     }
 
-    
-    if ($fileInfo.IsVideo) {
-        # Get the most correct video stream based on resolutions
-        $fileInfo.VideoStream = Get-VideoStreamNumber -resolution $settings.resolutions -streamDetails $streamDetails
-        $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp4" -directory $directory -usedIndices $usedIndices
+    if ($fileInfo.InputFile -match '\.mpd') {
+        # .mpd
+        if ($fileInfo.IsVideo) {
+            # Get the most correct video stream based on resolutions
+            $fileInfo.VideoStream = Get-VideoStreamNumber -resolution $settings.resolutions -streamDetails $streamDetails
+            $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp4" -directory $directory -usedIndices $usedIndices
         
-        # Generate FFmpeg arguments
-        $ffmpegArgs = Build-FfmpegArguments -inputFile $fileInfo.InputFile -videoStream $fileInfo.VideoStream -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory -isVideo $true -isAudio $false
-        $fileInfo.FfmpegCommand = $ffmpegArgs.Arguments -join ' '
+            # Generate FFmpeg arguments
+            $ffmpegArgs = Get-FfmpegArguments -inputFile $fileInfo.InputFile -videoStream $fileInfo.VideoStream -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory -isVideo $true -isAudio $false
+            $fileInfo.FfmpegCommand = $ffmpegArgs.Arguments -join ' '
+        }
+        elseif ($fileInfo.IsAudio) {    
+            # Get the first audio stream
+            $fileInfo.AudioStream = ($streamDetails | Where-Object { $_.StreamType -eq 'Audio' } )
+            $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp3" -directory $directory -usedIndices $usedIndices
+    
+            # Generate FFmpeg arguments
+            $ffmpegArgs = Get-FfmpegArguments -inputFile $fileInfo.InputFile -audioStream $fileInfo.AudioStream -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory -isVideo $false -isAudio $true
+            $fileInfo.FfmpegCommand = $ffmpegArgs.Arguments -join ' '
+        }
     }
-    elseif ($fileInfo.IsAudio) {    
-        # Get the first audio stream
-        $fileInfo.AudioStream = ($streamDetails | Where-Object { $_.StreamType -eq 'Audio' } )
-        $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp3" -directory $directory -usedIndices $usedIndices
-
-        # Generate FFmpeg arguments
-        $ffmpegArgs = Build-FfmpegArguments -inputFile $fileInfo.InputFile -audioStream $fileInfo.AudioStream -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory -isVideo $false -isAudio $true
-        $fileInfo.FfmpegCommand = $ffmpegArgs.Arguments -join ' '
+    elseif ($fileInfo.InputFile -match '\.m3u8?$') {
+        # .m3u8 (playlist)
+        $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp4" -directory $directory -usedIndices $usedIndices
+        $fileInfo.OutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory
+        $fileInfo.FfmpegCommand = "-v $($settings.log_level) -i $($fileInfo.InputFile) -bsf:a aac_adtstoasc -vcodec copy -c copy -crf 50 $($fileInfo.OutputPath)"
     }
+    else {
+        throw "Unsupported file type. Only .mpd, .m3u8 or .m3u files are supported."
+    }    
 
     # Get the OutputPath
-    $fileInfo.OutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory
+    if (-not $fileInfo.OutputPath) {
+        $fileInfo.OutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory
+    }
+
+    $fileInfo.RootOutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory -startFromRoot $true
 
     return $fileInfo
 }
@@ -438,16 +478,9 @@ function Start-DownloadingFiles {
         Write-Log "Output-folder created." -logLevel 'verbose'
     }
 
-    $filesInfo | ForEach-Object {
-        # Echo the command
-        Write-Log "Running ffmpeg with the following command:" -logLevel 'verbose'
-        Write-Log $ffmpegCommand -logLevel 'verbose'
-        
+    $filesInfo | ForEach-Object {        
         # Run the ffmpeg command with variables
         Start-Process -FilePath ffmpeg -ArgumentList $_.FfmpegCommand -Wait -NoNewWindow
-
-        # Send a response with the path when the file has been downloaded
-        Write-Host "File has been downloaded successfully to: `"$($_.OutputPath)`""
     }
 }
 
@@ -647,7 +680,7 @@ function Install-FFmpeg {
     if ($null -ne $installCommand) {
         Install-Dependency -Command $installCommand -DependencyName $dependencyName -InstallInstructions $instructions
     }
-}    
+}
 
 # Call the function to install FFmpeg
 Install-FFmpeg
@@ -661,6 +694,8 @@ if ($settings.list -eq "" -or $null -eq $settings.list) {
     Write-Host "Usage: pwsh thuis.ps1 [-list <mpd_files>] [-resolutions <preferred_resolution>] [-filename <output_filename>] [-info <info_argument>] [-log_level <log_level>] [-interactive] [-directory <directory_argument>]"
     exit 1    
 }
+
+Write-Log "Initiating data gathering for download preparation. Fetching information for each specified file. This can take a while." -logLevel "info"
 
 # Split the list of mpd files
 $mpdFiles = SplitString $settings.list
@@ -683,7 +718,7 @@ if ($settings.interactive) {
     Show-FilesInfo -info $filesInfo -logLevel "quiet"
 
     # If in interactive mode, ask for confirmation
-    if (-not (AskYesOrNo "Are you ready to start processing these MPD-files? (Y/n)")) {
+    if (-not (AskYesOrNo "Are you ready to start downloading? (Y/n)")) {
         exit
     }
 }
@@ -693,5 +728,11 @@ else {
 
 # Call the function to start downling all files
 Start-DownloadingFiles -filesInfo $filesInfo
+
+# Display the list of downloaded file locations
+Write-Host "All files have been downloaded successfully. Here are the locations:"
+$filesInfo | ForEach-Object {
+    Write-Host "- $($_.RootOutputPath)"
+}
 
 # End of script
