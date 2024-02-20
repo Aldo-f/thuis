@@ -1,6 +1,7 @@
 # Global variables
 $global:cachedInfo = @{}
-$global:defaultLogLevel = 'quiet'
+$global:defaultLogLevel = 'info'
+$global:defaultLogLevelFfmpeg = 'quiet'
 $global:validLogLevels = @("quiet", "panic", "fatal", "error", "warning", "info", "verbose", "debug")
 
 # Function to process command-line arguments
@@ -113,16 +114,13 @@ Function Write-Log {
         [string] $logLevel = 'info'
     )
 
-    # Valid log levels
-    $validLogLevels = @("quiet", "panic", "fatal", "error", "warning", "info", "verbose", "debug")
-
     # Set log level to default if not provided or invalid
     if (-not $global:validLogLevels -contains $logLevel) {
         $logLevel = $global:defaultLogLevel
     }
 
     # Determine whether to write based on log level
-    $writeLog = $validLogLevels.IndexOf($settings.log_level) -ge $validLogLevels.IndexOf($logLevel)
+    $writeLog = $global:validLogLevels.IndexOf($settings.log_level) -ge $global:validLogLevels.IndexOf($logLevel)
 
     if ($writeLog) {
         Write-Host $message
@@ -232,7 +230,7 @@ function Get-FfmpegArguments {
 
     $outputPath = Get-OutputPath -outputFile $outputFile -directory $directory
     $argumentsList = @(
-        '-v', $settings.log_level,
+        '-v', $global:defaultLogLevelFfmpeg,
         '-stats',
         '-i', "`"$inputFile`""
     )
@@ -450,7 +448,7 @@ function GetInputFileInfo {
         # .m3u8 (playlist)
         $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp4" -directory $directory -usedIndices $usedIndices
         $fileInfo.OutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory
-        $fileInfo.FfmpegCommand = "-v $($settings.log_level) -i $($fileInfo.InputFile) -bsf:a aac_adtstoasc -vcodec copy -c copy -crf 50 $($fileInfo.OutputPath)"
+        $fileInfo.FfmpegCommand = "-v $($global:defaultLogLevelFfmpeg) -i $($fileInfo.InputFile) -bsf:a aac_adtstoasc -vcodec copy -c copy -crf 50 $($fileInfo.OutputPath)"
     }
     else {
         throw "Unsupported file type. Only .mpd, .m3u8 or .m3u files are supported."
@@ -467,7 +465,7 @@ function GetInputFileInfo {
 }
 
 # Function to start downloading the files after getting all required data
-function Start-DownloadingFiles {    
+function Start-DownloadingFiles {
     param (
         [array] $filesInfo
     )
@@ -475,13 +473,32 @@ function Start-DownloadingFiles {
     # Create the output folder if it doesn't exist
     if (-not (Test-Path -Path $settings.Directory)) {
         New-Item -ItemType Directory -Path $settings.Directory | Out-Null
-        Write-Log "Output-folder created." -logLevel 'verbose'
+        Write-Log "Output folder created at $($settings.Directory)." -logLevel 'verbose'
     }
 
-    $filesInfo | ForEach-Object {        
-        # Run the ffmpeg command with variables
-        Start-Process -FilePath ffmpeg -ArgumentList $_.FfmpegCommand -Wait -NoNewWindow
+    $fileCount = $filesInfo.Count
+    if ($fileCount -eq 1) {
+        Write-Log "1 file queued for download." -logLevel 'info'
     }
+    else {
+        Write-Log "$fileCount files queued for download." -logLevel 'info'
+    }
+
+    $i = 0
+    foreach ($fileInfo in $filesInfo) {
+        $i++
+        $fileName = $fileInfo.OutputFile
+        Write-Log "Fetching information and starting download ($i/$fileCount): $fileName" -logLevel 'info'
+        $progressPercentage = (($i / $fileCount) * 100) - 1
+        Write-Progress -Activity "Downloading Files" -Status "$i of $fileCount" -PercentComplete $progressPercentage
+    
+        # Start ffmpeg process and wait for it to complete
+        Start-Process -FilePath ffmpeg -ArgumentList $fileInfo.FfmpegCommand -Wait -NoNewWindow
+    
+        Write-Log "Completed download ($i/$fileCount): $($fileInfo.OutputFile)" -logLevel 'info'
+    }   
+
+    Write-Progress -Activity "Downloading Files" -Status "Complete" -PercentComplete 100
 }
 
 # Function to ask a yes no question
@@ -529,14 +546,14 @@ function SplitString($string) {
     return [System.Array]$array
 }
 
-# Function to shown info about the files that we wish to process
+# Function to show info about the files that we wish to process
 Function Show-FilesInfo {
     param (
         [object] $info,
         [string] $logLevel
     )
 
-    $videoData = [array]($info | Where-Object { $_.IsVideo } | ForEach-Object { 
+    $videoData = [array]($info | Where-Object { $_.IsVideo } | ForEach-Object {
             $dataObject = @{
                 'Output File' = $_.OutputFile
                 'Directory'   = $_.Directory
@@ -550,7 +567,7 @@ Function Show-FilesInfo {
             [PSCustomObject]$dataObject
         })
 
-    $audioData = [array]($info | Where-Object { $_.IsAudio } | ForEach-Object { 
+    $audioData = [array]($info | Where-Object { $_.IsAudio } | ForEach-Object {
             $dataObject = @{
                 'Output File' = $_.OutputFile
                 'Directory'   = $_.Directory
@@ -565,7 +582,7 @@ Function Show-FilesInfo {
 
     Function Write-Data {
         param(
-            [array] $data, 
+            [array] $data,
             [string] $logLevel
         )
 
@@ -577,12 +594,12 @@ Function Show-FilesInfo {
         }
     }
 
-    if ($null -ne $videoData -and $videoData.Count -ge 0) {
+    if ($null -ne $videoData -and $videoData.Count -ge 1) {
         Write-Log "Video Files to be created:" -logLevel $logLevel
         Write-Data -data $videoData -logLevel $logLevel
     }
 
-    if ($null -ne $audioData -and $audioData.Count -ge 0) {
+    if ($null -ne $audioData -and $audioData.Count -ge 1) {
         Write-Log "Audio Files to be created:" -logLevel $logLevel
         Write-Data -data $audioData -logLevel $logLevel
     }
@@ -592,11 +609,11 @@ Function Show-FilesInfo {
 function Install-FFmpeg {
     # Check if ffmpeg is present
     if (Get-Command ffmpeg -ErrorAction SilentlyContinue) {
-        Write-Log "FFmpeg is already installed." -logLevel 'info'
+        Write-Log "FFmpeg is already installed." -logLevel 'verbose'
         return
     }
 
-    Write-Log "FFmpeg not found. Checking for existing package managers..." -logLevel 'warning'
+    Write-Log "FFmpeg not found. Checking for existing package managers..." -logLevel "warning"
     Write-Log $env:OS -logLevel 'debug'
 
     function Install-Dependency {
@@ -695,7 +712,8 @@ if ($settings.list -eq "" -or $null -eq $settings.list) {
     exit 1    
 }
 
-Write-Log "Initiating data gathering for download preparation. Fetching information for each specified file. This can take a while." -logLevel "info"
+Write-Log "Fetching data for each specified file..." -logLevel "info"
+Write-Log "This process can take a while, depending on the number of files and the download speed." -logLevel "verbose"
 
 # Split the list of mpd files
 $mpdFiles = SplitString $settings.list
@@ -730,9 +748,9 @@ else {
 Start-DownloadingFiles -filesInfo $filesInfo
 
 # Display the list of downloaded file locations
-Write-Host "All files have been downloaded successfully. Here are the locations:"
+Write-Log "All files have been downloaded successfully. Here are the locations:" -logLevel "info"
 $filesInfo | ForEach-Object {
-    Write-Host "- $($_.RootOutputPath)"
+    Write-Log "- $($_.RootOutputPath)"
 }
 
 # End of script
