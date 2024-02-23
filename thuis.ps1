@@ -18,6 +18,9 @@ Function ProcessCommandLineArguments {
         info        = $null
         log_level   = $global:defaultLogLevel
         interactive = $false
+        ffmpeg      = @{
+            '-v' = $global:defaultLogLevelFfmpeg
+        }
     }
 
     # Process each argument
@@ -31,10 +34,20 @@ Function ProcessCommandLineArguments {
             "^\-filename$" { $settings.filename = $arguments[++$i] }
             "^\-info$" { $settings.info = $true }
             "^\-interactive$" { $settings.interactive = $true }
-            "^\-log_level$|^-v" {
+            "^\-log-level$|^-v" {
                 $logLevel = $arguments[++$i].ToLower()
                 if ($global:validLogLevels -contains $logLevel) {
                     $settings.log_level = $logLevel
+                }
+                else {
+                    Write-Host "Invalid log level. Valid log levels are: $($global:validLogLevels -join ', ')"
+                    exit 1
+                }
+            }
+            "^\-ffmpeg-log-level$|^-ffmpeg-v" {
+                $logLevel = $arguments[++$i].ToLower()
+                if ($global:validLogLevels -contains $logLevel) {
+                    $settings.ffmpeg['-v'] = $logLevel
                 }
                 else {
                     Write-Host "Invalid log level. Valid log levels are: $($global:validLogLevels -join ', ')"
@@ -230,7 +243,7 @@ function Get-FfmpegArguments {
 
     $outputPath = Get-OutputPath -outputFile $outputFile -directory $directory
     $argumentsList = @(
-        '-v', $global:defaultLogLevelFfmpeg,
+        '-v', $settings.ffmpeg['-v'],
         '-stats',
         '-i', "`"$inputFile`""
     )
@@ -294,8 +307,23 @@ function GetInputFileInfo {
         [PSCustomObject]$usedIndices
     )
 
-    # Use Get-FfprobeOutput to get the general ffprobe output
+    # Attempt to process the file with ffprobe
     $ffprobeOutput = Get-FfprobeOutput $inputFile
+
+    # If the file is not found and it's not a URL, prepend the script's root path and try again
+    if ($ffprobeOutput -match 'No such file or directory' -and -not ($inputFile -match '^http[s]?://')) {
+        Write-Log "Attempting to locate '$inputFile' with the script's root path." -LogLevel 'warning'
+
+        # Use $PSScriptRoot as the root path
+        $inputFile = Join-Path -Path $PSScriptRoot -ChildPath $inputFile
+
+        # Retry ffprobe with the modified inputFile
+        $ffprobeOutput = Get-FfprobeOutput $inputFile
+        if ($ffprobeOutput -match 'No such file or directory') {
+            Write-Log "The file does not exist after retrying with script's root path." -LogLevel 'error'
+            return $null
+        }
+    }
 
     # Echo the ffprobe output
     Write-Log "FFprobe Output:" -logLevel 'debug'
@@ -366,6 +394,20 @@ function GetInputFileInfo {
             }
             $streamDetails += $streamObject
         }
+    }
+
+    # Check if $streamDetails is still empty
+    if (-not $streamDetails) {
+        # Get the latest line of ffprobe output
+        $latestLine = $ffprobeOutputLines[-1]
+
+        # Extract the part after the colon
+        $errorMessage = $latestLine.Substring($latestLine.IndexOf(':') + 1).Trim()
+
+        # Log the error message
+        Write-Log "Failed to extract stream details for '$inputFile'." -logLevel 'error'
+        Write-log "Error: $errorMessage" -logLevel 'debug'
+        return $null
     }
 
     # Determine the codec type from stream details
@@ -448,7 +490,7 @@ function GetInputFileInfo {
         # .m3u8 (playlist)
         $fileInfo.OutputFile = GenerateOutputName -filename "$filename.mp4" -directory $directory -usedIndices $usedIndices
         $fileInfo.OutputPath = Get-OutputPath -outputFile $fileInfo.OutputFile -directory $fileInfo.Directory
-        $fileInfo.FfmpegCommand = "-v $($global:defaultLogLevelFfmpeg) -i $($fileInfo.InputFile) -bsf:a aac_adtstoasc -vcodec copy -c copy -crf 50 $($fileInfo.OutputPath)"
+        $fileInfo.FfmpegCommand = "-v $($settings.ffmpeg['-v']) -i $($fileInfo.InputFile) -bsf:a aac_adtstoasc -vcodec copy -c copy -crf 50 $($fileInfo.OutputPath)"
     }
     else {
         throw "Unsupported file type. Only .mpd, .m3u8 or .m3u files are supported."
@@ -488,17 +530,14 @@ function Start-DownloadingFiles {
     foreach ($fileInfo in $filesInfo) {
         $i++
         $fileName = $fileInfo.OutputFile
+        Write-log "" -logLevel 'info'
         Write-Log "Fetching information and starting download ($i/$fileCount): $fileName" -logLevel 'info'
-        $progressPercentage = (($i / $fileCount) * 100) - 1
-        Write-Progress -Activity "Downloading Files" -Status "$i of $fileCount" -PercentComplete $progressPercentage
-    
+
         # Start ffmpeg process and wait for it to complete
-        Start-Process -FilePath ffmpeg -ArgumentList $fileInfo.FfmpegCommand -Wait -NoNewWindow
+        Start-Process -FilePath ffmpeg -ArgumentList $fileInfo.FfmpegCommand -Wait
     
         Write-Log "Completed download ($i/$fileCount): $($fileInfo.OutputFile)" -logLevel 'info'
-    }   
-
-    Write-Progress -Activity "Downloading Files" -Status "Complete" -PercentComplete 100
+    }
 }
 
 # Function to ask a yes no question
@@ -613,7 +652,7 @@ function Install-FFmpeg {
         return
     }
 
-    Write-Log "FFmpeg not found. Checking for existing package managers..." -logLevel "warning"
+    Write-Log "FFmpeg not found. Checking for existing package managers..." -logLevel 'warning'
     Write-Log $env:OS -logLevel 'debug'
 
     function Install-Dependency {
@@ -708,12 +747,12 @@ $settings = ProcessCommandLineArguments -arguments $args
 # Check if no input file and -list is provided
 if ($settings.list -eq "" -or $null -eq $settings.list) {
     Write-Host "Error: No input file or -list provided."
-    Write-Host "Usage: pwsh thuis.ps1 [-list <mpd_files>] [-resolutions <preferred_resolution>] [-filename <output_filename>] [-info <info_argument>] [-log_level <log_level>] [-interactive] [-directory <directory_argument>]"
+    Write-Host "Usage: pwsh ./thuis.ps1 [-list <mpd_files>] [-resolutions <preferred_resolution>] [-filename <output_filename>] [-info <info_argument>] [-log_level <log_level>] [-interactive] [-directory <directory_argument>]"
     exit 1    
 }
 
-Write-Log "Fetching data for each specified file..." -logLevel "info"
-Write-Log "This process can take a while, depending on the number of files and the download speed." -logLevel "verbose"
+Write-Log "Fetching data for each specified file..." -logLevel 'info'
+Write-Log "This process can take a while, depending on the number of files and the download speed." -logLevel 'verbose'
 
 # Split the list of mpd files
 $mpdFiles = SplitString $settings.list
@@ -722,8 +761,18 @@ $mpdFiles = SplitString $settings.list
 $usedIndices = [PSCustomObject]@{ Indices = @() }
 
 # Gather information about input files
-$filesInfo = foreach ($inputFile in $mpdFiles) {
-    GetInputFileInfo -inputFile $inputFile -filename $settings.filename -directory $settings.directory -usedIndices $usedIndices
+$filesInfo = @()
+foreach ($inputFile in $mpdFiles) {
+    $fileInfo = GetInputFileInfo -inputFile $inputFile -filename $settings.filename -directory $settings.directory -usedIndices $usedIndices
+    if ($null -ne $fileInfo) {
+        $filesInfo += $fileInfo
+    }    
+}
+
+# Check if no valid file information was collected
+if (-not $filesInfo) {
+    Write-Log "No valid file information could be processed for any of the input files." -logLevel 'Fatal'
+    exit
 }
 
 # Show information about the files that will be created
@@ -733,7 +782,7 @@ if ($settings.info) {
 }
 
 if ($settings.interactive) {
-    Show-FilesInfo -info $filesInfo -logLevel "quiet"
+    Show-FilesInfo -info $filesInfo -logLevel 'quiet'
 
     # If in interactive mode, ask for confirmation
     if (-not (AskYesOrNo "Are you ready to start downloading? (Y/n)")) {
@@ -741,14 +790,15 @@ if ($settings.interactive) {
     }
 }
 else {
-    Show-FilesInfo -info $filesInfo -logLevel "quiet"
+    Show-FilesInfo -info $filesInfo -logLevel 'quiet'
 }
 
 # Call the function to start downling all files
 Start-DownloadingFiles -filesInfo $filesInfo
 
 # Display the list of downloaded file locations
-Write-Log "All files have been downloaded successfully. Here are the locations:" -logLevel "info"
+Write-log "" -logLevel 'info'
+Write-Log "All files have been downloaded successfully. Here are the locations:" -logLevel 'info'
 $filesInfo | ForEach-Object {
     Write-Log "- $($_.RootOutputPath)"
 }

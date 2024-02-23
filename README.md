@@ -11,15 +11,15 @@
 
 ## Usage
 
-Execute `thuis.ps1` from the terminal using the syntax below to start downloading media:
+Execute `./thuis.ps1` from the terminal using the syntax below to start downloading media:
 
 ```sh
 
 # Download with a custom list of .mpd, .m3u8, .m3u files, or URLs
-pwsh thuis.ps1 -list <media_files_or_urls> # a list of files or URLs separated by a comma
+pwsh ./thuis.ps1 -list <media_files_or_urls> # a list of files or URLs separated by a comma
 
 # Comprehensive options for advanced usage
-pwsh thuis.ps1 -list <media_files_or_urls> -resolutions <preferred_resolution> -filename <output_filename> -directory <directory> -info <info_argument> -log_level <log_level> -interactive
+pwsh ./thuis.ps1 -list <media_files_or_urls> -resolutions <preferred_resolution> -filename <output_filename> -directory <directory> -info <info_argument> -log_level <log_level> -interactive
 
 ```
 
@@ -27,7 +27,7 @@ pwsh thuis.ps1 -list <media_files_or_urls> -resolutions <preferred_resolution> -
 
 ### Windows
 
-No prerequisites required. Running `pwsh thuis.ps1` will check and prompt for the installation of any missing dependencies.
+No prerequisites required. Running `./thuis.ps1` in PowerShell  (or `pwsh ./thuis.ps1` in cmd/bash) will check and prompt for the installation of any missing dependencies.
 
 ### Linux
 
@@ -59,15 +59,17 @@ Install Homebrew, PowerShell, and FFmpeg:
 /bin/bash -c "$(curl -fsSL <https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh>)"
 
 # Install PowerShell
-brew update brew install --cask powershell pwsh -Version
+brew update
+brew install --cask powershell pwsh -Version
 
 # Install FFmpeg
-brew update brew install ffmpeg
+brew update
+brew install ffmpeg
 
 ```
 
 
 ## TODO:
-- [x] Enhance interactive mode to be truly dynamic, prompting the user to update or add missing settings as needed.
+- [x] Enhance interactive (`-interactive`) mode to be truly dynamic, prompting the user to update or add missing settings as needed.
 - [ ] Test processing `.m3u` to `.mp4`.
 - [ ] Make use of the existing settings to specify the requested resolution for `.m3u8` and `.m3u`
