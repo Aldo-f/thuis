@@ -1,2 +1,10 @@
 .vscode
 media
+
+# v3 specific
+v3/.env
+v3/venv/
+v3/__pycache__/
+v3/**/__pycache__/
+v3/tools/
+*.pyc
