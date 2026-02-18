@@ -148,11 +148,12 @@ function GenerateOutputName {
         [PSCustomObject]$usedIndices
     )
 
-    function IncrementAndGenerateFilename($prefix, $index, $extension) {
-        $outputFilename = "${prefix}$("{0:D3}" -f $index).$extension"
+    function IncrementAndGenerateFilename($prefix, $index, $extension, $digitCount) {
+        $formattedIndex = $index.ToString("D$digitCount")
+        $outputFilename = "${prefix}$formattedIndex.$extension"
 
-        if ($usedIndices.Indices -notcontains $index -and -not (Test-Path (Join-Path $directory $outputFilename))) {
-            $usedIndices.Indices += $index
+        if ($usedIndices.Indices -notcontains $formattedIndex -and -not (Test-Path (Join-Path $directory $outputFilename))) {
+            $usedIndices.Indices += $formattedIndex
             return $outputFilename
         }
 
@@ -170,7 +171,7 @@ function GenerateOutputName {
         $currentDate = Get-Date -Format 'yyyy-MM-dd'
         $index = 1
         do {
-            $outputFilename = IncrementAndGenerateFilename "${currentDate}-" $index $extension
+            $outputFilename = IncrementAndGenerateFilename "${currentDate}-" $index $extension 2
  
             if ($outputFilename) {
                 return $outputFilename
@@ -180,19 +181,20 @@ function GenerateOutputName {
         } while ($true)
     }
     
-    # If no numbers were found at the end, add '-001'
+    # If no numbers were found at the end, add '-01'
     if (-not ($filenameBase -match '\d+$')) {
-        $filename = "$filenameBase-001.$extension"
+        $filename = "$filenameBase-01.$extension"
     }
 
     $lastPartAndExtension = $filename -replace '^.*[^0-9](\d+)(\.[^.]+)$', '$1$2'
     if ($lastPartAndExtension -ne $filename) {
         # The filename is structured with numbers at the end
-        $prefix = $filename -replace '\d+(\.[^.]+)$', ''
+        $prefix = $filename -replace '(\d+)(\.[^.]+)$', ''
         $index = [int]($lastPartAndExtension -replace '\..*$')
+        $digitCount = ($lastPartAndExtension -replace '\..*$').Length
     
         do {
-            $outputFilename = IncrementAndGenerateFilename $prefix $index $extension
+            $outputFilename = IncrementAndGenerateFilename $prefix $index $extension $digitCount
     
             if ($outputFilename) {
                 return $outputFilename
@@ -202,6 +204,7 @@ function GenerateOutputName {
         } while ($true)
     }
 }
+
 
 # Function to get general ffprobe output
 Function Get-FfprobeOutput($mpd) {
