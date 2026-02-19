@@ -1,0 +1,55 @@
+site_name: Thuis - VRT MAX Downloader
+site_url: https://aldo-f.github.io/thuis/
+site_description: Download videos from VRT MAX with automatic authentication
+
+theme:
+  name: material
+  language: en
+  palette: 
+    - scheme: default
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+
+extra:
+  alternate:
+    - link: /
+      name: English
+      flag: 🇬🇧
+    - link: /nl/
+      name: Nederlands
+      flag: 🇳🇱
+
+markdown_extensions:
+  - attr_list
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - tables
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Testing: testing.md
+  - DRM: drm.md
+  - Troubleshooting: troubleshooting.md
+
+plugins:
+  - search
