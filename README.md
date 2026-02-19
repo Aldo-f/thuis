@@ -1,75 +1,70 @@
-# thuis
+# Thuis - VRT MAX Downloader
 
-**thuis** is a command-line utility for downloading video or audio content from `.mpd` (Media Presentation Description), `.m3u8`, `.m3u` or URLs pointing to these types of files. It offers flexibility by allowing users to specify custom settings for their downloads.
+Download video's van VRT MAX met automatische authenticatie.
 
-## Features
+## Vereisten
 
-- **Download Video or Audio:** Easily fetch content using `.mpd`, `.m3u8`, `.m3u` or URL links.
-- **Customizable Downloads:** Specify lists, preferred resolutions, and output filenames.
-- **Detailed Logging:** Configure log levels to get the right amount of information.
-- **Interactive Mode:** Optionally run in an interactive mode for dynamic configuration.
+- Python 3.9+
+- ffmpeg
+- VRT MAX account
 
-## Usage
+## Installatie
 
-Execute `./thuis.ps1` from the terminal using the syntax below to start downloading media:
+```bash
+# Maak virtual environment
+python3 -m venv venv
+source venv/bin/activate  # Linux/Mac
+# of: .\venv\Scripts\activate  # Windows
 
-```sh
+# Installeer dependencies
+pip install -r requirements.txt
 
-# Download with a custom list of .mpd, .m3u8, .m3u files, or URLs
-pwsh ./thuis.ps1 -list <media_files_or_urls> # a list of files or URLs separated by a comma
-
-# Comprehensive options for advanced usage
-pwsh ./thuis.ps1 -list <media_files_or_urls> -resolutions <preferred_resolution> -filename <output_filename> -directory <directory> -info <info_argument> -log_level <log_level> -interactive
-
+# Installeer Playwright browsers
+playwright install chromium
 ```
 
-## Prerequisites
+## Eerste keer setup
 
-### Windows
-
-No prerequisites required. Running `./thuis.ps1` in PowerShell  (or `pwsh ./thuis.ps1` in cmd/bash) will check and prompt for the installation of any missing dependencies.
-
-### Linux
-
-Ensure PowerShell is installed:
-
-```sh
-
-# Install PowerShell
-sudo apt-get update
-sudo apt-get install -y wget apt-transport-https software-properties-common
-
-wget -q https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release; echo $VERSION_ID)/packages-microsoft-prod.deb
-sudo dpkg -i packages-microsoft-prod.deb
-rm packages-microsoft-prod.deb
-
-sudo apt-get update
-sudo apt-get install -y powershell
-pwsh -Version
-
+```bash
+python thuis.py --setup
 ```
 
-### Mac
+Dit vraagt om je VRT MAX email en wachtwoord, en slaat deze op in `.env`.
 
-Install Homebrew, PowerShell, and FFmpeg:
+**Let op:** Je wachtwoord wordt ongecodeerd opgeslagen in `.env`!
 
-```sh
+## Gebruik
 
-# Install Homebrew
-/bin/bash -c "$(curl -fsSL <https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh>)"
+```bash
+# Download een video
+python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/"
 
-# Install PowerShell
-brew update
-brew install --cask powershell pwsh -Version
+# Met custom output naam
+python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/" -o "thuis.mp4"
 
-# Install FFmpeg
-brew update
-brew install ffmpeg
-
+# Toon browser venster (voor debugging)
+python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/" --no-headless
 ```
 
+Video's worden automatisch opgeslagen in de `media/` map.
 
-## TODO:
-- [x] Enhance interactive (`-interactive`) mode to be truly dynamic, prompting the user to update or add missing settings as needed.
-- [ ] Test processing `.m3u` to `.mp4`.
-- [ ] Make use of the existing settings to specify the requested resolution for `.m3u8` and `.m3u`
+## Tests
+
+```bash
+pytest tests/
+```
+
+## Hoe het werkt
+
+1. **Login**: Automatisch inloggen op VRT MAX via Playwright
+2. **Stream extractie**: Haalt de HLS stream URL op via de VRT API
+3. **Download**: Gebruikt ffmpeg om de video te downloaden
+
+## Problemen?
+
+### Login werkt niet
+- Controleer credentials in `.env`
+- Probeer met `--no-headless` om te zien wat er gebeurt
+
+### Download faalt
+- Controleer of ffmpeg geïnstalleerd is: `ffmpeg -version`

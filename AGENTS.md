@@ -4,197 +4,186 @@ This document provides guidelines for agentic coding agents working in the **thu
 
 ## Project Overview
 
-**thuis** is a PowerShell command-line utility for downloading video or audio content from `.mpd` (Media Presentation Description), `.m3u8`, `.m3u` files or URLs pointing to these types of files. It uses FFmpeg for media processing.
+**thuis** is a Python command-line utility for downloading video content from VRT MAX. It uses Playwright for browser automation to handle authentication and extracts HLS stream URLs from the VRT API, then downloads videos using FFmpeg.
 
 ## Build/Lint/Test Commands
 
 ### Running the Script
 
 ```bash
-# Basic execution
-pwsh ./thuis.ps1 -list <media_files_or_urls>
+# First time setup
+python thuis.py --setup
 
-# With all options
-pwsh ./thuis.ps1 -list <media_files_or_urls> -resolutions 1080 -filename output -directory media -info -log_level info -interactive
+# Download a video
+python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/"
+
+# With custom output
+python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/" -o "thuis.mp4"
+
+# Debug mode (shows browser)
+python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/" --no-headless
 ```
 
-### PowerShell Syntax Validation
+### Python Syntax Validation
 
 ```bash
-# Check syntax without running
-pwsh -NoProfile -Command "Get-Command -Syntax ./thuis.ps1"
+# Check for syntax errors
+python -m py_compile thuis.py
 
-# Parse and check for errors
-pwsh -NoProfile -Command "try { \$null = [System.Management.Automation.PSParser]::Tokenize((Get-Content ./thuis.ps1 -Raw), [ref]\$null); Write-Host 'Syntax OK' } catch { Write-Error \$_ }"
+# Run type checking (if mypy is installed)
+mypy thuis.py
 ```
 
 ### Running Tests
 
-This project does not currently have a formal test framework. Manual testing can be performed by:
+```bash
+# Run all tests
+pytest tests/
+
+# Run with verbose output
+pytest tests/ -v
+
+# Run specific test file
+pytest tests/test_thuis.py
+```
+
+### Linting
 
 ```bash
-# Test with a sample .mpd file
-pwsh ./thuis.ps1 -list sample.mpd -info
+# Check code formatting
+black --check thuis.py tests/
 
-# Test interactive mode
-pwsh ./thuis.ps1 -interactive
+# Format code
+black thuis.py tests/
+
+# Check with flake8
+flake8 thuis.py tests/
 ```
 
 ## Code Style Guidelines
 
 ### Naming Conventions
 
-- **Functions**: Use PascalCase with verb-noun naming convention
-  - Good: `Get-FfprobeOutput`, `Start-DownloadingFiles`, `Install-FFmpeg`
-  - Good: `ProcessCommandLineArguments`, `GenerateOutputName`
-  - Avoid: `getFfprobe`, `StartDownloading`, `process_args`
+- **Functions**: Use snake_case
+  - Good: `download_with_ffmpeg`, `check_ffmpeg`, `setup`
+  - Avoid: `downloadWithFFmpeg`, `DownloadVideo`
 
-- **Variables**: Use camelCase for local variables, descriptive names
-  - Good: `$ffprobeOutput`, `$streamDetails`, `$inputFile`
-  - Good: `$global:cachedInfo` for global variables
-  - Avoid: `$x`, `$temp`, `$data1`
+- **Variables**: Use snake_case for local variables, descriptive names
+  - Good: `stream_url`, `output_path`, `cookie_header`
+  - Good: `CONFIG_FILE` for constants
+  - Avoid: `x`, `temp`, `data1`
 
-- **Parameters**: Use camelCase within param blocks
-  ```powershell
-  param (
-      [string]$inputFile,
-      [PSCustomObject]$videoStream,
-      [bool]$isVideo
-  )
+- **Parameters**: Use snake_case with type annotations
+  ```python
+  def download_video(
+      video_url: str,
+      username: str,
+      password: str,
+      output_path: Optional[Path] = None,
+      headless: bool = True,
+  ):
   ```
 
-- **Constants/Global Variables**: Use descriptive names with `$global:` prefix
-  - `$global:defaultLogLevel`, `$global:validLogLevels`
+- **Constants**: Use UPPER_CASE at module level
+  - `CONFIG_FILE`, `USER_AGENT`
 
 ### Formatting
 
 - **Indentation**: Use 4 spaces (no tabs)
-- **Braces**: Opening brace on same line for functions/conditionals
-  ```powershell
-  Function Example {
-      param ([string]$param1)
-      
-      if ($condition) {
-          # code
-      }
-  }
-  ```
-
-- **Line Length**: Keep lines under 120 characters where practical
+- **Line Length**: Keep lines under 100 characters where practical
 - **Blank Lines**: Use single blank lines to separate logical sections and functions
+- **Quotes**: Use double quotes for strings
 
-### Imports and Dependencies
+### Imports
 
-- This project relies on **FFmpeg** being installed on the system
-- The script includes `Install-FFmpeg` function for automatic dependency installation
-- No external PowerShell modules are required beyond the default PS capabilities
+Organize imports in this order:
+1. Standard library imports
+2. Third-party imports
+3. Local imports
 
-### Types and Data Structures
+Example:
+```python
+import asyncio
+import argparse
+import os
 
-- **Hashtables**: Use `@{}` for configuration objects
-  ```powershell
-  $settings = @{
-      list        = $null
-      resolutions = '1080'
-      directory   = 'media'
-      ffmpeg      = @{
-          '-v' = 'quiet'
-      }
-  }
-  ```
+from dotenv import load_dotenv
+from playwright.async_api import async_playwright
+```
 
-- **PSCustomObject**: Use for structured data return values
-  ```powershell
-  [PSCustomObject]@{
-      StreamNumber = $streamNumber
-      StreamType   = $streamType
-      CodecInfo    = $codecInfo
-  }
-  ```
+### Type Hints
 
-- **Type Attributes**: Use for parameters when type safety is needed
-  ```powershell
-  param (
-      [string]$inputFile,
-      [array]$filesInfo,
-      [PSCustomObject]$usedIndices,
-      [bool]$isVideo
-  )
-  ```
+Use type hints for function parameters and return values:
+```python
+def download_with_ffmpeg(stream_url: str, output_path: Path, title: str) -> Tuple[bool, Union[int, str]]:
+```
 
 ### Error Handling
 
-- Use `Write-Log` function with appropriate log levels
-- Valid log levels: `quiet`, `panic`, `fatal`, `error`, `warning`, `info`, `verbose`, `debug`
-- Use `exit 1` for error conditions
-- Use `throw` for unrecoverable errors with descriptive messages
+- Use `try/except` blocks for expected errors
+- Use `sys.exit(1)` for error conditions with user-friendly messages
+- Use `flush=True` on all print statements to ensure output appears during async operations
 
-```powershell
-if (-not $streamDetails) {
-    Write-Log "Failed to extract stream details for '$inputFile'." -logLevel 'error'
-    return $null
-}
-
-throw "Unsupported file type. Only .mpd, .m3u8 or .m3u files are supported."
+```python
+try:
+    result = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True)
+    return result.returncode == 0
+except FileNotFoundError:
+    return False
 ```
 
-### Logging
+### Logging/Output
 
-- Always use `Write-Log` instead of `Write-Host` for output
-- Pass log level as parameter: `Write-Log "message" -logLevel 'info'`
-- Use appropriate log levels:
-  - `error`: For failures
-  - `warning`: For non-critical issues
-  - `info`: For user-facing status messages
-  - `verbose`: For detailed progress information
-  - `debug`: For debugging details
+- Always use `print()` with `flush=True` for output during async operations
+- Use Dutch language for user-facing messages
+- Keep error messages concise but informative
+
+```python
+print("FOUT: ffmpeg is niet geïnstalleerd", flush=True)
+print("Stap 1: Inloggen...", flush=True)
+```
 
 ### Function Documentation
 
-- Include param blocks with type annotations
-- Keep functions focused on single responsibility
-- Return meaningful values or `$null` on failure
+Include docstrings for functions:
+```python
+def setup():
+    """Interactieve configuratie voor eerste keer"""
+    ...
 
-```powershell
-Function Get-OutputPath {
-    param(
-        [string]$outputFile,
-        [string]$directory = $null,
-        [bool]$startFromRoot = $false
-    )
-    # Function logic here
-    return [string]$outputPath
-}
+async def download_video(
+    video_url: str,
+    username: str,
+    password: str,
+    output_path: Optional[Path] = None,
+    headless: bool = True,
+):
+    """Download een VRT MAX video"""
+    ...
 ```
 
-### Cross-Platform Compatibility
+### Async/Await
 
-- Use `$IsWindows`, `$IsLinux`, `$IsMacOS` for OS detection
-- Use `[IO.Path]::DirectorySeparatorChar` for path construction
-- Avoid Windows-specific paths when possible
-- Use `$PSScriptRoot` for script-relative paths
+- Use `async def` for async functions
+- Use `await` for async calls
+- Run async code with `asyncio.run()` in main
 
-### External Command Execution
+```python
+async def download_video(...):
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(...)
+        ...
 
-- Use call operator `&` for external commands
-- Capture output with `2>&1` for stderr redirection
-  ```powershell
-  $ffprobeOutput = & "ffprobe" $mpd 2>&1
-  ```
-
-### Cache Implementation
-
-- Use `$global:cachedInfo` hashtable for caching
-- Check cache before expensive operations:
-  ```powershell
-  if ($global:cachedInfo.ContainsKey($outputKey)) {
-      return $global:cachedInfo[$outputKey]
-  }
-  ```
+success = asyncio.run(download_video(...))
+```
 
 ## Project-Specific Notes
 
-- The script processes media files in the order provided via `-list` argument
+- Credentials are stored in `.env` file (unencrypted, gitignored)
 - Default output directory is `media/` (gitignored)
-- Supports both URL and local file inputs
-- Interactive mode (`-interactive`) prompts user for missing configuration
+- Uses Playwright with Chromium for browser automation
+- Downloads via FFmpeg HLS streams
+- All user-facing messages should be in Dutch
+- Test with these URLs:
+  - `https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/`
+  - `https://www.vrt.be/vrtmax/a-z/den-elfde-van-den-elfde/1/den-elfde-van-den-elfde-s1a1/`
