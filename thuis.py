@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Thuis
+Thuis v3.0.0
 
 Download video's van VRT MAX met automatische authenticatie.
 
