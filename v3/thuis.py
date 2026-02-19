@@ -1,195 +1,299 @@
 #!/usr/bin/env python3
 """
-Thuis v3 - VRT MAX Downloader
+Thuis - VRT MAX Downloader
 
-Downloads video content from VRT MAX with automatic authentication
-and DRM key extraction.
+Download video's van VRT MAX met automatische authenticatie.
+
+Gebruik:
+    python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/"
+    python thuis.py --setup          # Eerste keer configuratie
+    python thuis.py --help           # Help tonen
 """
 
 import asyncio
 import argparse
-import sys
-from pathlib import Path
-from dotenv import load_dotenv
 import os
+import sys
+import subprocess
+from pathlib import Path
+from typing import Optional
+from dotenv import load_dotenv
+import requests
+from playwright.async_api import async_playwright
 
-from modules import VRTAuthenticator, StreamExtractor, Downloader
+CONFIG_FILE = Path(__file__).parent / ".env"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+
+def setup():
+    """Interactieve configuratie voor eerste keer"""
+    print("=" * 50, flush=True)
+    print("Thuis - Eerste keer setup", flush=True)
+    print("=" * 50, flush=True)
+    print("\nJe VRT MAX credentials worden opgeslagen in .env", flush=True)
+    print("WAARSCHUWING: Wachtwoord wordt ongecodeerd opgeslagen!\n", flush=True)
+
+    username = input("VRT MAX email: ").strip()
+    password = input("VRT MAX wachtwoord: ").strip()
+
+    if not username or not password:
+        print("ERROR: Email en wachtwoord zijn verplicht", flush=True)
+        sys.exit(1)
+
+    with open(CONFIG_FILE, "w") as f:
+        f.write(f"VRT_USERNAME={username}\n")
+        f.write(f"VRT_PASSWORD={password}\n")
+
+    print(f"\nCredentials opgeslagen in {CONFIG_FILE}", flush=True)
+    print("Je kan nu video's downloaden!", flush=True)
+
+
+def check_ffmpeg():
+    """Controleer of ffmpeg geïnstalleerd is"""
+    try:
+        result = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True)
+        return result.returncode == 0
+    except FileNotFoundError:
+        return False
+
+
+def download_with_ffmpeg(stream_url: str, output_path: Path, title: str):
+    """Download video met ffmpeg"""
+    print(f"Downloaden naar: {output_path}", flush=True)
+
+    cmd = [
+        "ffmpeg",
+        "-i",
+        stream_url,
+        "-c",
+        "copy",
+        "-bsf:a",
+        "aac_adtstoasc",
+        "-progress",
+        "pipe:1",
+        "-y",
+        str(output_path),
+    ]
+
+    try:
+        process = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+
+        while True:
+            line = process.stdout.readline()
+            if not line and process.poll() is not None:
+                break
+            if line.strip():
+                print(f"  {line.strip()}", flush=True)
+
+        returncode = process.wait()
+
+        if returncode == 0 and output_path.exists():
+            size = output_path.stat().st_size
+            return True, size
+        else:
+            error = process.stderr.read() if process.stderr else "Onbekende fout"
+            return False, error
+    except Exception as e:
+        return False, str(e)
 
 
 async def download_video(
     video_url: str,
     username: str,
     password: str,
-    output_dir: str,
-    resolution: int,
+    output_path: Optional[Path] = None,
     headless: bool = True,
-    manual_keys: list = None,
 ):
-    print("=" * 60)
-    print("Thuis v3 - VRT MAX Downloader")
-    print("=" * 60)
+    """Download een VRT MAX video"""
 
-    downloader = Downloader(output_dir=output_dir, resolution=resolution)
+    print(f"Video: {video_url}\n", flush=True)
 
-    if not downloader.check_dependencies():
-        print("\nError: Missing required dependencies.")
-        print("Please install N_m3u8DL-RE and FFmpeg.")
-        return False
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=headless)
+        context = await browser.new_context(
+            viewport={"width": 1920, "height": 1080}, user_agent=USER_AGENT
+        )
+        page = await context.new_page()
 
-    print(f"\n[1/4] Authenticating with VRT MAX...")
-    auth = VRTAuthenticator(username, password, headless=headless)
+        # Stap 1: Inloggen
+        print("Stap 1: Inloggen...", flush=True)
 
-    try:
-        await auth.start_browser()
+        redirect_uri = "https://www.vrt.be/vrtmax/sso/callback"
+        login_url = (
+            f"https://login.vrt.be/authorize?response_type=code"
+            f"&client_id=vrtnu-site&redirect_uri={redirect_uri}"
+            f"&scope=openid%20profile%20email%20video"
+        )
 
-        if not await auth.login():
-            print("Error: Failed to login to VRT MAX")
+        await page.goto(login_url, wait_until="networkidle")
+        await asyncio.sleep(3)
+
+        await page.fill('input[type="email"]', username)
+        await page.click('button[type="submit"]')
+        await asyncio.sleep(3)
+
+        pw = await page.query_selector('input[type="password"]')
+        if pw:
+            await pw.fill(password)
+            await page.click('button[type="submit"]')
+            await asyncio.sleep(8)
+
+        if "login" in page.url.lower():
+            print("FOUT: Inloggen mislukt", flush=True)
             return False
 
-        print("[OK] Logged in successfully")
+        print("  Ingelogd!\n", flush=True)
 
-        print(f"\n[2/4] Navigating to video: {video_url}")
-        if not await auth.navigate_to_video(video_url):
-            print("Error: Failed to navigate to video")
+        # Stap 2: Naar VRT MAX
+        print("Stap 2: Stream ophalen...", flush=True)
+        await page.goto("https://www.vrt.be/vrtmax/", wait_until="networkidle")
+        await asyncio.sleep(3)
+
+        # Stap 3: Stream URL
+        redirect_url = None
+
+        async def handle_response(response):
+            nonlocal redirect_url
+            if "/videos/" in response.url and "vualto" in response.url:
+                location = response.headers.get("location", "")
+                if location:
+                    redirect_url = (
+                        "https://media-services-public.vrt.be" + location
+                        if location.startswith("/")
+                        else location
+                    )
+
+        page.on("response", handle_response)
+
+        await page.goto(video_url, wait_until="networkidle")
+        await asyncio.sleep(8)
+
+        if not redirect_url:
+            print("FOUT: Kon stream URL niet ophalen", flush=True)
             return False
 
-        print("[OK] Video page loaded")
+        cookies = await context.cookies()
+        cookie_header = "; ".join(
+            [f"{c.get('name', '')}={c.get('value', '')}" for c in cookies]
+        )
 
-        print(f"\n[3/4] Extracting stream information...")
-        page = auth.get_page()
-        extractor = StreamExtractor(page)
+        headers = {
+            "User-Agent": USER_AGENT,
+            "Cookie": cookie_header,
+            "Referer": "https://www.vrt.be/",
+        }
 
-        await extractor.inject_capture_scripts()
+        resp = requests.get(redirect_url, headers=headers)
 
-        await auth.navigate_to_video(video_url)
-
-        stream_info = await extractor.extract_stream_info()
-
-        if not stream_info:
-            print("Error: Failed to extract stream information")
+        if resp.status_code != 200:
+            print(f"FOUT: API gaf status {resp.status_code}", flush=True)
             return False
 
-        print(f"[OK] Found MPD: {stream_info.mpd_url[:80]}...")
-        if stream_info.pssh:
-            print(f"[OK] PSSH: {stream_info.pssh[:50]}...")
-        if stream_info.license_url:
-            print(f"[OK] License URL: {stream_info.license_url}")
+        data = resp.json()
+        title = data.get("title", "video")
+        print(f"  Titel: {title}\n", flush=True)
 
-        print(f"\n[4/4] Starting download...")
+        stream_url = None
+        for tu in data.get("targetUrls", []):
+            if tu.get("type") == "hls":
+                stream_url = tu.get("url")
+                break
 
-        output_filename = downloader.generate_filename_from_url(video_url)
+        if not stream_url:
+            print("FOUT: Geen HLS stream gevonden", flush=True)
+            return False
 
-        keys_to_use = manual_keys
-        if not keys_to_use and stream_info.keys:
-            keys_to_use = stream_info.keys
+        # Stap 4: Downloaden
+        print("Stap 3: Downloaden...", flush=True)
 
-        if stream_info.mpd_url:
-            result = await downloader.download(
-                mpd_url=stream_info.mpd_url,
-                output_filename=output_filename,
-                keys=keys_to_use,
-                license_url=stream_info.license_url,
-                license_headers=stream_info.license_headers,
-            )
+        if not output_path:
+            output_dir = Path("media")
+            output_dir.mkdir(exist_ok=True)
+            safe_title = "".join(c for c in title if c.isalnum() or c in " -_").strip()
+            output_path = output_dir / f"{safe_title}.mp4"
 
-            if result.success:
-                print(f"\n[SUCCESS] Downloaded: {result.output_file}")
-                return True
-            else:
-                print(f"\n[ERROR] Download failed: {result.error}")
+        success, result = download_with_ffmpeg(stream_url, output_path, title)
 
-                if not keys_to_use:
-                    print("\n" + "=" * 60)
-                    print("DRM KEYS REQUIRED")
-                    print("=" * 60)
-                    print("This video is protected with Widevine DRM.")
-                    print("You need to provide decryption keys.")
-                    print("\nTo get keys:")
-                    print("1. Use a tool like AllHell3 or pywidevine")
-                    print("2. Or use a key database")
-                    print("\nPSSH:", stream_info.pssh)
-                    print("License URL:", stream_info.license_url)
-                    print("\nThen run with: --key <kid>:<key>")
-                    print("=" * 60)
-
-                return False
+        if success:
+            size_mb = int(result) / 1024 / 1024
+            print(f"\n  SUCCES!", flush=True)
+            print(f"  Opgeslagen: {output_path}", flush=True)
+            print(f"  Grootte: {size_mb:.2f} MB", flush=True)
+            return True
         else:
-            print("Error: No MPD URL found")
+            error_msg = str(result)
+            print(f"  FOUT: {error_msg[:200]}", flush=True)
             return False
 
-    finally:
-        await auth.close_browser()
+        await browser.close()
 
 
 def main():
     load_dotenv()
 
     parser = argparse.ArgumentParser(
-        description="Download videos from VRT MAX",
+        description="Thuis - VRT MAX Downloader",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  %(prog)s "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/"
-  %(prog)s "https://www.vrt.be/vrtmax/..." --key abc123:def456
-  %(prog)s "https://www.vrt.be/vrtmax/..." --no-headless
+Voorbeelden:
+  python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/"
+  python thuis.py --setup
+  python thuis.py "url" -o "output.mp4"
+  python thuis.py "url" --no-headless
         """,
     )
 
-    parser.add_argument("url", help="VRT MAX video URL")
+    parser.add_argument("url", nargs="?", help="VRT MAX video URL")
     parser.add_argument(
-        "--username",
-        "-u",
-        default=os.getenv("VRT_USERNAME"),
-        help="VRT MAX username (or set VRT_USERNAME env)",
+        "-u", "--username", default=os.getenv("VRT_USERNAME"), help="VRT MAX email"
     )
     parser.add_argument(
-        "--password",
-        "-p",
-        default=os.getenv("VRT_PASSWORD"),
-        help="VRT MAX password (or set VRT_PASSWORD env)",
+        "-p", "--password", default=os.getenv("VRT_PASSWORD"), help="VRT MAX wachtwoord"
     )
+    parser.add_argument("-o", "--output", help="Output bestand")
+    parser.add_argument("--setup", action="store_true", help="Eerste keer configuratie")
     parser.add_argument(
-        "--output",
-        "-o",
-        default=os.getenv("OUTPUT_DIR", "media"),
-        help="Output directory",
-    )
-    parser.add_argument(
-        "--resolution",
-        "-r",
-        type=int,
-        default=int(os.getenv("DEFAULT_RESOLUTION", "1080")),
-        help="Preferred resolution",
-    )
-    parser.add_argument(
-        "--key",
-        "-k",
-        action="append",
-        dest="keys",
-        metavar="KID:KEY",
-        help="DRM decryption key (can be specified multiple times)",
-    )
-    parser.add_argument(
-        "--no-headless", action="store_true", help="Show browser window"
+        "--no-headless", action="store_true", help="Toon browser venster"
     )
 
     args = parser.parse_args()
 
-    if not args.username or not args.password:
-        print("Error: Username and password required.")
-        print("Set VRT_USERNAME and VRT_PASSWORD in .env file")
-        print("or use --username and --password arguments.")
+    if args.setup:
+        setup()
+        return
+
+    if not check_ffmpeg():
+        print("FOUT: ffmpeg is niet geïnstalleerd", flush=True)
+        print("Installeer ffmpeg eerst:", flush=True)
+        print("  Ubuntu/Debian: sudo apt install ffmpeg", flush=True)
+        print("  Mac: brew install ffmpeg", flush=True)
+        print("  Windows: winget install ffmpeg", flush=True)
         sys.exit(1)
+
+    if not args.username or not args.password:
+        print("Geen credentials gevonden.", flush=True)
+        print("Gebruik: python thuis.py --setup", flush=True)
+        print(
+            "Of geef credentials mee: python thuis.py <url> -u <email> -p <wachtwoord>",
+            flush=True,
+        )
+        sys.exit(1)
+
+    if not args.url:
+        parser.print_help()
+        sys.exit(1)
+
+    output_path = Path(args.output) if args.output else None
 
     success = asyncio.run(
         download_video(
             video_url=args.url,
             username=args.username,
             password=args.password,
-            output_dir=args.output,
-            resolution=args.resolution,
+            output_path=output_path,
             headless=not args.no_headless,
-            manual_keys=args.keys,
         )
     )
 
