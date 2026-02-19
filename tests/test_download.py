@@ -63,9 +63,8 @@ class TestDownload:
         output_path.unlink(missing_ok=True)
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(
-        reason="Geen echte DRM-protected URL beschikbaar - huidige URL is DRM-vrij"
-    )
+    @pytest.mark.slow
+    @pytest.mark.timeout(300)
     async def test_download_drm_protected_fails(self, vrt_credentials, output_dir):
         """Test dat DRM-beschermde video faalt met duidelijke foutmelding"""
         from thuis import download_video

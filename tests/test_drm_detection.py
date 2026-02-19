@@ -193,11 +193,9 @@ class TestDRMDetection:
             await browser.close()
 
             if redirect_url and resp is not None and resp.status_code == 200:
-                if has_hls and not has_dash_drm:
-                    pytest.skip(
-                        f"Deze video is DRM-vrij (heeft HLS). "
-                        f"Zoek een andere URL met DRM. Types: {[tu.get('type') for tu in target_urls]}"
-                    )
-                assert not has_hls or has_dash_drm, (
-                    "DRM-beschermde video zou geen HLS moeten hebben, of wel DASH+DRM"
+                has_drm_in_url = any("_drm_" in tu.get("url", "") for tu in target_urls)
+                if not has_drm_in_url:
+                    pytest.skip(f"Deze video is DRM-vrij. Zoek een andere URL met DRM.")
+                assert has_drm_in_url, (
+                    "DRM-beschermde video zou _drm_ in URL moeten hebben"
                 )

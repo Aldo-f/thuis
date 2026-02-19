@@ -13,7 +13,7 @@ VRT_PASSWORD = os.getenv("VRT_PASSWORD", "")
 TEST_URLS = {
     "drm_free_short": "https://www.vrt.be/vrtmax/a-z/flikken-maastricht/trailer/flikken-maastricht-trailer-s15/",
     "drm_free_long": "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/",
-    "drm_protected": "https://www.vrt.be/vrtmax/a-z/this-is-not-a-murder-mystery/1/this-is-not-a-murder-mystery-s1a1/",
+    "drm_protected": "https://www.vrt.be/vrtmax/a-z/de-camping/1/de-camping-s1a1/",
 }
 
 
