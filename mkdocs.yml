@@ -27,10 +27,10 @@ theme:
 
 extra:
   alternate:
-    - link: /
+    - link: /thuis/
       name: English
       flag: 🇬🇧
-    - link: /nl/
+    - link: /thuis/nl/
       name: Nederlands
       flag: 🇳🇱
 
