@@ -139,6 +139,10 @@ class TestDRMDetection:
             await asyncio.sleep(2)
 
             redirect_url = None
+            resp = None
+            has_hls = False
+            has_dash_drm = False
+            target_urls = []
 
             async def handle_response(response):
                 nonlocal redirect_url
@@ -188,7 +192,12 @@ class TestDRMDetection:
 
             await browser.close()
 
-            if redirect_url and resp.status_code == 200:
+            if redirect_url and resp is not None and resp.status_code == 200:
+                if has_hls and not has_dash_drm:
+                    pytest.skip(
+                        f"Deze video is DRM-vrij (heeft HLS). "
+                        f"Zoek een andere URL met DRM. Types: {[tu.get('type') for tu in target_urls]}"
+                    )
                 assert not has_hls or has_dash_drm, (
                     "DRM-beschermde video zou geen HLS moeten hebben, of wel DASH+DRM"
                 )

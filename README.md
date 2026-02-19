@@ -51,8 +51,25 @@ Video's worden automatisch opgeslagen in de `media/` map.
 ## Tests
 
 ```bash
-pytest tests/
+# Snel (alleen DRM detectie, geen downloads)
+pytest tests/test_drm_detection.py -v
+
+# Alle tests inclusief downloads (langzaam)
+pytest tests/ -v -m ""
+
+# Alleen snelle tests (geen downloads)
+pytest tests/ -v -m "not slow"
 ```
+
+### Test URLs
+
+| Type | URL | Duur | DRM |
+|------|-----|------|-----|
+| Kort DRM-vrij | Flikken Maastricht trailer | ~2 min | Nee |
+| Lang DRM-vrij | Thuis aflevering | ~10 min | Nee |
+| DRM beschermd | TBD | - | Ja* |
+
+*De huidige "DRM" URL is ook DRM-vrij - zoek nog naar een echte DRM-protected video.
 
 ## Hoe het werkt
 

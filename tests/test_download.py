@@ -1,8 +1,12 @@
 """Test VRT MAX downloads - DRM-free and DRM protected"""
 
+import sys
 import pytest
 import asyncio
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from conftest import TEST_URLS, skip_no_credentials, vrt_credentials, output_dir
 
 
@@ -11,8 +15,10 @@ class TestDownload:
     """Test video downloads from VRT MAX"""
 
     @pytest.mark.asyncio
+    @pytest.mark.slow
+    @pytest.mark.timeout(300)
     async def test_download_short_drm_free(self, vrt_credentials, output_dir):
-        """Test download van korte DRM-vrije trailer (~30 sec)"""
+        """Test download van korte DRM-vrije trailer (~2 min)"""
         from thuis import download_video
 
         username, password = vrt_credentials
@@ -34,8 +40,9 @@ class TestDownload:
 
     @pytest.mark.asyncio
     @pytest.mark.slow
+    @pytest.mark.timeout(600)
     async def test_download_long_drm_free(self, vrt_credentials, output_dir):
-        """Test download van volledige aflevering (~5 min)"""
+        """Test download van volledige aflevering (~10 min)"""
         from thuis import download_video
 
         username, password = vrt_credentials
@@ -56,6 +63,9 @@ class TestDownload:
         output_path.unlink(missing_ok=True)
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(
+        reason="Geen echte DRM-protected URL beschikbaar - huidige URL is DRM-vrij"
+    )
     async def test_download_drm_protected_fails(self, vrt_credentials, output_dir):
         """Test dat DRM-beschermde video faalt met duidelijke foutmelding"""
         from thuis import download_video
