@@ -1,4 +1,4 @@
-# Thuis - VRT MAX Downloader
+# Thuis
 
 Download videos from VRT MAX with automatic authentication.
 

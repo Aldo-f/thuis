@@ -1,4 +1,4 @@
-# Thuis - VRT MAX Downloader
+# Thuis
 
 Download video's van VRT MAX met automatische authenticatie.
 

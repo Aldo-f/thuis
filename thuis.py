@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Thuis - VRT MAX Downloader
+Thuis
 
 Download video's van VRT MAX met automatische authenticatie.
 
@@ -234,7 +234,7 @@ def main():
     load_dotenv()
 
     parser = argparse.ArgumentParser(
-        description="Thuis - VRT MAX Downloader",
+        description="Thuis",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Voorbeelden:
