@@ -159,6 +159,9 @@ def filter_episodes_to_download(
     return episodes_to_download
 
 
+BASE_URL = "https://www.vrt.be"
+
+
 def discover_season_episodes(page) -> List[str]:
     """Discover all episode URLs from a season page.
 
@@ -176,6 +179,8 @@ def discover_season_episodes(page) -> List[str]:
         href = link.get_attribute("href")
         if href and "/vrtmax/a-z/" in href:
             if re.search(r"[a-z]+-s\d+a\d+", href):
+                if href.startswith("/"):
+                    href = BASE_URL + href
                 if href not in episode_urls:
                     episode_urls.append(href)
 
@@ -469,11 +474,16 @@ async def download_season(
             () => {
                 const allLinks = document.querySelectorAll('a');
                 const urls = [];
+                const baseUrl = 'https://www.vrt.be';
                 allLinks.forEach(link => {
                     const href = link.getAttribute('href');
                     if (href && href.includes('/vrtmax/a-z/')) {
                         if (href.match(/[a-z]+-s\\d+a\\d+/)) {
-                            urls.push(href);
+                            if (href.startsWith('/')) {
+                                urls.push(baseUrl + href);
+                            } else {
+                                urls.push(href);
+                            }
                         }
                     }
                 });

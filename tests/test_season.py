@@ -215,6 +215,23 @@ class TestEpisodeDiscovery:
         assert "thuis-s31a6002" in result[1]
         assert "thuis-s31a6003" in result[2]
 
+    def test_discover_episodes_relative_urls(self):
+        """Should convert relative URLs to absolute"""
+        from thuis import discover_season_episodes
+
+        page = MockPage(
+            [
+                "/vrtmax/a-z/thuis/31/thuis-s31a6001/",
+                "/vrtmax/a-z/thuis/31/thuis-s31a6002/",
+            ]
+        )
+
+        result = discover_season_episodes(page)
+
+        assert len(result) == 2
+        assert result[0].startswith("https://www.vrt.be")
+        assert "/thuis-s31a6001/" in result[0]
+
     def test_discover_episodes_no_results(self):
         """Should return empty list when no episodes found"""
         from thuis import discover_season_episodes
