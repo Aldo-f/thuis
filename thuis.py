@@ -13,16 +13,187 @@ Gebruik:
 import asyncio
 import argparse
 import os
+import re
 import sys
 import subprocess
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict
 from dotenv import load_dotenv
 import requests
 from playwright.async_api import async_playwright
 
 CONFIG_FILE = Path(__file__).parent / ".env"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+MEDIA_DIR = Path("media")
+
+
+def detect_url_type(url: str) -> str:
+    """Detect if URL is a single episode, season, or trailer.
+
+    Returns: 'single', 'season', or 'trailer'
+    """
+    url = url.rstrip("/")
+
+    if "/trailer/" in url:
+        return "trailer"
+
+    url_parts = url.split("/")
+
+    last_part = url_parts[-1]
+    second_last = url_parts[-2] if len(url_parts) >= 2 else ""
+
+    if re.match(r"^[a-z]+-s\d+[a]\d+$", last_part):
+        return "single"
+
+    if last_part.isdigit():
+        return "season"
+
+    return "single"
+
+
+def parse_episode_info(url: str) -> Dict:
+    """Parse episode information from URL.
+
+    Returns dict with keys: program, season, episode, type
+    """
+    url = url.rstrip("/")
+    url_parts = url.split("/")
+
+    result = {"program": "", "season": "", "episode": "", "type": "episode"}
+
+    if "/trailer/" in url:
+        result["type"] = "trailer"
+        for part in reversed(url_parts):
+            if part and "trailer" not in part and part != "a-z" and part != "vrtmax":
+                result["program"] = part.replace("-trailer", "")
+                break
+        return result
+
+    last_part = url_parts[-1]
+    season_part = url_parts[-2] if len(url_parts) >= 2 else ""
+
+    match = re.match(r"^([a-z-]+)-s(\d+)a(\d+)$", last_part)
+    if match:
+        result["program"] = match.group(1)
+        result["season"] = match.group(2)
+        result["episode"] = match.group(3)
+    else:
+        if last_part.isdigit():
+            result["program"] = url_parts[-2] if len(url_parts) >= 2 else "video"
+            result["season"] = last_part
+        else:
+            result["program"] = last_part
+
+    return result
+
+
+def generate_filename(info: Dict) -> str:
+    """Generate filename from episode info.
+
+    Format: {program}-s{season}a{episode}.mp4
+    """
+    program = info.get("program", "video")
+
+    if info.get("type") == "trailer":
+        return f"{program}-trailer.mp4"
+
+    season = info.get("season", "")
+    episode = info.get("episode", "")
+
+    if season and episode:
+        return f"{program}-s{season}a{episode}.mp4"
+
+    return f"{program}.mp4"
+
+
+def get_output_path(url: str, program_name: str = None) -> Path:
+    """Get output path for download.
+
+    Returns Path in media/{program}/ folder.
+    """
+    info = parse_episode_info(url)
+
+    if program_name:
+        program = program_name
+    else:
+        program = info.get("program", "video")
+
+    program_dir = MEDIA_DIR / program.capitalize()
+    program_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = generate_filename(info)
+
+    return program_dir / filename
+
+
+def filter_episodes_to_download(
+    all_episodes: List[str], existing_files: List[str] = None, start_episode: int = None
+) -> List[str]:
+    """Filter episodes to download based on existing files and start episode.
+
+    Args:
+        all_episodes: List of episode filenames
+        existing_files: List of already downloaded filenames
+        start_episode: Episode number to start from
+
+    Returns:
+        List of episodes to download
+    """
+    existing = set(existing_files) if existing_files else set()
+
+    episodes_to_download = []
+
+    for episode in all_episodes:
+        if episode in existing:
+            continue
+
+        if start_episode:
+            match = re.search(r"a(\d+)\.mp4$", episode)
+            if match:
+                ep_num = int(match.group(1))
+                if ep_num < start_episode:
+                    continue
+
+        episodes_to_download.append(episode)
+
+    return episodes_to_download
+
+
+def discover_season_episodes(page) -> List[str]:
+    """Discover all episode URLs from a season page.
+
+    Args:
+        page: Playwright page object on the season URL
+
+    Returns:
+        List of episode URLs
+    """
+    episode_urls = []
+
+    links = page.query_selector_all("a[href*='/vrtmax/a-z/']")
+
+    for link in links:
+        href = link.get_attribute("href")
+        if href and re.search(r"/[a-z]+-s\d+a\d+/$", href):
+            if href not in episode_urls:
+                episode_urls.append(href)
+
+    return sorted(episode_urls)
+
+
+def get_existing_episodes(program_dir: Path) -> List[str]:
+    """Get list of already downloaded episodes in a program directory.
+
+    Args:
+        program_dir: Path to the program directory
+
+    Returns:
+        List of existing episode filenames
+    """
+    if not program_dir.exists():
+        return []
+
+    return [f.name for f in program_dir.glob("*.mp4")]
 
 
 def setup():
@@ -230,6 +401,221 @@ async def download_video(
         await browser.close()
 
 
+async def download_season(
+    season_url: str,
+    username: str,
+    password: str,
+    start_episode: int = None,
+    force: bool = False,
+    headless: bool = True,
+):
+    """Download all episodes from a season"""
+
+    url_type = detect_url_type(season_url)
+    if url_type != "season":
+        print(f"FOUT: URL is geen seizoens-URL: {season_url}", flush=True)
+        return False
+
+    info = parse_episode_info(season_url)
+    program = info.get("program", "video").capitalize()
+    season = info.get("season", "")
+
+    print(f"Seizoen downloaden: {program} S{season}\n", flush=True)
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=headless)
+        context = await browser.new_context(
+            viewport={"width": 1920, "height": 1080}, user_agent=USER_AGENT
+        )
+        page = await context.new_page()
+
+        print("Stap 1: Inloggen...", flush=True)
+
+        redirect_uri = "https://www.vrt.be/vrtmax/sso/callback"
+        login_url = (
+            f"https://login.vrt.be/authorize?response_type=code"
+            f"&client_id=vrtnu-site&redirect_uri={redirect_uri}"
+            f"&scope=openid%20profile%20email%20video"
+        )
+
+        await page.goto(login_url, wait_until="networkidle")
+        await asyncio.sleep(3)
+
+        await page.fill('input[type="email"]', username)
+        await page.click('button[type="submit"]')
+        await asyncio.sleep(3)
+
+        pw = await page.query_selector('input[type="password"]')
+        if pw:
+            await pw.fill(password)
+            await page.click('button[type="submit"]')
+            await asyncio.sleep(8)
+
+        if "login" in page.url.lower():
+            print("FOUT: Inloggen mislukt", flush=True)
+            return False
+
+        print("  Ingelogd!\n", flush=True)
+
+        print("Stap 2: Afleveringen ophalen...", flush=True)
+        await page.goto("https://www.vrt.be/vrtmax/", wait_until="networkidle")
+        await asyncio.sleep(2)
+
+        await page.goto(season_url, wait_until="networkidle")
+        await asyncio.sleep(5)
+
+        episode_urls = await page.evaluate("""
+            () => {
+                const links = document.querySelectorAll('a[href*="/vrtmax/a-z/"]');
+                const urls = [];
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && /\\/[a-z]+-s\\d+a\\d+\\/$/.test(href)) {
+                        urls.push(href);
+                    }
+                });
+                return [...new Set(urls)].sort();
+            }
+        """)
+
+        if not episode_urls:
+            print("FOUT: Geen afleveringen gevonden", flush=True)
+            return False
+
+        print(f"  Gevonden: {len(episode_urls)} afleveringen\n", flush=True)
+
+        program_dir = MEDIA_DIR / program
+        program_dir.mkdir(parents=True, exist_ok=True)
+
+        existing_files = [] if force else get_existing_episodes(program_dir)
+
+        if existing_files:
+            print(f"  Reeds gedownload: {len(existing_files)}\n", flush=True)
+
+        all_episodes = []
+        for url in episode_urls:
+            info = parse_episode_info(url)
+            filename = generate_filename(info)
+            all_episodes.append(filename)
+
+        episodes_to_download = filter_episodes_to_download(
+            all_episodes,
+            existing_files=existing_files if not force else None,
+            start_episode=start_episode,
+        )
+
+        if not episodes_to_download:
+            print("  Alle afleveringen zijn al gedownload!", flush=True)
+            return True
+
+        print(
+            f"  Te downloaden: {len(episodes_to_download)} afleveringen\n", flush=True
+        )
+
+        cookies = await context.cookies()
+        cookie_header = "; ".join(
+            [f"{c.get('name', '')}={c.get('value', '')}" for c in cookies]
+        )
+
+        headers = {
+            "User-Agent": USER_AGENT,
+            "Cookie": cookie_header,
+            "Referer": "https://www.vrt.be/",
+        }
+
+        await browser.close()
+
+        success_count = 0
+        failed_count = 0
+
+        for i, filename in enumerate(episodes_to_download, 1):
+            episode_url = None
+            for url in episode_urls:
+                if parse_episode_info(url).get("episode") in filename:
+                    episode_url = url
+                    break
+
+            if not episode_url:
+                continue
+
+            episode_info = parse_episode_info(episode_url)
+            print(f"[{i}/{len(episodes_to_download)}] {filename}...", flush=True)
+
+            redirect_url = None
+
+            async with async_playwright() as p2:
+                browser2 = await p2.chromium.launch(headless=headless)
+                context2 = await browser2.new_context(
+                    viewport={"width": 1920, "height": 1080}, user_agent=USER_AGENT
+                )
+                page2 = await context2.new_page()
+
+                await context2.add_cookies(cookies)
+
+                async def handle_response(response):
+                    nonlocal redirect_url
+                    if "/videos/" in response.url and "vualto" in response.url:
+                        location = response.headers.get("location", "")
+                        if location:
+                            redirect_url = (
+                                "https://media-services-public.vrt.be" + location
+                                if location.startswith("/")
+                                else location
+                            )
+
+                page2.on("response", handle_response)
+
+                await page2.goto(episode_url, wait_until="networkidle")
+                await asyncio.sleep(5)
+
+                if not redirect_url:
+                    print(f"    FOUT: Kon stream URL niet ophalen", flush=True)
+                    failed_count += 1
+                    await browser2.close()
+                    continue
+
+                resp = requests.get(redirect_url, headers=headers)
+
+                if resp.status_code != 200:
+                    print(f"    FOUT: API gaf status {resp.status_code}", flush=True)
+                    failed_count += 1
+                    await browser2.close()
+                    continue
+
+                data = resp.json()
+                title = data.get("title", filename)
+
+                stream_url = None
+                for tu in data.get("targetUrls", []):
+                    if tu.get("type") == "hls":
+                        stream_url = tu.get("url")
+                        break
+
+                if not stream_url:
+                    print(f"    FOUT: Geen HLS stream gevonden", flush=True)
+                    failed_count += 1
+                    await browser2.close()
+                    continue
+
+                output_path = program_dir / filename
+
+                success, result = download_with_ffmpeg(stream_url, output_path, title)
+
+                if success:
+                    print(f"    ✓", flush=True)
+                    success_count += 1
+                else:
+                    print(f"    ✗ FOUT", flush=True)
+                    failed_count += 1
+
+                await browser2.close()
+
+        print(
+            f"\n  Resultaat: {success_count} gelukt, {failed_count} gefaald", flush=True
+        )
+        return success_count > 0
+
+
 def main():
     load_dotenv()
 
@@ -239,6 +625,7 @@ def main():
         epilog="""
 Voorbeelden:
   python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/"
+  python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/" --start 10
   python thuis.py --setup
   python thuis.py "url" -o "output.mp4"
   python thuis.py "url" --no-headless
@@ -256,6 +643,10 @@ Voorbeelden:
     parser.add_argument("--setup", action="store_true", help="Eerste keer configuratie")
     parser.add_argument(
         "--no-headless", action="store_true", help="Toon browser venster"
+    )
+    parser.add_argument("-s", "--start", type=int, help="Start vanaf aflevering nummer")
+    parser.add_argument(
+        "-f", "--force", action="store_true", help="Herdownload bestaande bestanden"
     )
 
     args = parser.parse_args()
@@ -285,17 +676,30 @@ Voorbeelden:
         parser.print_help()
         sys.exit(1)
 
+    url_type = detect_url_type(args.url)
     output_path = Path(args.output) if args.output else None
 
-    success = asyncio.run(
-        download_video(
-            video_url=args.url,
-            username=args.username,
-            password=args.password,
-            output_path=output_path,
-            headless=not args.no_headless,
+    if url_type == "season":
+        success = asyncio.run(
+            download_season(
+                season_url=args.url,
+                username=args.username,
+                password=args.password,
+                start_episode=args.start,
+                force=args.force,
+                headless=not args.no_headless,
+            )
         )
-    )
+    else:
+        success = asyncio.run(
+            download_video(
+                video_url=args.url,
+                username=args.username,
+                password=args.password,
+                output_path=output_path,
+                headless=not args.no_headless,
+            )
+        )
 
     sys.exit(0 if success else 1)
 
