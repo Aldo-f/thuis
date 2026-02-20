@@ -743,7 +743,7 @@ async def download_season(
 
         log(f"Gevonden: {len(episode_urls)} afleveringen")
 
-        program_dir = MEDIA_DIR / program
+        program_dir = MEDIA_DIR / program.capitalize()
         program_dir.mkdir(parents=True, exist_ok=True)
 
         existing_files = [] if force else get_existing_episodes(program_dir)

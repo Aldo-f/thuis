@@ -2,7 +2,7 @@
 
 Download video's van VRT MAX met automatische authenticatie.
 
-[Beginnen](#installatie) · [Gebruik](#gebruik) · [Documentatie](https://aldo-f.github.io/thuis/nl/) · [English](README.md)
+[Beginnen](#installatie) · [Gebruik](#gebruik) · [Web UI](#web-ui) · [Documentatie](https://aldo-f.github.io/thuis/nl/) · [English](README.md)
 
 ---
 
@@ -12,6 +12,7 @@ Download video's van VRT MAX met automatische authenticatie.
 - **HLS Stream Download**: HLS streams ophalen en downloaden met FFmpeg
 - **DRM Detectie**: Herkent DRM-beschermde content
 - **Eenvoudige CLI**: Makkelijk te gebruiken command line interface
+- **Web UI**: Browser-gebaseerde interface voor makkelijk downloaden
 
 ---
 
@@ -58,6 +59,15 @@ Dit vraagt om je VRT MAX email en wachtwoord, opgeslagen in `.env`.
 # Download een video
 python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/"
 
+# Download een volledig seizoen
+python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/"
+
+# Dry-run (toon wat gedownload zou worden)
+python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/" --dry-run
+
+# Interactieve modus (vraag voor elk download)
+python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/" --interactive
+
 # Met custom output naam
 python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/" -o "thuis.mp4"
 
@@ -66,6 +76,25 @@ python thuis.py "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6017/" --no-he
 ```
 
 Video's worden automatisch opgeslagen in de `media/` map.
+
+---
+
+## Web UI
+
+Er is ook een browser-gebaseerde interface beschikbaar:
+
+```bash
+# Start de web server
+python app.py
+```
+
+Open dan http://localhost:5000 in je browser.
+
+De Web UI laat je toe om:
+- Een VRT MAX URL in te geven
+- Te zien wat gedownload zal worden (seizoen of enkele aflevering)
+- Downloads te starten met één klik
+- Download voortgang te volgen
 
 ---
 

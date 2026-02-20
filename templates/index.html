@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thuis - VRT MAX Downloader</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .status-logged-in {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-logged-out {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .result {
+            margin-top: 20px;
+        }
+        
+        .result-item {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .result-item h3 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .episode-count {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .download-info {
+            background: #e7f3ff;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+        
+        .download-info p {
+            margin: 8px 0;
+            color: #333;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #999;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Thuis</h1>
+        <p class="subtitle">VRT MAX Video Downloader</p>
+        
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Status</h2>
+                {% if logged_in %}
+                <span class="status-badge status-logged-in">✓ Ingelogd</span>
+                {% else %}
+                <span class="status-badge status-logged-out">✗ Niet ingelogd</span>
+                {% endif %}
+            </div>
+            
+            <p style="color: #666; margin-bottom: 20px;">{{ login_message }}</p>
+            
+            {% if not logged_in %}
+            <div style="background: #fff3cd; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <p><strong>Tip:</strong> Start eerst de CLI versie om in te loggen:</p>
+                <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px;">python thuis.py --setup</code>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">Download</h2>
+            
+            <div class="input-group">
+                <input type="text" id="urlInput" placeholder="https://www.vrt.be/vrtmax/a-z/thuis/31/" />
+                <button class="btn-primary" id="analyzeBtn" onclick="analyzeUrl()">Analyseren</button>
+            </div>
+            
+            <div id="result"></div>
+        </div>
+        
+        <footer>
+            Thuis CLI + Web UI | <a href="https://github.com/Aldo-f/thuis">GitHub</a>
+        </footer>
+    </div>
+    
+    <script>
+        let currentUrl = '';
+        
+        async function analyzeUrl() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) {
+                alert('Voer een URL in');
+                return;
+            }
+            
+            const btn = document.getElementById('analyzeBtn');
+            const resultDiv = document.getElementById('result');
+            
+            btn.disabled = true;
+            btn.textContent = 'Analyseren...';
+            currentUrl = url;
+            
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Bezig met analyseren...</p></div>';
+            
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: url})
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultDiv.innerHTML = `<div class="result-item" style="border-color: #dc3545;">
+                        <h3 style="color: #dc3545;">Fout</h3>
+                        <p>${data.error}</p>
+                    </div>`;
+                } else {
+                    displayResult(data);
+                }
+            } catch (e) {
+                resultDiv.innerHTML = `<div class="result-item" style="border-color: #dc3545;">
+                    <h3 style="color: #dc3545;">Verbindingsfout</h3>
+                    <p>${e.message}</p>
+                </div>`;
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Analyseren';
+        }
+        
+        function displayResult(data) {
+            const resultDiv = document.getElementById('result');
+            
+            if (data.type === 'season') {
+                resultDiv.innerHTML = `
+                    <div class="result-item">
+                        <h3>Seizoen: ${data.program} S${data.season}</h3>
+                        <p class="episode-count">Alle afleveringen van seizoen ${data.season}</p>
+                        
+                        <div class="download-info">
+                            <p><strong>Programma:</strong> ${data.program}</p>
+                            <p><strong>Seizoen:</strong> ${data.season}</p>
+                            <p><strong>URL type:</strong> ${data.type}</p>
+                        </div>
+                        
+                        <button class="btn-success" style="margin-top: 16px; width: 100%;" 
+                                onclick="startDownload('${currentUrl}')">
+                            Download Seizoen ${data.season}
+                        </button>
+                    </div>
+                `;
+            } else if (data.type === 'single') {
+                resultDiv.innerHTML = `
+                    <div class="result-item">
+                        <h3>Aflevering: ${data.program} S${data.season} E${data.episode}</h3>
+                        
+                        <div class="download-info">
+                            <p><strong>Programma:</strong> ${data.program}</p>
+                            <p><strong>Seizoen:</strong> ${data.season}</p>
+                            <p><strong>Aflevering:</strong> ${data.episode}</p>
+                        </div>
+                        
+                        <button class="btn-success" style="margin-top: 16px; width: 100%;"
+                                onclick="startDownload('${currentUrl}')">
+                            Download Aflevering
+                        </button>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result-item">
+                        <h3>URL Type: ${data.type}</h3>
+                        <p>Kon dit URL type niet herkennen.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function startDownload(url) {
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Download starten...</p></div>';
+            
+            try {
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: url})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result-item" style="border-color: #28a745;">
+                            <h3 style="color: #28a745;">✓ Download gestart!</h3>
+                            <p>${data.message}</p>
+                            <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                                De download draait op de achtergrond. 
+                                Check je terminal voor voortgang.
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result-item" style="border-color: #dc3545;">
+                            <h3 style="color: #dc3545;">Fout</h3>
+                            <p>${data.error || 'Onbekende fout'}</p>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                resultDiv.innerHTML = `
+                    <div class="result-item" style="border-color: #dc3545;">
+                        <h3 style="color: #dc3545;">Verbindingsfout</h3>
+                        <p>${e.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Check login status on load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/check-login', {method: 'POST'});
+                const data = await response.json();
+                
+                if (!data.logged_in) {
+                    console.log('Not logged in:', data.message);
+                }
+            } catch (e) {
+                console.log('Could not check login status');
+            }
+        });
+    </script>
+</body>
+</html>
