@@ -506,14 +506,20 @@ async def download_season(
             if pw:
                 await pw.fill(password)
                 await page.click('button[type="submit"]')
-                random_delay(5, 8)
+
+                try:
+                    await page.wait_for_url(
+                        lambda url: "login" not in url.lower(), timeout=15000
+                    )
+                except Exception:
+                    pass
+
+                random_delay(2, 4)
             else:
                 print(
-                    "  DEBUG: Geen password field gevonden, mogelijk al ingelogd of andere flow",
+                    "  Geen password field gevonden, mogelijk al ingelogd of andere flow",
                     flush=True,
                 )
-
-            print(f"  DEBUG: URL na login: {page.url}", flush=True)
 
             if "login" in page.url.lower():
                 print("FOUT: Inloggen mislukt", flush=True)
