@@ -649,9 +649,39 @@ async def download_season(
                 print(f"    FOUT: Kon stream URL niet ophalen", flush=True)
                 failed_count += 1
                 await page_episode.close()
-                continue
 
-            resp = requests.get(redirect_url, headers=headers)
+                # Probeer opnieuw met verse cookies
+                cookies = await context.cookies()
+                cookie_header = "; ".join(
+                    [f"{c.get('name', '')}={c.get('value', '')}" for c in cookies]
+                )
+                headers = {
+                    "User-Agent": USER_AGENT,
+                    "Cookie": cookie_header,
+                    "Referer": "https://www.vrt.be/",
+                }
+
+                # Nog een poging
+                await page_episode.goto(episode_url, wait_until="networkidle")
+                random_delay(3, 6)
+
+                if redirect_url:
+                    resp = requests.get(redirect_url, headers=headers)
+                else:
+                    await page_episode.close()
+                    continue
+            else:
+                # Verfris cookies voor elke episode
+                cookies = await context.cookies()
+                cookie_header = "; ".join(
+                    [f"{c.get('name', '')}={c.get('value', '')}" for c in cookies]
+                )
+                headers = {
+                    "User-Agent": USER_AGENT,
+                    "Cookie": cookie_header,
+                    "Referer": "https://www.vrt.be/",
+                }
+                resp = requests.get(redirect_url, headers=headers)
 
             if resp.status_code != 200:
                 print(f"    FOUT: API gaf status {resp.status_code}", flush=True)
