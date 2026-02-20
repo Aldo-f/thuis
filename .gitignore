@@ -8,4 +8,5 @@ __pycache__/
 .pytest_cache/
 site/
 cookies.json
+logs/
 thuis.log

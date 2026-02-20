@@ -9,7 +9,7 @@ De tool controleert de stream URL op specifieke patronen:
 | Stream Type | URL Patroon | Downloadbaar |
 |-------------|-------------|--------------|
 | DRM-vrij | `..._nodrm_...` | Ja |
-| DRM-beschermd | `..._drm_...` | Nee |
+| Mogelijk beschermd | `..._drm_...` | Meestal Ja |
 
 ## Gedrag
 
@@ -17,24 +17,10 @@ De tool controleert de stream URL op specifieke patronen:
 - Video's met `_nodrm_` in de URL kunnen succesvol gedownload worden
 - HLS streams worden geëxtraheerd en verwerkt door FFmpeg
 
-### DRM-beschermde Content
-- Video's met `_drm_` in de URL zullen niet downloaden
-- De tool toont een foutmelding die DRM bescherming aangeeft
-
-## Voorbeelden
-
-### Downloadbare Content
-```
-URL: https://vod.vrtcdn.be/.../pl-xxx_nodrm_xxx.ism/.m3u8
-Resultaat: ✅ Succes
-```
-
-### Beschermde Content
-```
-URL: https://vod.vrtcdn.be/.../pl-xxx_drm_xxx.ism/.m3u8
-Resultaat: ❌ Mislukt - DRM beschermd
-```
+### Content met `_drm_` in URL
+- VRT is DRM aan het afbouwen - de meeste content downloadt nu succesvol
+- Als download mislukt, zie je een foutmelding
 
 ## Opmerking
 
-De meeste on-demand content op VRT MAX is DRM-vrij. Alleen sommige nieuwere series kunnen DRM bescherming hebben.
+De meeste on-demand content op VRT MAX is nu DRM-vrij. Het `_drm_` patroon in URL's betekent niet altijd dat downloaden zal mislukken.

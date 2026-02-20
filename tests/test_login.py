@@ -6,6 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from conftest import skip_no_credentials
+
 
 class TestLoginURL:
     """Test login URL construction"""
@@ -58,6 +60,7 @@ class TestLoginFlow:
 class TestCredentials:
     """Test credential handling"""
 
+    @skip_no_credentials
     def test_credentials_from_env(self):
         """Should load credentials from environment"""
         import os

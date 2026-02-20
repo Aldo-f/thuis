@@ -37,7 +37,7 @@ BASE_URL = "https://www.vrt.be"
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()],
+    handlers=[logging.FileHandler(LOG_FILE)],
 )
 logger = logging.getLogger(__name__)
 
@@ -104,6 +104,25 @@ def parse_episode_info(url: str) -> Dict:
     Returns dict with keys: program, season, episode, type
     """
     url = url.rstrip("/")
+
+    if "?" in url:
+        url, query = url.split("?", 1)
+        match = re.search(r"seizoen-(\d+)", query)
+        if match:
+            url_parts = url.rstrip("/").split("/")
+            program = (
+                url_parts[-1]
+                if url_parts[-1]
+                else (url_parts[-2] if len(url_parts) >= 2 else "video")
+            )
+            result = {
+                "program": program,
+                "season": match.group(1),
+                "episode": "",
+                "type": "episode",
+            }
+            return result
+
     url_parts = url.split("/")
 
     result = {"program": "", "season": "", "episode": "", "type": "episode"}
@@ -249,6 +268,52 @@ def get_existing_episodes(program_dir: Path) -> List[str]:
     return [f.name for f in program_dir.glob("*.mp4")]
 
 
+async def handle_cookie_consent(page) -> bool:
+    """Handle cookie consent dialog if present.
+
+    Args:
+        page: Playwright page object
+
+    Returns:
+        True if cookie dialog was handled, False if not found
+    """
+    await asyncio.sleep(3)
+
+    for attempt in range(3):
+        try:
+            frames = page.frames
+            cmp_frame = None
+            for frame in frames:
+                if "cmp-sp.vrt.be" in str(frame.url):
+                    cmp_frame = frame
+                    break
+
+            if cmp_frame:
+                btn = None
+
+                reject_buttons = await cmp_frame.query_selector_all("button")
+                for b in reject_buttons:
+                    text = await b.inner_text()
+                    if text and "weigeren" in text.lower():
+                        btn = b
+                        break
+                    elif text and "accepteren" in text.lower():
+                        btn = b
+
+                if btn:
+                    await btn.scroll_into_view_if_needed()
+                    await asyncio.sleep(0.5)
+                    await btn.click(force=True)
+                    await asyncio.sleep(2)
+                    return True
+        except Exception:
+            pass
+
+        await asyncio.sleep(2)
+
+    return False
+
+
 def setup():
     """Interactieve configuratie voor eerste keer"""
     print("=" * 50, flush=True)
@@ -325,8 +390,6 @@ def download_with_ffmpeg(
             stream_url,
             "-c",
             "copy",
-            "-bsf:a",
-            "aac_adtstoasc",
             "-progress",
             "pipe:1",
             "-reconnect",
@@ -342,7 +405,7 @@ def download_with_ffmpeg(
     try:
         log("FFmpeg starten...")
         process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True
         )
 
         start_time = time.time()
@@ -538,6 +601,8 @@ async def download_season(
     start_episode: int = None,
     force: bool = False,
     headless: bool = True,
+    dry_run: bool = False,
+    interactive: bool = False,
 ):
     """Download all episodes from a season"""
 
@@ -624,11 +689,32 @@ async def download_season(
             log("✓ Ingelogd en cookies opgeslagen!")
 
         log("Stap 2: Afleveringen ophalen...")
-        await page.goto("https://www.vrt.be/vrtmax/", wait_until="networkidle")
+        await page.goto("https://www.vrt.be/vrtmax/", wait_until="domcontentloaded")
         random_delay(1, 2)
+        await handle_cookie_consent(page)
 
-        await page.goto(season_url, wait_until="networkidle")
+        if "?" in season_url:
+            season_url_with_params = season_url
+        else:
+            parsed = parse_episode_info(season_url)
+            program = parsed.get("program", "thuis")
+            season = parsed.get("season", "")
+            season_url_with_params = (
+                f"https://www.vrt.be/vrtmax/a-z/{program}/?seizoen=seizoen-{season}"
+            )
+
+        await page.goto(season_url_with_params, wait_until="domcontentloaded")
         random_delay(3, 5)
+        await handle_cookie_consent(page)
+
+        alle_seizoenen = await page.query_selector("text=Alle seizoenen")
+        if alle_seizoenen:
+            await alle_seizoenen.evaluate("el => el.click()")
+            random_delay(5, 8)
+
+            for _ in range(15):
+                await page.evaluate("window.scrollBy(0, 1500)")
+                await asyncio.sleep(1)
 
         episode_urls = await page.evaluate("""
             () => {
@@ -682,6 +768,22 @@ async def download_season(
             return True
 
         log(f"Te downloaden: {len(episodes_to_download)} afleveringen")
+
+        if dry_run:
+            log(f"(Dry-run: geen downloads gestart)")
+            await browser.close()
+            return True
+
+        if interactive:
+            log("")
+            answer = input(
+                f"Download {len(episodes_to_download)} afleveringen starten? [y/N]: "
+            )
+            if answer.lower() != "y":
+                log("Download geannuleerd.")
+                await browser.close()
+                return False
+            log("")
 
         cookies = await context.cookies()
         cookie_header = "; ".join(
@@ -854,6 +956,16 @@ Voorbeelden:
     parser.add_argument(
         "-f", "--force", action="store_true", help="Herdownload bestaande bestanden"
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Toon welke afleveringen gedownload zouden worden",
+    )
+    parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Vraag bevestiging voor elke download",
+    )
 
     args = parser.parse_args()
 
@@ -894,6 +1006,8 @@ Voorbeelden:
                 start_episode=args.start,
                 force=args.force,
                 headless=not args.no_headless,
+                dry_run=args.dry_run,
+                interactive=args.interactive,
             )
         )
     else:
