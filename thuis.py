@@ -39,6 +39,11 @@ def random_delay(min_sec: float = 1.0, max_sec: float = 3.0):
     time.sleep(delay)
 
 
+def detect_login_success(url: str) -> bool:
+    """Detect if login was successful based on URL"""
+    return "login" not in url.lower()
+
+
 def save_cookies(cookies: List, path: Path = COOKIE_FILE):
     """Save cookies to a JSON file."""
     with open(path, "w") as f:
@@ -497,10 +502,18 @@ async def download_season(
             random_delay(1, 3)
 
             pw = await page.query_selector('input[type="password"]')
+            print(f"  DEBUG: Password field found: {pw is not None}", flush=True)
             if pw:
                 await pw.fill(password)
                 await page.click('button[type="submit"]')
                 random_delay(5, 8)
+            else:
+                print(
+                    "  DEBUG: Geen password field gevonden, mogelijk al ingelogd of andere flow",
+                    flush=True,
+                )
+
+            print(f"  DEBUG: URL na login: {page.url}", flush=True)
 
             if "login" in page.url.lower():
                 print("FOUT: Inloggen mislukt", flush=True)
