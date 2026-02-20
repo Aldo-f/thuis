@@ -171,3 +171,127 @@ class TestFilenameFormat:
 
         assert "flikken-maastricht" in filename
         assert filename.endswith(".mp4")
+
+
+class MockLink:
+    """Mock link element for testing"""
+
+    def __init__(self, href):
+        self.href = href
+
+    def get_attribute(self, name):
+        return self.href if name == "href" else None
+
+
+class MockPage:
+    """Mock Playwright page for testing episode discovery"""
+
+    def __init__(self, links):
+        self.links = links
+
+    def query_selector_all(self, selector):
+        return [MockLink(href) for href in self.links]
+
+
+class TestEpisodeDiscovery:
+    """Test episode discovery from season page"""
+
+    def test_discover_episodes_with_results(self):
+        """Should discover episodes from season page"""
+        from thuis import discover_season_episodes
+
+        page = MockPage(
+            [
+                "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6001/",
+                "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6002/",
+                "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6003/",
+            ]
+        )
+
+        result = discover_season_episodes(page)
+
+        assert len(result) == 3
+        assert "thuis-s31a6001" in result[0]
+        assert "thuis-s31a6002" in result[1]
+        assert "thuis-s31a6003" in result[2]
+
+    def test_discover_episodes_no_results(self):
+        """Should return empty list when no episodes found"""
+        from thuis import discover_season_episodes
+
+        page = MockPage(
+            [
+                "https://www.vrt.be/vrtmax/a-z/thuis/",
+                "https://www.vrt.be/vrtmax/a-z/ander-programma/",
+            ]
+        )
+
+        result = discover_season_episodes(page)
+
+        assert result == []
+
+    def test_discover_episodes_dedup(self):
+        """Should deduplicate episode URLs"""
+        from thuis import discover_season_episodes
+
+        page = MockPage(
+            [
+                "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6001/",
+                "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6001/",  # duplicate
+                "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6002/",
+            ]
+        )
+
+        result = discover_season_episodes(page)
+
+        assert len(result) == 2
+
+    def test_discover_episodes_sorted(self):
+        """Should return sorted episode URLs"""
+        from thuis import discover_season_episodes
+
+        page = MockPage(
+            [
+                "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6003/",
+                "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6001/",
+                "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6002/",
+            ]
+        )
+
+        result = discover_season_episodes(page)
+
+        assert "6001" in result[0]
+        assert "6002" in result[1]
+        assert "6003" in result[2]
+
+
+class TestEdgeCases:
+    """Test edge cases and error handling"""
+
+    def test_filter_empty_list(self):
+        """Should handle empty episode list"""
+        from thuis import filter_episodes_to_download
+
+        result = filter_episodes_to_download([])
+
+        assert result == []
+
+    def test_filter_all_existing(self):
+        """Should return empty when all episodes exist"""
+        from thuis import filter_episodes_to_download
+
+        all_episodes = ["thuis-s31a6001.mp4", "thuis-s31a6002.mp4"]
+        existing = ["thuis-s31a6001.mp4", "thuis-s31a6002.mp4"]
+
+        result = filter_episodes_to_download(all_episodes, existing)
+
+        assert result == []
+
+    def test_parse_invalid_url(self):
+        """Should handle invalid URL gracefully"""
+        from thuis import parse_episode_info
+
+        url = "https://example.com/"
+        info = parse_episode_info(url)
+
+        assert info["program"] == "" or info["program"] == "example.com"

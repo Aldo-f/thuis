@@ -170,13 +170,14 @@ def discover_season_episodes(page) -> List[str]:
     """
     episode_urls = []
 
-    links = page.query_selector_all("a[href*='/vrtmax/a-z/']")
+    links = page.query_selector_all("a")
 
     for link in links:
         href = link.get_attribute("href")
-        if href and re.search(r"/[a-z]+-s\d+a\d+/$", href):
-            if href not in episode_urls:
-                episode_urls.append(href)
+        if href and "/vrtmax/a-z/" in href:
+            if re.search(r"[a-z]+-s\d+a\d+", href):
+                if href not in episode_urls:
+                    episode_urls.append(href)
 
     return sorted(episode_urls)
 
@@ -466,12 +467,14 @@ async def download_season(
 
         episode_urls = await page.evaluate("""
             () => {
-                const links = document.querySelectorAll('a[href*="/vrtmax/a-z/"]');
+                const allLinks = document.querySelectorAll('a');
                 const urls = [];
-                links.forEach(link => {
+                allLinks.forEach(link => {
                     const href = link.getAttribute('href');
-                    if (href && /\\/[a-z]+-s\\d+a\\d+\\/$/.test(href)) {
-                        urls.push(href);
+                    if (href && href.includes('/vrtmax/a-z/')) {
+                        if (href.match(/[a-z]+-s\\d+a\\d+/)) {
+                            urls.push(href);
+                        }
                     }
                 });
                 return [...new Set(urls)].sort();
