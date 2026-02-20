@@ -173,6 +173,62 @@ class TestFilenameFormat:
         assert filename.endswith(".mp4")
 
 
+class TestStealthImport:
+    """Test stealth functionality is properly imported"""
+
+    def test_stealth_import(self):
+        """Should import stealth module"""
+        from playwright_stealth import stealth as playwright_stealth
+
+        assert hasattr(playwright_stealth, "Stealth")
+
+    def test_stealth_class(self):
+        """Should create Stealth instance"""
+        from playwright_stealth import stealth as playwright_stealth
+
+        stealth = playwright_stealth.Stealth()
+        assert stealth is not None
+        assert hasattr(stealth, "apply_stealth_async")
+
+
+class TestCookiePersistence:
+    """Test cookie save/load functionality"""
+
+    def test_save_and_load_cookies(self, tmp_path):
+        """Should save and load cookies"""
+        import sys
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from thuis import save_cookies, load_cookies
+
+        test_cookies = [
+            {"name": "session", "value": "abc123", "domain": ".vrt.be"},
+            {"name": "token", "value": "xyz789", "domain": ".vrt.be"},
+        ]
+
+        cookie_file = tmp_path / "test_cookies.json"
+        save_cookies(test_cookies, cookie_file)
+
+        loaded = load_cookies(cookie_file)
+
+        assert loaded is not None
+        assert len(loaded) == 2
+        assert loaded[0]["name"] == "session"
+        assert loaded[1]["value"] == "xyz789"
+
+    def test_load_cookies_nonexistent(self, tmp_path):
+        """Should return None for nonexistent cookie file"""
+        import sys
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from thuis import load_cookies
+
+        cookie_file = tmp_path / "nonexistent.json"
+        loaded = load_cookies(cookie_file)
+
+        assert loaded is None
+
+
 class MockLink:
     """Mock link element for testing"""
 
