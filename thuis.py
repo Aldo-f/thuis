@@ -25,12 +25,28 @@ from dotenv import load_dotenv
 import requests
 from playwright.async_api import async_playwright
 from playwright_stealth import stealth as playwright_stealth
+import logging
 
 CONFIG_FILE = Path(__file__).parent / ".env"
 COOKIE_FILE = Path(__file__).parent / "cookies.json"
+LOG_FILE = Path(__file__).parent / "thuis.log"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 MEDIA_DIR = Path("media")
 BASE_URL = "https://www.vrt.be"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()],
+)
+logger = logging.getLogger(__name__)
+
+
+def log(msg: str, flush: bool = True):
+    """Log message to file and console"""
+    logger.info(msg)
+    if flush:
+        print(msg, flush=True)
 
 
 def random_delay(min_sec: float = 1.0, max_sec: float = 3.0):
@@ -267,7 +283,9 @@ def check_ffmpeg():
 
 def download_with_ffmpeg(stream_url: str, output_path: Path, title: str):
     """Download video met ffmpeg"""
-    print(f"Downloaden naar: {output_path}", flush=True)
+    log(f"Downloaden: {title}")
+    log(f"Stream URL: {stream_url}")
+    log(f"Output: {output_path}")
 
     cmd = [
         "ffmpeg",
@@ -288,22 +306,30 @@ def download_with_ffmpeg(stream_url: str, output_path: Path, title: str):
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
 
+        last_progress = time.time()
         while True:
             line = process.stdout.readline()
             if not line and process.poll() is not None:
                 break
             if line.strip():
-                print(f"  {line.strip()}", flush=True)
+                if "out_time=" in line or "progress=" in line:
+                    if time.time() - last_progress > 2:
+                        log(f"  {line.strip()}")
+                        last_progress = time.time()
 
         returncode = process.wait()
 
         if returncode == 0 and output_path.exists():
             size = output_path.stat().st_size
+            size_mb = size / 1024 / 1024
+            log(f"✓ Download voltooid: {size_mb:.2f} MB")
             return True, size
         else:
             error = process.stderr.read() if process.stderr else "Onbekende fout"
+            log(f"✗ Fout bij downloaden: {error[:200]}")
             return False, error
     except Exception as e:
+        log(f"✗ Uitzondering: {str(e)}")
         return False, str(e)
 
 
@@ -379,7 +405,7 @@ async def download_video(
         await asyncio.sleep(8)
 
         if not redirect_url:
-            print("FOUT: Kon stream URL niet ophalen", flush=True)
+            log("FOUT: Kon stream URL niet ophalen")
             return False
 
         cookies = await context.cookies()
@@ -450,14 +476,14 @@ async def download_season(
 
     url_type = detect_url_type(season_url)
     if url_type != "season":
-        print(f"FOUT: URL is geen seizoens-URL: {season_url}", flush=True)
+        log(f"FOUT: URL is geen seizoens-URL: {season_url}")
         return False
 
     info = parse_episode_info(season_url)
     program = info.get("program", "video").capitalize()
     season = info.get("season", "")
 
-    print(f"Seizoen downloaden: {program} S{season}\n", flush=True)
+    log(f"Seizoen downloaden: {program} S{season}")
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=headless)
@@ -469,21 +495,22 @@ async def download_season(
         stealth = playwright_stealth.Stealth()
         await stealth.apply_stealth_async(page)
 
-        print("Stap 1: Inloggen...", flush=True)
+        log("Stap 1: Inloggen...")
 
         saved_cookies = load_cookies()
         if saved_cookies:
-            print("  Opgeslagen cookies gevonden, proberen...", flush=True)
+            log("Opgeslagen cookies gevonden, proberen...")
             try:
                 await context.add_cookies(saved_cookies)
                 await page.goto("https://www.vrt.be/vrtmax/", wait_until="networkidle")
                 random_delay(1, 2)
                 if "login" not in page.url.lower():
-                    print("  ✓ Ingelogd met opgeslagen cookies!\n", flush=True)
+                    log("✓ Ingelogd met opgeslagen cookies!")
                 else:
-                    print("  Cookies verlopen, opnieuw inloggen...\n", flush=True)
+                    log("Cookies verlopen, opnieuw inloggen...")
                     saved_cookies = None
-            except Exception:
+            except Exception as e:
+                log(f"Fout bij laden cookies: {e}")
                 saved_cookies = None
 
         if not saved_cookies:
@@ -502,7 +529,7 @@ async def download_season(
             random_delay(1, 3)
 
             pw = await page.query_selector('input[type="password"]')
-            print(f"  DEBUG: Password field found: {pw is not None}", flush=True)
+            log(f"Password field found: {pw is not None}")
             if pw:
                 await pw.fill(password)
                 await page.click('button[type="submit"]')
@@ -511,26 +538,25 @@ async def download_season(
                     await page.wait_for_url(
                         lambda url: "login" not in url.lower(), timeout=15000
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    log(f"Wait for URL timeout: {e}")
 
                 random_delay(2, 4)
             else:
-                print(
-                    "  Geen password field gevonden, mogelijk al ingelogd of andere flow",
-                    flush=True,
-                )
+                log("Geen password field gevonden, mogelijk al ingelogd")
+
+            log(f"URL na login poging: {page.url}")
 
             if "login" in page.url.lower():
-                print("FOUT: Inloggen mislukt", flush=True)
+                log("FOUT: Inloggen mislukt")
                 await browser.close()
                 return False
 
             cookies = await context.cookies()
             save_cookies(cookies)
-            print("  ✓ Ingelogd en cookies opgeslagen!\n", flush=True)
+            log("✓ Ingelogd en cookies opgeslagen!")
 
-        print("Stap 2: Afleveringen ophalen...", flush=True)
+        log("Stap 2: Afleveringen ophalen...")
         await page.goto("https://www.vrt.be/vrtmax/", wait_until="networkidle")
         random_delay(1, 2)
 
@@ -559,10 +585,10 @@ async def download_season(
         """)
 
         if not episode_urls:
-            print("FOUT: Geen afleveringen gevonden", flush=True)
+            log(f"FOUT: Geen afleveringen gevonden")
             return False
 
-        print(f"  Gevonden: {len(episode_urls)} afleveringen\n", flush=True)
+        log(f"Gevonden: {len(episode_urls)} afleveringen")
 
         program_dir = MEDIA_DIR / program
         program_dir.mkdir(parents=True, exist_ok=True)
@@ -570,7 +596,7 @@ async def download_season(
         existing_files = [] if force else get_existing_episodes(program_dir)
 
         if existing_files:
-            print(f"  Reeds gedownload: {len(existing_files)}\n", flush=True)
+            log(f"Reeds gedownload: {len(existing_files)}")
 
         all_episodes = []
         for url in episode_urls:
@@ -585,12 +611,10 @@ async def download_season(
         )
 
         if not episodes_to_download:
-            print("  Alle afleveringen zijn al gedownload!", flush=True)
+            log("Alle afleveringen zijn al gedownload!")
             return True
 
-        print(
-            f"  Te downloaden: {len(episodes_to_download)} afleveringen\n", flush=True
-        )
+        log(f"Te downloaden: {len(episodes_to_download)} afleveringen")
 
         cookies = await context.cookies()
         cookie_header = "; ".join(
@@ -603,9 +627,7 @@ async def download_season(
             "Referer": "https://www.vrt.be/",
         }
 
-        print(
-            f"  Te downloaden: {len(episodes_to_download)} afleveringen\n", flush=True
-        )
+        log(f"Te downloaden: {len(episodes_to_download)} afleveringen")
 
         success_count = 0
         failed_count = 0
@@ -621,7 +643,7 @@ async def download_season(
                 continue
 
             episode_info = parse_episode_info(episode_url)
-            print(f"[{i}/{len(episodes_to_download)}] {filename}...", flush=True)
+            log(f"[{i}/{len(episodes_to_download)}] Downloaden: {filename}")
 
             redirect_url = None
 
