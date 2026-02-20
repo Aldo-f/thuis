@@ -4,6 +4,8 @@
 import os
 import sys
 import json
+import logging
+from datetime import datetime
 import asyncio
 import subprocess
 from pathlib import Path
@@ -13,13 +15,25 @@ from dotenv import load_dotenv
 # Load environment
 load_dotenv()
 
-app = Flask(__name__)
-app.secret_key = os.urandom(24)
-
 # Paths
 BASE_DIR = Path(__file__).parent
 COOKIE_FILE = BASE_DIR / "cookies.json"
 THUIS_SCRIPT = BASE_DIR / "thuis.py"
+
+# Setup logging
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / f"app-{datetime.now().strftime('%Y-%m-%d')}.log"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()],
+)
+logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
 
 
 def load_cookies():
@@ -110,15 +124,15 @@ def api_analyze():
     url = data.get("url", "").strip()
 
     if not url:
+        logger.warning("Analyze: No URL provided")
         return jsonify({"error": "No URL provided"}), 400
 
     try:
         result = get_episodes_from_url(url)
-
-        # For season URLs, we'd need to actually scrape the page to get episode count
-        # For now, return what we can parse
+        logger.info(f"Analyze: {url} -> {result.get('type')}")
         return jsonify(result)
     except Exception as e:
+        logger.error(f"Analyze error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -129,14 +143,17 @@ def api_download():
     url = data.get("url", "").strip()
 
     if not url:
+        logger.warning("Download: No URL provided")
         return jsonify({"error": "No URL provided"}), 400
 
     try:
         pid, cmd = run_thuis_download(url)
+        logger.info(f"Download started: {url} (PID: {pid})")
         return jsonify(
             {"success": True, "pid": pid, "message": f"Download started (PID: {pid})"}
         )
     except Exception as e:
+        logger.error(f"Download error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 

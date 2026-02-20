@@ -300,6 +300,22 @@
                         </button>
                     </div>
                 `;
+            } else if (data.type === 'trailer') {
+                resultDiv.innerHTML = `
+                    <div class="result-item">
+                        <h3>Trailer: ${data.program}</h3>
+                        
+                        <div class="download-info">
+                            <p><strong>Programma:</strong> ${data.program}</p>
+                            <p><strong>Type:</strong> Trailer</p>
+                        </div>
+                        
+                        <button class="btn-success" style="margin-top: 16px; width: 100%;"
+                                onclick="startDownload('${currentUrl}')">
+                            Download Trailer
+                        </button>
+                    </div>
+                `;
             } else {
                 resultDiv.innerHTML = `
                     <div class="result-item">
