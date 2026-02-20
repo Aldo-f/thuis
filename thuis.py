@@ -312,8 +312,12 @@ def download_with_ffmpeg(
         log(f"User-Agent: {user_agent}")
 
     if cookies:
-        cmd.extend(["-headers", f"Cookie: {cookies}"])
-        log(f"Cookies: {cookies[:50]}...")
+        # Build complete headers string
+        headers_str = f"Cookie: {cookies}\r\n"
+        headers_str += f"User-Agent: {user_agent}\r\n"
+        headers_str += "Referer: https://www.vrt.be/\r\n"
+        cmd.extend(["-headers", headers_str])
+        log(f"Headers: Cookie={cookies[:30]}..., Referer=https://www.vrt.be/")
 
     cmd.extend(
         [

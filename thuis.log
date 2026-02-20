@@ -4,3 +4,12 @@
 2026-02-20 13:57:09,944 - INFO - Timeout: 300 seconden
 2026-02-20 13:57:09,945 - INFO - FFmpeg starten...
 2026-02-20 13:57:17,052 - INFO -   Progress: 00:00:00.000000
+2026-02-20 14:26:27,563 - INFO - Downloaden: VRT MAX: Flikken Maastricht R15
+2026-02-20 14:26:27,563 - INFO - Stream URL: https://vod.vrtcdn.be/remix/content/vod/pl-333bea66-541f-4d91-a020-efacfeff6f4e/pl-333bea66-541f-4d91-a020-efacfeff6f4e_nodrm_97884f71-1f74-49a6-bf10-24b8594f4bb6.ism/.m3u8?filter=%28%21%28type%3D%3D%22audio%22%26%26FourCC%21%3D%22AACL%22%29%29
+2026-02-20 14:26:27,563 - INFO - Output: media/VRT MAX Flikken Maastricht R15.mp4
+2026-02-20 14:26:27,563 - INFO - Timeout: 300 seconden
+2026-02-20 14:26:27,563 - INFO - User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
+2026-02-20 14:26:27,563 - INFO - Cookies: oidcstate=2fbe449a82e311c57a9a1d13b161db9b8bbd217b...
+2026-02-20 14:26:27,563 - INFO - FFmpeg starten...
+2026-02-20 14:26:27,619 - INFO - ⚠ FFmpeg gestopt na 0.1s, returncode: 8
+2026-02-20 14:26:27,620 - INFO - ⚠ Partial download: 1.00 MB
