@@ -1,19 +1,6 @@
-2026-02-20 13:24:08,740 - INFO - Seizoen downloaden: Den-elfde-van-den-elfde S1
-2026-02-20 13:24:09,518 - INFO - Stap 1: Inloggen...
-2026-02-20 13:24:15,295 - INFO - Password field found: True
-2026-02-20 13:24:19,108 - INFO - URL na login poging: https://www.vrt.be/vrtmax/sso/callback?code=lA1Km2
-2026-02-20 13:24:19,118 - INFO - ✓ Ingelogd en cookies opgeslagen!
-2026-02-20 13:24:19,118 - INFO - Stap 2: Afleveringen ophalen...
-2026-02-20 13:24:29,680 - INFO - Gevonden: 7 afleveringen
-2026-02-20 13:24:29,682 - INFO - Reeds gedownload: 3
-2026-02-20 13:24:29,683 - INFO - Te downloaden: 4 afleveringen
-2026-02-20 13:24:29,693 - INFO - Te downloaden: 4 afleveringen
-2026-02-20 13:24:29,693 - INFO - [1/4] Downloaden: den-elfde-van-den-elfde-s1a4.mp4
-2026-02-20 13:24:40,538 - INFO - Downloaden: Den elfde van den elfde S1 E1
-2026-02-20 13:24:40,539 - INFO - Stream URL: https://vod.vrtcdn.be/remix/content/vod/pl-553eb307-395d-475c-9612-c216d270cb96/pl-553eb307-395d-475c-9612-c216d270cb96_nodrm_eec86fb2-d315-4d40-8b06-0164799fdb6a.ism/.m3u8?filter=%28%21%28type%3D%3D%22audio%22%26%26FourCC%21%3D%22AACL%22%29%29
-2026-02-20 13:24:40,539 - INFO - Output: media/Den-elfde-van-den-elfde/den-elfde-van-den-elfde-s1a4.mp4
-2026-02-20 13:24:44,713 - INFO -   out_time=00:00:00.000000
-2026-02-20 13:34:45,764 - INFO - Downloaden: VRT MAX: Flikken Maastricht R15
-2026-02-20 13:34:45,765 - INFO - Stream URL: https://vod.vrtcdn.be/remix/content/vod/pl-333bea66-541f-4d91-a020-efacfeff6f4e/pl-333bea66-541f-4d91-a020-efacfeff6f4e_nodrm_97884f71-1f74-49a6-bf10-24b8594f4bb6.ism/.m3u8?filter=%28%21%28type%3D%3D%22audio%22%26%26FourCC%21%3D%22AACL%22%29%29
-2026-02-20 13:34:45,765 - INFO - Output: media/VRT MAX Flikken Maastricht R15.mp4
-2026-02-20 13:34:50,338 - INFO -   out_time=00:00:00.000000
+2026-02-20 13:57:09,943 - INFO - Downloaden: VRT MAX: Flikken Maastricht R15
+2026-02-20 13:57:09,944 - INFO - Stream URL: https://vod.vrtcdn.be/remix/content/vod/pl-333bea66-541f-4d91-a020-efacfeff6f4e/pl-333bea66-541f-4d91-a020-efacfeff6f4e_nodrm_97884f71-1f74-49a6-bf10-24b8594f4bb6.ism/.m3u8?filter=%28%21%28type%3D%3D%22audio%22%26%26FourCC%21%3D%22AACL%22%29%29
+2026-02-20 13:57:09,944 - INFO - Output: media/VRT MAX Flikken Maastricht R15.mp4
+2026-02-20 13:57:09,944 - INFO - Timeout: 300 seconden
+2026-02-20 13:57:09,945 - INFO - FFmpeg starten...
+2026-02-20 13:57:17,052 - INFO -   Progress: 00:00:00.000000

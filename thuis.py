@@ -282,7 +282,12 @@ def check_ffmpeg():
 
 
 def download_with_ffmpeg(
-    stream_url: str, output_path: Path, title: str, timeout: int = 300
+    stream_url: str,
+    output_path: Path,
+    title: str,
+    timeout: int = 300,
+    user_agent: str = None,
+    cookies: str = None,
 ):
     """Download video met ffmpeg
 
@@ -291,33 +296,45 @@ def download_with_ffmpeg(
         output_path: Path to save the video
         title: Video title for logging
         timeout: Max seconds to wait for download
+        user_agent: User-Agent header
+        cookies: Cookie header string
     """
     log(f"Downloaden: {title}")
     log(f"Stream URL: {stream_url}")
     log(f"Output: {output_path}")
     log(f"Timeout: {timeout} seconden")
 
-    cmd = [
-        "ffmpeg",
-        "-i",
-        stream_url,
-        "-c",
-        "copy",
-        "-bsf:a",
-        "aac_adtstoasc",
-        "-progress",
-        "pipe:1",
-        "-y",
-        "-timeout",
-        "30000000",  # 30 seconds connection timeout in microseconds
-        "-reconnect",
-        "1",
-        "-reconnect_streamed",
-        "1",
-        "-reconnect_delay_max",
-        "5",
-        str(output_path),
-    ]
+    cmd = ["ffmpeg"]
+
+    # Add headers if provided
+    if user_agent:
+        cmd.extend(["-user-agent", user_agent])
+        log(f"User-Agent: {user_agent}")
+
+    if cookies:
+        cmd.extend(["-headers", f"Cookie: {cookies}"])
+        log(f"Cookies: {cookies[:50]}...")
+
+    cmd.extend(
+        [
+            "-i",
+            stream_url,
+            "-c",
+            "copy",
+            "-bsf:a",
+            "aac_adtstoasc",
+            "-progress",
+            "pipe:1",
+            "-y",
+            "-reconnect",
+            "1",
+            "-reconnect_streamed",
+            "1",
+            "-reconnect_delay_max",
+            "5",
+            str(output_path),
+        ]
+    )
 
     try:
         log("FFmpeg starten...")
@@ -493,7 +510,9 @@ async def download_video(
             safe_title = "".join(c for c in title if c.isalnum() or c in " -_").strip()
             output_path = output_dir / f"{safe_title}.mp4"
 
-        success, result = download_with_ffmpeg(stream_url, output_path, title)
+        success, result = download_with_ffmpeg(
+            stream_url, output_path, title, user_agent=USER_AGENT, cookies=cookie_header
+        )
 
         if success:
             size_mb = int(result) / 1024 / 1024
@@ -773,7 +792,13 @@ async def download_season(
 
             output_path = program_dir / filename
 
-            success, result = download_with_ffmpeg(stream_url, output_path, title)
+            success, result = download_with_ffmpeg(
+                stream_url,
+                output_path,
+                title,
+                user_agent=USER_AGENT,
+                cookies=cookie_header,
+            )
 
             if success:
                 print(f"    ✓", flush=True)
