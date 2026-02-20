@@ -12,19 +12,45 @@ Gebruik:
 
 import asyncio
 import argparse
+import json
 import os
+import random
 import re
 import sys
+import time
 import subprocess
 from pathlib import Path
 from typing import Optional, List, Dict
 from dotenv import load_dotenv
 import requests
 from playwright.async_api import async_playwright
+from playwright_stealth import stealth_async
 
 CONFIG_FILE = Path(__file__).parent / ".env"
+COOKIE_FILE = Path(__file__).parent / "cookies.json"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 MEDIA_DIR = Path("media")
+BASE_URL = "https://www.vrt.be"
+
+
+def random_delay(min_sec: float = 1.0, max_sec: float = 3.0):
+    """Sleep for a random duration to mimic human behavior."""
+    delay = random.uniform(min_sec, max_sec)
+    time.sleep(delay)
+
+
+def save_cookies(cookies: List, path: Path = COOKIE_FILE):
+    """Save cookies to a JSON file."""
+    with open(path, "w") as f:
+        json.dump(cookies, f)
+
+
+def load_cookies(path: Path = COOKIE_FILE) -> Optional[List]:
+    """Load cookies from a JSON file if it exists."""
+    if path.exists():
+        with open(path, "r") as f:
+            return json.load(f)
+    return None
 
 
 def detect_url_type(url: str) -> str:
@@ -435,40 +461,61 @@ async def download_season(
         )
         page = await context.new_page()
 
+        await stealth_async(page)
+
         print("Stap 1: Inloggen...", flush=True)
 
-        redirect_uri = "https://www.vrt.be/vrtmax/sso/callback"
-        login_url = (
-            f"https://login.vrt.be/authorize?response_type=code"
-            f"&client_id=vrtnu-site&redirect_uri={redirect_uri}"
-            f"&scope=openid%20profile%20email%20video"
-        )
+        saved_cookies = load_cookies()
+        if saved_cookies:
+            print("  Opgeslagen cookies gevonden, proberen...", flush=True)
+            try:
+                await context.add_cookies(saved_cookies)
+                await page.goto("https://www.vrt.be/vrtmax/", wait_until="networkidle")
+                random_delay(1, 2)
+                if "login" not in page.url.lower():
+                    print("  ✓ Ingelogd met opgeslagen cookies!\n", flush=True)
+                else:
+                    print("  Cookies verlopen, opnieuw inloggen...\n", flush=True)
+                    saved_cookies = None
+            except Exception:
+                saved_cookies = None
 
-        await page.goto(login_url, wait_until="networkidle")
-        await asyncio.sleep(3)
+        if not saved_cookies:
+            redirect_uri = "https://www.vrt.be/vrtmax/sso/callback"
+            login_url = (
+                f"https://login.vrt.be/authorize?response_type=code"
+                f"&client_id=vrtnu-site&redirect_uri={redirect_uri}"
+                f"&scope=openid%20profile%20email%20video"
+            )
 
-        await page.fill('input[type="email"]', username)
-        await page.click('button[type="submit"]')
-        await asyncio.sleep(3)
+            await page.goto(login_url, wait_until="networkidle")
+            random_delay(1, 2)
 
-        pw = await page.query_selector('input[type="password"]')
-        if pw:
-            await pw.fill(password)
+            await page.fill('input[type="email"]', username)
             await page.click('button[type="submit"]')
-            await asyncio.sleep(8)
+            random_delay(1, 3)
 
-        if "login" in page.url.lower():
-            print("FOUT: Inloggen mislukt", flush=True)
-            return False
+            pw = await page.query_selector('input[type="password"]')
+            if pw:
+                await pw.fill(password)
+                await page.click('button[type="submit"]')
+                random_delay(5, 8)
 
-        print("  Ingelogd!\n", flush=True)
+            if "login" in page.url.lower():
+                print("FOUT: Inloggen mislukt", flush=True)
+                await browser.close()
+                return False
+
+            cookies = await context.cookies()
+            save_cookies(cookies)
+            print("  ✓ Ingelogd en cookies opgeslagen!\n", flush=True)
 
         print("Stap 2: Afleveringen ophalen...", flush=True)
         await page.goto("https://www.vrt.be/vrtmax/", wait_until="networkidle")
-        await asyncio.sleep(2)
+        random_delay(1, 2)
 
         await page.goto(season_url, wait_until="networkidle")
-        await asyncio.sleep(5)
+        random_delay(3, 5)
 
         episode_urls = await page.evaluate("""
             () => {
@@ -536,7 +583,9 @@ async def download_season(
             "Referer": "https://www.vrt.be/",
         }
 
-        await browser.close()
+        print(
+            f"  Te downloaden: {len(episodes_to_download)} afleveringen\n", flush=True
+        )
 
         success_count = 0
         failed_count = 0
@@ -556,72 +605,70 @@ async def download_season(
 
             redirect_url = None
 
-            async with async_playwright() as p2:
-                browser2 = await p2.chromium.launch(headless=headless)
-                context2 = await browser2.new_context(
-                    viewport={"width": 1920, "height": 1080}, user_agent=USER_AGENT
-                )
-                page2 = await context2.new_page()
+            page_episode = await context.new_page()
+            await stealth_async(page_episode)
 
-                await context2.add_cookies(cookies)
+            async def handle_response(response):
+                nonlocal redirect_url
+                if "/videos/" in response.url and "vualto" in response.url:
+                    location = response.headers.get("location", "")
+                    if location:
+                        redirect_url = (
+                            "https://media-services-public.vrt.be" + location
+                            if location.startswith("/")
+                            else location
+                        )
 
-                async def handle_response(response):
-                    nonlocal redirect_url
-                    if "/videos/" in response.url and "vualto" in response.url:
-                        location = response.headers.get("location", "")
-                        if location:
-                            redirect_url = (
-                                "https://media-services-public.vrt.be" + location
-                                if location.startswith("/")
-                                else location
-                            )
+            page_episode.on("response", handle_response)
 
-                page2.on("response", handle_response)
+            await page_episode.goto(episode_url, wait_until="networkidle")
+            random_delay(3, 6)
 
-                await page2.goto(episode_url, wait_until="networkidle")
-                await asyncio.sleep(5)
+            if not redirect_url:
+                print(f"    FOUT: Kon stream URL niet ophalen", flush=True)
+                failed_count += 1
+                await page_episode.close()
+                continue
 
-                if not redirect_url:
-                    print(f"    FOUT: Kon stream URL niet ophalen", flush=True)
-                    failed_count += 1
-                    await browser2.close()
-                    continue
+            resp = requests.get(redirect_url, headers=headers)
 
-                resp = requests.get(redirect_url, headers=headers)
+            if resp.status_code != 200:
+                print(f"    FOUT: API gaf status {resp.status_code}", flush=True)
+                failed_count += 1
+                await page_episode.close()
+                continue
 
-                if resp.status_code != 200:
-                    print(f"    FOUT: API gaf status {resp.status_code}", flush=True)
-                    failed_count += 1
-                    await browser2.close()
-                    continue
+            data = resp.json()
+            title = data.get("title", filename)
 
-                data = resp.json()
-                title = data.get("title", filename)
+            stream_url = None
+            for tu in data.get("targetUrls", []):
+                if tu.get("type") == "hls":
+                    stream_url = tu.get("url")
+                    break
 
-                stream_url = None
-                for tu in data.get("targetUrls", []):
-                    if tu.get("type") == "hls":
-                        stream_url = tu.get("url")
-                        break
+            if not stream_url:
+                print(f"    FOUT: Geen HLS stream gevonden", flush=True)
+                failed_count += 1
+                await page_episode.close()
+                continue
 
-                if not stream_url:
-                    print(f"    FOUT: Geen HLS stream gevonden", flush=True)
-                    failed_count += 1
-                    await browser2.close()
-                    continue
+            output_path = program_dir / filename
 
-                output_path = program_dir / filename
+            success, result = download_with_ffmpeg(stream_url, output_path, title)
 
-                success, result = download_with_ffmpeg(stream_url, output_path, title)
+            if success:
+                print(f"    ✓", flush=True)
+                success_count += 1
+            else:
+                print(f"    ✗ FOUT", flush=True)
+                failed_count += 1
 
-                if success:
-                    print(f"    ✓", flush=True)
-                    success_count += 1
-                else:
-                    print(f"    ✗ FOUT", flush=True)
-                    failed_count += 1
+            await page_episode.close()
 
-                await browser2.close()
+            random_delay(1, 3)
+
+        await browser.close()
 
         print(
             f"\n  Resultaat: {success_count} gelukt, {failed_count} gefaald", flush=True
