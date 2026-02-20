@@ -24,7 +24,7 @@ from typing import Optional, List, Dict
 from dotenv import load_dotenv
 import requests
 from playwright.async_api import async_playwright
-from playwright_stealth import stealth_async
+from playwright_stealth import stealth as playwright_stealth
 
 CONFIG_FILE = Path(__file__).parent / ".env"
 COOKIE_FILE = Path(__file__).parent / "cookies.json"
@@ -461,7 +461,8 @@ async def download_season(
         )
         page = await context.new_page()
 
-        await stealth_async(page)
+        stealth = playwright_stealth.Stealth()
+        await stealth.apply_stealth_async(page)
 
         print("Stap 1: Inloggen...", flush=True)
 
@@ -606,7 +607,8 @@ async def download_season(
             redirect_url = None
 
             page_episode = await context.new_page()
-            await stealth_async(page_episode)
+            stealth_ep = playwright_stealth.Stealth()
+            await stealth_ep.apply_stealth_async(page_episode)
 
             async def handle_response(response):
                 nonlocal redirect_url
