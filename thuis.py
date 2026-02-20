@@ -304,20 +304,20 @@ def download_with_ffmpeg(
     log(f"Output: {output_path}")
     log(f"Timeout: {timeout} seconden")
 
-    cmd = ["ffmpeg"]
+    cmd = ["ffmpeg", "-y"]
 
-    # Add headers if provided
+    # Build headers string for FFmpeg
+    headers_parts = []
     if user_agent:
-        cmd.extend(["-user-agent", user_agent])
-        log(f"User-Agent: {user_agent}")
-
+        headers_parts.append(f"User-Agent: {user_agent}")
     if cookies:
-        # Build complete headers string
-        headers_str = f"Cookie: {cookies}\r\n"
-        headers_str += f"User-Agent: {user_agent}\r\n"
-        headers_str += "Referer: https://www.vrt.be/\r\n"
+        headers_parts.append(f"Cookie: {cookies}")
+    headers_parts.append("Referer: https://www.vrt.be/")
+
+    if headers_parts:
+        headers_str = "\r\n".join(headers_parts) + "\r\n"
         cmd.extend(["-headers", headers_str])
-        log(f"Headers: Cookie={cookies[:30]}..., Referer=https://www.vrt.be/")
+        log(f"Headers: {headers_str.replace(chr(13), '').replace(chr(10), ' ')}")
 
     cmd.extend(
         [
@@ -329,7 +329,6 @@ def download_with_ffmpeg(
             "aac_adtstoasc",
             "-progress",
             "pipe:1",
-            "-y",
             "-reconnect",
             "1",
             "-reconnect_streamed",
