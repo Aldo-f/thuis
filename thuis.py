@@ -281,11 +281,21 @@ def check_ffmpeg():
         return False
 
 
-def download_with_ffmpeg(stream_url: str, output_path: Path, title: str):
-    """Download video met ffmpeg"""
+def download_with_ffmpeg(
+    stream_url: str, output_path: Path, title: str, timeout: int = 300
+):
+    """Download video met ffmpeg
+
+    Args:
+        stream_url: HLS stream URL
+        output_path: Path to save the video
+        title: Video title for logging
+        timeout: Max seconds to wait for download
+    """
     log(f"Downloaden: {title}")
     log(f"Stream URL: {stream_url}")
     log(f"Output: {output_path}")
+    log(f"Timeout: {timeout} seconden")
 
     cmd = [
         "ffmpeg",
@@ -298,24 +308,48 @@ def download_with_ffmpeg(stream_url: str, output_path: Path, title: str):
         "-progress",
         "pipe:1",
         "-y",
+        "-timeout",
+        "30000000",  # 30 seconds connection timeout in microseconds
+        "-reconnect",
+        "1",
+        "-reconnect_streamed",
+        "1",
+        "-reconnect_delay_max",
+        "5",
         str(output_path),
     ]
 
     try:
+        log("FFmpeg starten...")
         process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
 
+        start_time = time.time()
         last_progress = time.time()
+
         while True:
+            # Check timeout
+            if time.time() - start_time > timeout:
+                log(f"⚠ Timeout bereikt ({timeout}s), FFmpeg wordt gestopt")
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except:
+                    process.kill()
+                break
+
             line = process.stdout.readline()
             if not line and process.poll() is not None:
                 break
+
             if line.strip():
                 if "out_time=" in line or "progress=" in line:
-                    if time.time() - last_progress > 2:
-                        log(f"  {line.strip()}")
-                        last_progress = time.time()
+                    # Parse time
+                    if "out_time=" in line:
+                        time_str = line.split("=")[1].strip()
+                        log(f"  Progress: {time_str}")
+                    last_progress = time.time()
 
         returncode = process.wait()
 
@@ -325,9 +359,20 @@ def download_with_ffmpeg(stream_url: str, output_path: Path, title: str):
             log(f"✓ Download voltooid: {size_mb:.2f} MB")
             return True, size
         else:
+            elapsed = time.time() - start_time
+            log(f"⚠ FFmpeg gestopt na {elapsed:.1f}s, returncode: {returncode}")
+
+            # Check if we got partial download
+            if output_path.exists() and output_path.stat().st_size > 0:
+                size = output_path.stat().st_size
+                size_mb = size / 1024 / 1024
+                log(f"⚠ Partial download: {size_mb:.2f} MB")
+                return True, size
+
             error = process.stderr.read() if process.stderr else "Onbekende fout"
-            log(f"✗ Fout bij downloaden: {error[:200]}")
+            log(f"✗ Fout: {error[:500]}")
             return False, error
+
     except Exception as e:
         log(f"✗ Uitzondering: {str(e)}")
         return False, str(e)
