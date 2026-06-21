@@ -2,3 +2,4 @@ packages:
   - packages/core
   - packages/electron-app
   - packages/web-app
+  - website

@@ -4,10 +4,16 @@
   "private": true,
   "type": "module",
   "main": "dist/main/index.js",
+  "description": "Thuis-V2 desktop application for VRT MAX episode management",
+  "homepage": "https://Aldo-f.github.io/thuis/",
+  "author": {
+    "name": "Aldo Fieuw",
+    "email": "aldo.fieuw@gmail.com"
+  },
   "scripts": {
     "dev": "electron .",
-    "build": "tsc -b && electron-builder",
-    "build:dir": "tsc -b && electron-builder --dir",
+    "build": "tsc -p . && electron-builder",
+    "build:dir": "tsc -p . && electron-builder --dir",
     "lint": "eslint . --ext .ts,.tsx",
     "postinstall": "electron-builder install-app-deps"
   },

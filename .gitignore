@@ -6,6 +6,7 @@ node_modules/
 dist/
 build/
 website/build/
+website/.docusaurus/
 *.tsbuildinfo
 
 # Environmental variables
@@ -24,3 +25,6 @@ pnpm-debug.log*
 # System Files
 .DS_Store
 Thumbs.db
+
+# Package manager lockfiles (pnpm is primary)
+package-lock.json

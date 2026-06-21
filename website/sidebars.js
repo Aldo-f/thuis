@@ -5,7 +5,6 @@ const sidebars = {
     'getting-started',
     'architecture',
     'usage',
-    'faq',
   ],
 };
 

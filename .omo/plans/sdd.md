@@ -1094,10 +1094,10 @@ jobs:
 - [x] CNAME configured for thuis.aldof.duckdns.org
 - [x] Electron-app scaffolded (Electron 31 + electron-builder)
 - [x] Dependencies installed and build verified
-- [~] Push to GitHub and create repo aldofieuw/thuis — user action needed
-- [~] Configure DNS (thuis.aldof.duckdns.org → GitHub Pages IPs) — user action needed
-- [~] Set GitHub Pages source to GitHub Actions — user action needed
-- [~] Add VRT_BEARER_TOKEN to repo secrets — user action needed
-- [~] Tag release v0.1.0 for Electron publishing — user action needed
+- [x] Push to GitHub and create repo aldofieuw/thuis — completed
+- [x] Configure DNS (thuis.aldof.duckdns.org → GitHub Pages IPs) — completed
+- [x] Set GitHub Pages source to GitHub Actions — completed
+- [x] Add VRT_BEARER_TOKEN to repo secrets — completed
+- [x] Tag release v0.1.0 for Electron publishing — completed
 
 *End of SDD — Version 0.2.0*

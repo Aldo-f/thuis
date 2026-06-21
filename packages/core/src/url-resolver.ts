@@ -22,8 +22,8 @@ export function parseVrtUrl(url: string): VrtUrlComponents {
   }
 
   return {
-    show: match[1],
-    season: parseInt(match[2], 10),
-    episodeCode: match[3],
+    show: match[1]!,
+    season: parseInt(match[2]!, 10),
+    episodeCode: match[3]!,
   };
 }

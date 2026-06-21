@@ -13,7 +13,7 @@ export interface GraphQLClient {
 }
 
 export function createClient(baseUrl: string, token: string): GraphQLClient {
-  const fetchGraphQL = async <T>(query: string, variables: Record<string, any>): Promise<T> => {
+  const fetchGraphQL = async <T>(query: string, variables: Record<string, string | number>): Promise<T> => {
     const response = await fetch(baseUrl, {
       method: "POST",
       headers: {
@@ -35,7 +35,7 @@ export function createClient(baseUrl: string, token: string): GraphQLClient {
     return json.data;
   };
 
-  const encodeComponentId = (payload: any) => {
+  const encodeComponentId = (payload: Record<string, string>) => {
     return Buffer.from(JSON.stringify(payload)).toString("base64");
   };
 
@@ -43,7 +43,7 @@ export function createClient(baseUrl: string, token: string): GraphQLClient {
     async searchEpisodes(query: string, lazyItemCount = 10) {
       const componentId = encodeComponentId({ q: query });
       const variables = { componentId, lazyItemCount };
-      const data = await fetchGraphQL<any>(SEARCH_EPISODES_QUERY, variables);
+      const data = await fetchGraphQL<Record<string, unknown>>(SEARCH_EPISODES_QUERY, variables);
       // Validate against Zod schema
       const parsed = SearchResultSchema.parse(data);
       return parsed;
@@ -55,7 +55,7 @@ export function createClient(baseUrl: string, token: string): GraphQLClient {
       const { episodeCode } = parseVrtUrl(url);
       const componentId = encodeComponentId({ componentId: episodeCode });
       const variables = { componentId };
-      const data = await fetchGraphQL<any>(EPISODE_BY_URL_QUERY, variables);
+      const data = await fetchGraphQL<Record<string, unknown>>(EPISODE_BY_URL_QUERY, variables);
       const parsed = EpisodeDetailSchema.parse(data);
       return parsed;
     },

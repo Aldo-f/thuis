@@ -2,7 +2,7 @@
 const config = {
   title: 'Thuis Documentation',
   tagline: 'Documentation for Thuis VRT MAX Content Monitor',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.svg',
   url: 'https://Aldo-f.github.io',
   baseUrl: '/thuis/',
   organizationName: 'Aldo-f',
@@ -63,7 +63,7 @@ const config = {
           items: [
             {
               label: 'Tutorial',
-              to: '/docs/intro',
+              to: '/intro',
             },
           ],
         },

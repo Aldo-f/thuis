@@ -1,32 +1,31 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { createEpisodeSlice } from "./episode-slice.js";
+import { createDownloadSlice } from "./download-slice.js";
+import { createUISlice } from "./ui-slice.js";
+import type { ThuisStore } from "./types.js";
 
-export type Episode = {
-  id: string;
-  title: string;
-  season: number;
-  episode: number;
-  duration: string;
-  url: string;
-};
+export type { ThuisStore } from "./types.js";
 
-type State = {
-  episodes: Record<string, Episode>;
-  addEpisode: (episode: Episode) => void;
-  removeEpisode: (id: string) => void;
-};
-
-export const useThuisStore = create<State>((set) => ({
-  episodes: {},
-  addEpisode: (episode) =>
-    set((state) => ({
-      episodes: {
-        ...state.episodes,
-        [episode.id]: episode,
-      },
-    })),
-  removeEpisode: (id) =>
-    set((state) => {
-      const { [id]: _removed, ...rest } = state.episodes;
-      return { episodes: rest };
+export const useThuisStore = create<ThuisStore>()(
+  persist(
+    (set) => ({
+      ...createEpisodeSlice(set),
+      ...createDownloadSlice(set),
+      ...createUISlice(set),
+      _hasHydrated: false,
     }),
-}));
+    {
+      name: "thuis-combined-store",
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state._hasHydrated = true;
+        }
+      },
+    }
+  )
+);
+
+export * from "./episode-slice.js";
+export * from "./download-slice.js";
+export * from "./ui-slice.js";

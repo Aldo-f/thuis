@@ -10,6 +10,5 @@
       "@thuis/core": ["../core/src/index.ts"]
     }
   },
-  "include": ["src"],
-  "references": [{ "path": "../core" }]
+  "include": ["src"]
 }

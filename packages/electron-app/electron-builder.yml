@@ -15,6 +15,7 @@ mac:
   target: [dmg, zip]
 linux:
   target: [AppImage, deb, rpm]
+  category: AudioVideo
 publish:
   provider: github
   owner: aldofieuw
