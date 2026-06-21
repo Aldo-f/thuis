@@ -12,8 +12,8 @@
   },
   "scripts": {
     "dev": "electron .",
-    "build": "tsc -p . && electron-builder",
-    "build:dir": "tsc -p . && electron-builder --dir",
+    "build": "tsc -p . && electron-builder --publish never",
+    "build:dir": "tsc -p . && electron-builder --publish never --dir",
     "lint": "eslint . --ext .ts,.tsx",
     "postinstall": "electron-builder install-app-deps"
   },
