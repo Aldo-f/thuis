@@ -29,7 +29,7 @@ jobs:
 
   build-electron:
     needs: quality
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/v4/main'
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
