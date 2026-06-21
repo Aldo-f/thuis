@@ -1,0 +1,21 @@
+.github/workflows/ci.yml
+  s_93dc388cd27214::t_c755b371b3f9fe 5,7
+.github/workflows/pages.yml
+  s_93dc388cd27214::t_cc01e18dc2fc11 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "4327466e303a8529421684f0518d290741427465",
+  "prompts": {},
+  "sessions": {
+    "s_93dc388cd27214": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_11fe5cc2bffeXM2fcibuTjJ0vj",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
