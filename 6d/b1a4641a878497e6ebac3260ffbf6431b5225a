@@ -1,0 +1,177 @@
+package.json
+  s_0d722744094eb8::t_4349fc3181286d 1-8,11-19
+  s_0635fad003c31d::t_e76c4399d8a5e9 9-10
+packages/web-app/tsconfig.json
+  s_ff981032ea1963::t_8cb9aef462ab9c 8,14
+  s_ff981032ea1963::t_787731763acb97 1-7,9-13,15
+packages/electron-app/src/main/ipc-handlers.ts
+  s_2a2b78884df937::t_dcdea965d35301 1-39
+packages/web-app/src/pages/EpisodeDetail.tsx
+  s_ff981032ea1963::t_3cf1e24605f813 1-44
+packages/core/tsconfig.json
+  s_93dc388cd27214::t_68c46eb8650cff 1-8
+.omo/plans/sdd.md
+  s_93dc388cd27214::t_8c81cf699efb1c 1-281,291-942,944-949,952-954,956,958,974-987,989-1087,1103
+  s_93dc388cd27214::t_bb3563d92fa9a7 282-290
+  s_93dc388cd27214::t_9ef3142b78a738 943,950-951,955,957
+  s_93dc388cd27214::t_10e59e652a5a81 959-973
+  s_93dc388cd27214::t_171198ea2d3b09 988
+  s_93dc388cd27214::t_ed7e84db3c8d0b 1088-1091,1102
+  s_93dc388cd27214::t_8306616869fc26 1092-1101
+packages/web-app/src/main.tsx
+  s_ff981032ea1963::t_3f8e507b654156 1-13
+packages/electron-app/src/main/index.ts
+  s_2a2b78884df937::t_0c6df06449c9cd 1-43
+website/package.json
+  s_dcce442f10bcc4::t_8005ee152cecd2 1-36
+website/sidebars.js
+  s_dcce442f10bcc4::t_aa8f45415fbb86 1-12
+packages/web-app/src/index.css
+  s_ff981032ea1963::t_83194d3f3d66dc 1
+SPEC.md
+  s_93dc388cd27214::t_fed70071aca535 1-135
+packages/web-app/vite.config.ts
+  s_ff981032ea1963::t_c4ac332e8d708e 1-21
+packages/electron-app/electron-builder.yml
+  s_2a2b78884df937::t_0e5ded492e5cb6 1-16,18-21
+  s_40d0ac2dcf882e::t_c032e4bfce42df 17
+.specify/memory/constitution.md
+  s_93dc388cd27214::t_0b8b59362e6525 1-50
+packages/web-app/src/vite-env.d.ts
+  s_ff981032ea1963::t_fd37086ec6f57b 1
+packages/core/src/store/episode-slice.ts
+  s_93dc388cd27214::t_5260ec7d30efac 1-30
+packages/web-app/src/pages/Home.tsx
+  s_ff981032ea1963::t_b2b3a56e87bc28 1-80
+packages/electron-app/tsconfig.json
+  s_2a2b78884df937::t_5df715a9e9881c 1-15
+packages/electron-app/src/preload/index.d.ts
+  s_2a2b78884df937::t_dc717788d6ab4e 1-20
+packages/core/src/graphql/types.ts
+  s_93dc388cd27214::t_ad6e357c824697 1-43
+packages/core/jest.config.ts
+  s_0d722744094eb8::t_83f2909e69fe5f 1-31
+packages/core/src/graphql/client.ts
+  s_93dc388cd27214::t_b4b810d44c3e1e 1-63
+packages/web-app/src/pages/Search.tsx
+  s_ff981032ea1963::t_d3e781f08e7538 1-59
+packages/core/package.json
+  s_93dc388cd27214::t_3396be20f10373 1-17,29-30
+  s_0d722744094eb8::t_bfaf368fe141d0 26-27
+  s_ff981032ea1963::t_6d23342019674d 18-25,28
+packages/electron-app/src/preload/index.ts
+  s_2a2b78884df937::t_55639c98052d3c 1-21
+packages/core/src/index.ts
+  s_93dc388cd27214::t_ccbd75321e0d4c 2
+  s_0d722744094eb8::t_a4c08364f163a5 1
+pnpm-workspace.yaml
+  s_93dc388cd27214::t_18cb38375c9bb0 2-4
+  s_93dc388cd27214::t_2ba5a626fc49f3 1
+packages/web-app/package.json
+  s_ff981032ea1963::t_1b3061c2dac1c4 1-27
+.github/workflows/pages.yml
+  s_0635fad003c31d::t_d3216009293e16 1-33
+website/docusaurus.config.js
+  s_dcce442f10bcc4::t_c4545bbd57ede6 1-85
+packages/core/src/types/download.ts
+  s_93dc388cd27214::t_9721d53324d521 1-29
+.omo/boulder.json
+  s_93dc388cd27214::t_fb92df34fea504 1-2,4-8,10,14-15,46-47,50-51
+  s_93dc388cd27214::t_de3b6455981db3 9,11-13,21,23-25,33,48,52
+  s_93dc388cd27214::t_620ddae3ddda1b 3,16-20,22,26-32,34-45,49
+AGENTS.md
+  s_93dc388cd27214::t_9e60b228482f07 1-4
+packages/core/src/graphql/queries.ts
+  s_93dc388cd27214::t_42bdf83583a487 1-46
+packages/web-app/src/App.tsx
+  s_ff981032ea1963::t_4bce1a89ca2cf1 1-53
+packages/core/src/store/index.ts
+  s_93dc388cd27214::t_2c3c9f7fcefe62 1-32
+packages/web-app/src/components/EpisodeCard.tsx
+  s_ff981032ea1963::t_f25360c3246e5e 1-58
+packages/web-app/index.html
+  s_ff981032ea1963::t_965a9ebe4ee29c 1-13
+tsconfig.base.json
+  s_93dc388cd27214::t_b8df54fb8a99ec 1-22
+.github/workflows/ci.yml
+  s_0635fad003c31d::t_b9be53cf617e20 1-27,29-40,42-51,59,63-86
+  s_c18c2bb0a37ec5::t_c1cbace8798811 28,41,52-58,60-62
+packages/electron-app/package.json
+  s_2a2b78884df937::t_6f6e15f13a6586 1-24
+packages/core/src/types/episode.ts
+  s_93dc388cd27214::t_ed7ee3bb5c97a3 1-30
+.specify/scripts/bash/common.sh
+  s_93dc388cd27214::t_5cf14c986b193c 1-582
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "6db1a4641a878497e6ebac3260ffbf6431b5225a",
+  "prompts": {},
+  "sessions": {
+    "s_0635fad003c31d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_11a696315ffeLjtr7VeN0xEAUO",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_0d722744094eb8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_11e2f2454ffeTuAk5fEDCX5Qkx",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_2a2b78884df937": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_11a17c382ffeNv7rYGxi04H23g",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_40d0ac2dcf882e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_11987ff92ffeLQazUMQ5Cr55JG",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_93dc388cd27214": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_11fe5cc2bffeXM2fcibuTjJ0vj",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_c18c2bb0a37ec5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_119895361ffeLC4i9Z2Zuygpsj",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_dcce442f10bcc4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1198b68b1ffeNqRK44Q63MAxrM",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_ff981032ea1963": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_11a6963abffe4Z2Jlm2Z7pBbp5",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
