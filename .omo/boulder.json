@@ -1,0 +1,73 @@
+{
+  "schema_version": 2,
+  "active_work_id": "sdd-31709f12",
+  "works": {
+    "sdd-45569032": {
+      "work_id": "sdd-45569032",
+      "active_plan": "/home/aldo/docker-stack/06-apps/thuis/.omo/plans/sdd.md",
+      "plan_name": "sdd",
+      "status": "completed",
+      "started_at": "2026-06-19T21:35:43.939Z",
+      "updated_at": "2026-06-20T17:26:35.249Z",
+      "session_ids": [
+        "opencode:ses_11fe5cc2bffeXM2fcibuTjJ0vj"
+      ],
+      "session_origins": {
+        "opencode:ses_11fe5cc2bffeXM2fcibuTjJ0vj": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {},
+      "ended_at": "2026-06-20T17:26:35.242Z",
+      "elapsed_ms": 71451303
+    },
+    "sdd-a5c55cf6": {
+      "work_id": "sdd-a5c55cf6",
+      "active_plan": "/home/aldo/docker-stack/06-apps/thuis/.omo/plans/sdd.md",
+      "plan_name": "sdd",
+      "status": "completed",
+      "started_at": "2026-06-20T16:37:32.732Z",
+      "updated_at": "2026-06-20T16:41:05.276Z",
+      "session_ids": [
+        "opencode:ses_11fe5cc2bffeXM2fcibuTjJ0vj"
+      ],
+      "session_origins": {
+        "opencode:ses_11fe5cc2bffeXM2fcibuTjJ0vj": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {}
+    },
+    "sdd-31709f12": {
+      "work_id": "sdd-31709f12",
+      "active_plan": "/home/aldo/docker-stack/06-apps/thuis/.omo/plans/sdd.md",
+      "plan_name": "sdd",
+      "status": "completed",
+      "started_at": "2026-06-20T16:37:33.020Z",
+      "updated_at": "2026-06-20T16:41:05.276Z",
+      "session_ids": [
+        "opencode:ses_11fe5cc2bffeXM2fcibuTjJ0vj",
+        "opencode:ses_11a17c382ffeNv7rYGxi04H23g"
+      ],
+      "session_origins": {
+        "opencode:ses_11fe5cc2bffeXM2fcibuTjJ0vj": "direct",
+        "opencode:ses_11a17c382ffeNv7rYGxi04H23g": "appended"
+      },
+      "agent": "atlas",
+      "task_sessions": {}
+    }
+  },
+  "status": "completed",
+  "updated_at": "2026-06-20T16:41:05.276Z",
+  "plan_name": "sdd",
+  "agent": "atlas",
+  "session_ids": [
+    "opencode:ses_11fe5cc2bffeXM2fcibuTjJ0vj",
+    "opencode:ses_11a17c382ffeNv7rYGxi04H23g"
+  ],
+  "session_origins": {
+    "opencode:ses_11fe5cc2bffeXM2fcibuTjJ0vj": "direct",
+    "opencode:ses_11a17c382ffeNv7rYGxi04H23g": "appended"
+  },
+  "task_sessions": {},
+  "active_plan": "/home/aldo/docker-stack/06-apps/thuis/.omo/plans/sdd.md",
+  "started_at": "2026-06-20T16:37:33.020Z"
+}

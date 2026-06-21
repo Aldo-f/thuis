@@ -1,0 +1,33 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: https://thuis.aldof.duckdns.org
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+      - run: pnpm install
+      - run: pnpm build:web
+      - name: Add CNAME
+        run: echo "thuis.aldof.duckdns.org" > packages/web-app/dist/CNAME
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/web-app/dist
+      - uses: actions/deploy-pages@v4

@@ -1,0 +1,19 @@
+{
+  "name": "thuis",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "build:core": "pnpm --filter @thuis/core build",
+    "build:web": "pnpm --filter @thuis/web-app build",
+    "build:electron": "pnpm --filter @thuis/electron-app build",
+    "test": "pnpm -r test",
+    "test:core": "pnpm --filter @thuis/core test",
+    "lint": "pnpm -r lint",
+    "lint:core": "pnpm --filter @thuis/core lint"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

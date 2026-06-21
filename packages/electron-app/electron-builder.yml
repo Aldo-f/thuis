@@ -1,0 +1,21 @@
+appId: com.thuis.app
+productName: Thuis
+directories:
+  output: dist
+  buildResources: build
+files:
+  - dist/**/*
+  - package.json
+extraResources:
+  - from: node_modules/@thuis/core/dist
+    to: core
+win:
+  target: [nsis, portable]
+mac:
+  target: [dmg, zip]
+linux:
+  target: [AppImage, deb, rpm]
+publish:
+  provider: github
+  owner: aldofieuw
+  repo: thuis
