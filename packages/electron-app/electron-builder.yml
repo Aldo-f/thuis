@@ -1,5 +1,6 @@
 appId: com.thuis.app
 productName: Thuis
+artifactName: "${productName}-${version}-${arch}.${ext}"
 directories:
   output: dist
   buildResources: build
