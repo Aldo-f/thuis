@@ -22,7 +22,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install
       - run: pnpm --filter @thuis/core lint
-      - run: pnpm --filter @thuis/core test -- --coverage --passWithNoTests
+      - run: pnpm --filter @thuis/core test --coverage --passWithNoTests
       - run: pnpm --filter @thuis/core build
       - run: pnpm --filter @thuis/web-app exec tsc -b --noEmit
       - run: pnpm --filter @thuis/web-app exec vite build

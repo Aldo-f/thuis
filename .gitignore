@@ -28,3 +28,4 @@ Thumbs.db
 
 # Package manager lockfiles (pnpm is primary)
 package-lock.json
+coverage/
