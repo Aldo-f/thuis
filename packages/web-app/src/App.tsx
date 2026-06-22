@@ -1,7 +1,9 @@
 import { Routes, Route, Link } from "react-router-dom";
 import Home from "./pages/Home.js";
 import Search from "./pages/Search.js";
-import EpisodeDetail from "./pages/EpisodeDetail.js";
+import EpisodeDetailPage from "./pages/EpisodeDetail.js";
+import VaultPage from "./pages/VaultPage.js";
+import DownloadQueuePage from "./pages/DownloadQueuePage.js";
 
 function App() {
   return (
@@ -17,35 +19,35 @@ function App() {
               Home
             </Link>
             <Link to="/search" className="transition-colors hover:text-stone-800">
-              Search
+              Zoeken
+            </Link>
+            <Link to="/queue" className="transition-colors hover:text-stone-800">
+              Downloads
+            </Link>
+            <Link to="/vault" className="transition-colors hover:text-stone-800">
+              Inloggen
             </Link>
           </nav>
         </div>
       </header>
 
-      {/* Main layout: content + sidebar */}
+      {/* Main layout */}
       <div className="mx-auto flex w-full max-w-7xl flex-1 px-4 sm:px-6 lg:px-8">
-        {/* Page content */}
         <main className="min-w-0 flex-1 py-6">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/search" element={<Search />} />
-            <Route path="/episode/:id" element={<EpisodeDetail />} />
+            <Route path="/episode/:id" element={<EpisodeDetailPage />} />
+            <Route path="/queue" element={<DownloadQueuePage />} />
+            <Route path="/vault" element={<VaultPage />} />
           </Routes>
         </main>
-
-        {/* Sidebar — download queue placeholder */}
-        <aside className="ml-8 hidden w-72 shrink-0 lg:block">
-          <div className="sticky top-4 rounded-lg border border-stone-200 bg-white p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-stone-400">
-              Download Queue
-            </h2>
-            <p className="mt-3 text-sm text-stone-400">
-              No downloads in progress.
-            </p>
-          </div>
-        </aside>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-stone-200 bg-white py-4 text-center text-xs text-stone-400">
+        Thuis — Bekijk en download VRT MAX content
+      </footer>
     </div>
   );
 }

@@ -1,15 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
+    "noEmit": true,
     "jsx": "react-jsx",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "module": "NodeNext",
-    "baseUrl": ".",
-    "paths": {
-      "@thuis/core": ["../core/src/index.ts"]
-    }
+    "moduleResolution": "NodeNext"
   },
   "include": ["src"]
 }
