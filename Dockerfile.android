@@ -1,0 +1,39 @@
+# Build only Android APK
+
+FROM node:20-alpine
+
+# Install Java, Android SDK, and build tools
+RUN apk add --no-cache openjdk21 bash curl unzip git && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux_latest.zip -O /tmp/sdk-tools.zip && \
+    mkdir -p /opt/android-sdk/cmdline-tools && \
+    unzip -q /tmp/sdk-tools.zip -d /opt/android-sdk/cmdline-tools && \
+    rm /tmp/sdk-tools.zip && \
+    yes | /opt/android-sdk/cmdline-tools/bin/sdkmanager \
+        --sdk_root=/opt/android-sdk \
+        "platform-tools" \
+        "platforms;android-33" \
+        "build-tools;34.0.0" \
+        "ndk;26.1.10972239" \
+        "cmake;3.22.1" && \
+    rm -rf /tmp/* /var/cache/apk/*
+
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH="${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/cmdline-tools/bin:${PATH}"
+
+WORKDIR /app
+
+# Create directories for the app
+RUN mkdir -p packages/electron-app
+
+# Copy package files (allow electron-app)
+COPY package.json pnpm-lock.yaml ./
+COPY packages/electron-app/package.json packages/electron-app/
+
+# Install dependencies
+RUN corepack enable && pnpm install --frozen-lockfile
+
+# Copy remaining source code
+COPY . .
+
+# Build Android APK
+CMD ["pnpm", "--filter", "@thuis/electron-app", "run", "build:android"]

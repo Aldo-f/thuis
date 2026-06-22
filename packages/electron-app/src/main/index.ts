@@ -1,4 +1,6 @@
-import { app, BrowserWindow, ipcMain, dialog, Notification } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, Notification, Tray } from "electron";
+import { createTray, updateTrayProgress, destroyTray } from "./tray-manager.js";
+import { DownloadEngine } from "./download-engine.js";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerIpcHandlers } from "./ipc-handlers.js";
@@ -30,12 +32,22 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  createTray();
   registerIpcHandlers();
   createWindow();
+
+  // Wire up download engine progress to tray
+  const engine = new DownloadEngine();
+  engine.onProgress((jobId, progress, status) => {
+    updateTrayProgress(progress, status);
+  });
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+  if (process.platform !== "darwin") {
+    destroyTray();
+    app.quit();
+  }
 });
 
 app.on("activate", () => {

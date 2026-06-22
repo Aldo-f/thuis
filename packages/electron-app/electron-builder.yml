@@ -1,19 +1,18 @@
-appId: com.thuis.app
-productName: Thuis
-artifactName: "${productName}-${version}-${arch}.${ext}"
+appId: "com.aldof.thuis"
+productName: "Thuis"
 directories:
-  output: dist
-  buildResources: build
+  output: "dist"
+  buildResources: "build"
 files:
-  - dist/**/*
-  - package.json
-extraResources:
-  - from: node_modules/@thuis/core/dist
-    to: core
-win:
-  target: [nsis, portable]
-mac:
-  target: [dmg, zip]
+  - "dist/**/*"
+  - "package.json"
 linux:
-  target: [AppImage, deb, rpm]
-  category: AudioVideo
+  target:
+    - "AppImage"
+    - "deb"
+win:
+  target:
+    - "nsis"
+mac:
+  target:
+    - "dmg"

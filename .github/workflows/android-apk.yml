@@ -1,0 +1,48 @@
+# Android APK Build Workflow
+
+name: Android APK Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Install Node.js and dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm config set linux_arch x64
+
+      - name: Build Android Docker image
+        run: |
+          docker build -f Dockerfile.android -t thuis-android-builder .
+
+      - name: Create keystore from secret
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p ~/.android
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > ~/.android/keystore.jks
+
+      - name: Build Android APK
+        run: docker run --rm -v "$(pwd):/app" -e ANDROID_KEYSTORE_PATH="/.android/keystore.jks" thuis-android-builder
+
+      - name: Upload APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${GITHUB_RUN_NUMBER}
+          files: dist/thuis-android-arm64-v${GITHUB_RUN_NUMBER}.apk
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

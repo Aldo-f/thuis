@@ -15,7 +15,8 @@
     "build": "tsc -p . && electron-builder --publish never",
     "build:dir": "tsc -p . && electron-builder --publish never --dir",
     "lint": "eslint . --ext .ts,.tsx",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "build:android": "pnpm --filter @thuis/electron-app run electron-builder -p android"
   },
   "dependencies": {
     "@thuis/core": "workspace:*",

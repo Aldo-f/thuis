@@ -1,0 +1,24 @@
+node_modules
+.git
+.gitignore
+.github
+.omo
+.opencode
+.specify
+AGENTS.md
+*.md
+
+# Include only what we need
+packages/electron-app/electron-builder.yml
+packages/electron-app/package.json
+
+# Source code (allowing native Android build)
+packages/electron-app/src
+
+# Scripts
+package.json
+pnpm-lock.yaml
+
+# Exclude too much
+*.dockerignore
+Dockerfile*

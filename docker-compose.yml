@@ -1,0 +1,11 @@
+services:
+  thuis-web:
+    build: .
+    container_name: thuis-web
+    restart: unless-stopped
+    networks:
+      - docker-stack_core-network
+
+networks:
+  docker-stack_core-network:
+    external: true
