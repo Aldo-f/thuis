@@ -3,6 +3,7 @@ import { z } from "zod";
 export const EpisodeSchema = z.object({
   id: z.string(),
   title: z.string(),
+  seriesTitle: z.string(),
   season: z.number(),
   episode: z.number(),
   episodeCode: z.string(),
@@ -13,6 +14,8 @@ export const EpisodeSchema = z.object({
   description: z.string().optional(),
   available: z.boolean().optional(),
   videoId: z.string().optional(),
+  provider: z.string().default("vrt"),
+  airedAt: z.string().optional(),
 });
 
 export type Episode = z.infer<typeof EpisodeSchema>;

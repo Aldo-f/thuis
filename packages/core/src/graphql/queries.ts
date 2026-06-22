@@ -44,3 +44,43 @@ fragment EpisodeTileFragment on EpisodeTile {
   secondaryMeta { type value }
   objectId
 }`;
+
+/**
+ * VideoPage query — fetches episode metadata from a VRT MAX URL path.
+ * This is the primary query used by the new VRT MAX frontend.
+ * The pageId variable is the URL path: e.g. "/vrtmax/a-z/thuis/31/thuis-s31a6105/"
+ */
+export const VIDEO_PAGE_QUERY = `
+query VideoPage($pageId: ID!) {
+  page(id: $pageId) {
+    ... on EpisodePage {
+      episode {
+        ageRaw
+        description
+        durationRaw
+        episodeNumberRaw
+        id
+        name
+        onTimeRaw
+        program {
+          title
+        }
+        season {
+          id
+          titleRaw
+        }
+        title
+        brand
+      }
+      ldjson
+      player {
+        image {
+          templateUrl
+        }
+        modes {
+          streamId
+        }
+      }
+    }
+  }
+}`;

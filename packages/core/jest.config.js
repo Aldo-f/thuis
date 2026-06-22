@@ -4,6 +4,9 @@ const config = {
   testEnvironment: "node",
   roots: ["<rootDir>/src"],
   testMatch: ["**/__tests__/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
+  transformIgnorePatterns: [
+    "/node_modules/(?!nock/)",
+  ],
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
