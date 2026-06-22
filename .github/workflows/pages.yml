@@ -14,6 +14,9 @@ jobs:
     environment:
       name: github-pages
       url: https://thuis.aldof.duckdns.org
+    concurrency:
+      group: pages
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -30,4 +33,5 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: packages/web-app/dist
-      - uses: actions/deploy-pages@v4
+      - id: deployment
+        uses: actions/deploy-pages@v4
