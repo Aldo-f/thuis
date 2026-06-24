@@ -25,11 +25,9 @@ jobs:
           node-version: "20"
           cache: "pnpm"
       - run: pnpm install
-      - run: pnpm build:web
-      - name: Add CNAME
-        run: echo "thuis.aldof.duckdns.org" > packages/web-app/dist/CNAME
+      - run: pnpm --filter website build
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: packages/web-app/dist
+          path: website/build
       - id: deployment
         uses: actions/deploy-pages@v4
