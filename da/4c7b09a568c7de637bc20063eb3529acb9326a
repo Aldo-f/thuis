@@ -1,0 +1,1027 @@
+packages/web-app/src/hooks/useVault.ts
+  s_46688b8ec465b9::t_1978d63fd9d2e3 6-7
+  s_46688b8ec465b9::t_55980c74d1ab33 1-5,17-22,24-33,35-37,40,42-46,48-49,51,55-78,80-90,93-99,101-112,115-132,137,139,144-163,165-189,191-201,207,210-236,238,249-252
+  s_46688b8ec465b9::t_aa831ea69a120f 50
+packages/core/src/__tests__/security/vault-security.test.ts
+  s_a92d6a24acf287::t_07d9e7a49b4ce5 1
+  s_72f5f54becf22e::t_5eafd169eb8969 2-87
+packages/web-app/src/__tests__/components/ProviderCredentialForm.test.tsx
+  s_94a4de48841b8d::t_76368a44bb23a3 1-5,9,11,13-14,22,26-28,33,39-40
+  s_94a4de48841b8d::t_561d343a2ffd98 6-8,10,12,15,17-21,23-25,30-32,34-38
+  s_94a4de48841b8d::t_6f949eb981fcd6 16,29
+packages/core/src/providers/ProviderAdapter.ts
+  s_522dba34778a25::t_3a8e66e471f67a 6-9,12,14-15
+  s_f79e829b232531::t_8822b34ea670af 16
+  s_f79e829b232531::t_1495c8464f7860 4-5,10-11
+  s_95cc1bbb66d2f3::t_7a8f6a59014cd2 1-2
+  s_522dba34778a25::t_26a43ddd512d0b 3,13
+packages/web-app/src/services/SearchService.ts
+  s_1946b2db800439::t_86246719367886 1-2
+  s_1946b2db800439::t_c2241faf44d76b 5
+  s_1946b2db800439::t_749243ea59eb53 7
+  s_1946b2db800439::t_bc6118fb897c60 12
+  s_1946b2db800439::t_695277e3267e46 3-4,6,8-11,13-37
+packages/core/src/__tests__/download/StreamResolver.test.ts
+  s_a92d6a24acf287::t_2273dd09934766 2
+  s_a92d6a24acf287::t_fd52c366e859b7 3
+  s_b6a98109857a5a::t_2543a989fb5062 5
+  s_a92d6a24acf287::t_9b3af52ebc2e7b 4
+specs/003-multi-provider-platform/spec.md
+  s_4265f2dede4a54::t_46695e5a41ca51 1-221
+packages/ytdlp-service/src/YtDlpService.ts
+  s_ee6f4dc7003fa4::t_9e5c1c165a3dc2 5
+  s_ee6f4dc7003fa4::t_e5a2c617384862 25-42
+  s_dde34368dc13fc::t_c2c5c56e4829cc 1-4,6-11,22-24,43-151
+  s_ee6f4dc7003fa4::t_afa420612a61a5 12-21
+start.sh
+  s_7838b558d6ace2::t_b4c715ce29adff 1-13
+packages/core/src/vault/Vault.ts
+  s_b6a98109857a5a::t_b72289816ad459 87
+  s_2fcbecdeef6acf::t_430fae4dea3e57 88,104
+  s_7eea0690dd90ca::t_ff696168cad949 111,113-175
+  s_7eea0690dd90ca::t_2b5e242f403e43 1-36,42-44,105,176-181,183-191,197-213,215-331
+  s_2fcbecdeef6acf::t_b95b21c53e51f5 45
+  s_7eea0690dd90ca::t_c06ec976186c1d 39-41
+  s_522dba34778a25::t_3a966b345d9111 192-193,195-196
+  s_7eea0690dd90ca::t_d0025bf3e967ac 112
+  s_b1743544adb5c0::t_86a9459b06f335 214
+  s_b6a98109857a5a::t_9442b37bda7454 37
+  s_1ae21eb3183569::t_4921c5a3a5ef68 89-103
+  s_95cc1bbb66d2f3::t_8cce0e881f9a0b 53-75
+  s_b6a98109857a5a::t_a510886100e0ca 107-110
+  s_2fcbecdeef6acf::t_70e822abcdef21 106
+  s_7eea0690dd90ca::t_f17a36053ebb06 38
+  s_522dba34778a25::t_fa5fde85e4a1c1 194
+  s_a852c13f911944::t_3f6e7fc21e6f86 182
+  s_bf84c100482c5a::t_ce4ca05288c200 46-52,76-86
+packages/core/src/__tests__/integration/provider-flow.test.ts
+  s_dd5a9d08106368::t_f0fd1315ffe600 23
+  s_916edcae16d1ee::t_db1358d125af79 1-5,9-22,24-68,70-91
+  s_95cc1bbb66d2f3::t_edc44cdac4eec3 6,8
+  s_95cc1bbb66d2f3::t_1f277bef21b9f7 7
+  s_a92d6a24acf287::t_90adf6198f588b 69
+packages/auth-server/tsconfig.json
+  s_5357fa4cd18186::t_290d4a67716fa3 1-8
+packages/core/src/vault/encryption.ts
+  s_e24ac25c56a4a2::t_b3b9f1cc88de22 74
+  s_110db783333ebd::t_e9dfbee2eb051f 149
+  s_8d770207ae6d4d::t_120a3c19639897 32-33,37-43,45-60,62-69,71-72,75-101,103,105-109,112-147,150-159
+  s_8d770207ae6d4d::t_e817d5eba21754 1-31,44,61,70,102,104,110,148
+  s_125c72519ddd6f::t_483ecb9db3c992 34-36
+  s_7eea0690dd90ca::t_ff93945c42ac5f 73
+  s_e24ac25c56a4a2::t_ba1a6af1145b34 111
+.omo/plans/006-vrtmax-e2e-login-download.md
+  s_ee6f4dc7003fa4::t_5a02d3a4824a47 15
+  s_ee6f4dc7003fa4::t_42ece3c6916499 47
+  s_ee6f4dc7003fa4::t_a5c09185b4a72d 43
+  s_ee6f4dc7003fa4::t_cc7e69007d6833 53
+  s_ee6f4dc7003fa4::t_14738337f1a963 57-60
+  s_ee6f4dc7003fa4::t_8d904c541b4b68 30
+  s_ee6f4dc7003fa4::t_16ca4f6fb5e7dc 20
+  s_ee6f4dc7003fa4::t_c07085610cb4ce 24
+  s_ee6f4dc7003fa4::t_1b6958e049fcf5 38
+  s_ee6f4dc7003fa4::t_3874660637a0e5 1-14,16-19,21-23,25-29,31-33,35-37,39-42,44-46,48-52,54-56,61-67
+  s_ee6f4dc7003fa4::t_5161f6ed116107 34
+nginx.conf
+  s_b727f86840b59a::t_055bdb9591a39a 24-47
+  s_7838b558d6ace2::t_78ab33a4940b91 48-64
+packages/auth-server/src/server.ts
+  s_5357fa4cd18186::t_e8fc365111723c 1-110
+playwright-test.js
+  s_0b2da19cff860d::t_876d3d33f2f114 1-61
+packages/web-app/src/main.tsx
+  s_c447ecbef0c6be::t_f57691c478d4a0 6
+  s_c447ecbef0c6be::t_7a5c43b0e139f3 8-16
+packages/core/src/__tests__/auth/VrtAuthService.test.ts
+  s_a92d6a24acf287::t_ef68c26cd75a64 2
+  s_b6a98109857a5a::t_17f3c51c974c34 3-4
+.omo/plans/003-multi-provider-platform.md
+  s_4265f2dede4a54::t_7c303a0665f84e 81-87
+  s_4265f2dede4a54::t_90d39826f6643a 1-80,88-114
+packages/web-app/src/hooks/useAuth.ts
+  s_c447ecbef0c6be::t_f3ebe89703cd3f 4-9,11
+  s_a6441336abf9ac::t_5f88579d71dde5 2,10
+  s_c447ecbef0c6be::t_e48b1375976fcb 42
+  s_c447ecbef0c6be::t_824f40b6125546 23,49
+  s_c447ecbef0c6be::t_da1d380fd32be0 36
+packages/web-app/playwright.config.ts
+  s_ee6f4dc7003fa4::t_ff47d84a606310 1-25
+packages/web-app/src/__tests__/components/ProviderCard.test.tsx
+  s_993284a2123d88::t_894ec95cdf41c6 25
+  s_94a4de48841b8d::t_8c65d54b218be0 1-21,23-24,26-31
+  s_993284a2123d88::t_9c4673263e3419 22
+packages/web-app/src/components/vault/ProviderCard.tsx
+  s_1b14b959d43e93::t_5a17be244f4f75 137
+  s_c816cf73dcafd5::t_65d8ab0cc8aacd 138-143,170-171,180-181
+  s_38cc358072389b::t_61f99436c3c734 173
+  s_b989c131c42f0a::t_a9cbd0d725f4cb 38
+  s_95cc1bbb66d2f3::t_7ff8a9130a2c0d 2
+  s_b989c131c42f0a::t_a41de6dd10ef82 26
+  s_b989c131c42f0a::t_9f182d788c22a8 5
+  s_95cc1bbb66d2f3::t_cc3089ffe5eb79 3
+  s_38cc358072389b::t_1688eabf75f6cd 52-53
+  s_b989c131c42f0a::t_6da0243fefbeb5 54-60
+  s_1b14b959d43e93::t_cbacb09c55cdb1 1,4,10,85-96,144-169,172,174-179,182-189
+  s_94a4de48841b8d::t_b17566160f0b9d 62
+  s_38cc358072389b::t_82d5206ab405d7 49-51
+packages/core/src/__tests__/regression/provider-regression.test.ts
+  s_a92d6a24acf287::t_aa9d124b0d3373 8
+  s_a92d6a24acf287::t_59fbd9bc54945f 7
+  s_a92d6a24acf287::t_58218360870aa2 6
+  s_b6a98109857a5a::t_d835c68707f86f 9-11
+  s_4534b7d7da5a3f::t_5131257a3f2fc8 1-3,5,12-113
+  s_bf84c100482c5a::t_880b1af3946da5 4
+packages/core/src/provider-setup.ts
+  s_ee6f4dc7003fa4::t_1e30e4066bf1b1 16,20,23
+  s_ee6f4dc7003fa4::t_4b1e44674af549 4,21-22,24,26
+  s_95cc1bbb66d2f3::t_cf787f646208d8 1-3
+  s_30c59a514ebd21::t_63af0ce9ccabb4 5-14,25,27-29
+  s_ee6f4dc7003fa4::t_98657b0702f0ec 15,17-19
+packages/core/package.json
+  s_2fcbecdeef6acf::t_624a5f06839302 26,28,30
+website/docs/getting-started.md
+  s_963864a5a666bd::t_d5f0ecb971d9bd 77-93
+website/docs/search-service.md
+  s_963864a5a666bd::t_94939d64ea99ee 1-85
+packages/core/src/__tests__/setup-jest-globals.ts
+  s_1ae21eb3183569::t_bc35a89fb3faa5 1,6
+  s_1ae21eb3183569::t_add471d7489181 2-4,8-26,35
+  s_1ae21eb3183569::t_ff47dbf9df1a89 27-31
+  s_b6a98109857a5a::t_c29d0d9d587278 7
+  s_1ae21eb3183569::t_50d5c15d4cc4aa 33-34
+  s_1ae21eb3183569::t_416624bf76b0df 5
+  s_1ae21eb3183569::t_f81ba8230229d5 32
+website/docs/provider-adapter.md
+  s_963864a5a666bd::t_7a2806132dcf30 1-84
+packages/ytdlp-service/src/DownloadManager.ts
+  s_6d0eebb3666500::t_418cf535f9bd42 1-226
+.omo/run-continuation/ses_10ef08dc4ffefU03n3cTEcF32u.json
+  s_4265f2dede4a54::t_dc9f0f0aa50286 1-10
+website/sidebars.js
+  s_963864a5a666bd::t_19fe8a78394f98 8-11
+packages/core/jest.config.js
+  s_b6a98109857a5a::t_b70118498ee28d 19
+  s_52e5f9f9d46e8f::t_60421a24fca671 22
+  s_4265f2dede4a54::t_f41def5f9bf642 10
+  s_52e5f9f9d46e8f::t_213670721e8852 5-9
+  s_52e5f9f9d46e8f::t_192f501bbda8bd 3
+  s_b6a98109857a5a::t_420e40c2d9c72f 11
+packages/core/src/__tests__/integration/thuis-download.test.ts
+  s_a92d6a24acf287::t_53bb4308d65232 16
+  s_b6a98109857a5a::t_13525dee9f066f 17-19
+packages/web-app/src/__tests__/components/DownloadProgress.test.tsx
+  s_993284a2123d88::t_2a4a16f2cc43f5 1-36
+packages/web-app/e2e/provider.login.test.ts
+  s_ee6f4dc7003fa4::t_37c17922e24016 64
+  s_45409184750d3d::t_f5c25f4a185aea 70,80-81
+  s_8997d3a448c794::t_429aa6e15def6d 6-31
+  s_ee6f4dc7003fa4::t_4d2287dbf2538e 65
+  s_ee6f4dc7003fa4::t_da5c12dfb77d8e 1-5,32-40,42-50,53-55,57-60,63,66-69,71-79,82-90
+  s_45409184750d3d::t_0022e205d8e44c 41,51-52,56,61-62
+.omo/plans/002-thuis-web-downloader.md
+  s_4265f2dede4a54::t_c04a2e80bba79f 76-128
+  s_4265f2dede4a54::t_9b3562b7b52de9 1-75,129-155
+packages/ytdlp-service/src/types.ts
+  s_1c36adebc90b2c::t_e2a3e9df121b9b 1-30
+packages/ytdlp-service/src/index.ts
+  s_b8b3e8fea839fe::t_93b7fd1b2c876c 1-4
+  s_ee6f4dc7003fa4::t_ed3e19e4cdfc7b 7
+  s_43b48b612d45a4::t_b5633e840c0437 6
+  s_43b48b612d45a4::t_5848a2845e28fc 5
+packages/core/src/__tests__/providers/ProviderRegistry.test.ts
+  s_a92d6a24acf287::t_0d2ff06a53c648 2
+  s_522dba34778a25::t_d62a0fd0dd1181 19-28,33
+  s_b8f60ef600bb03::t_b2ff8cef193a69 37
+  s_f79e829b232531::t_6e7ea3f8767fbb 5,7,34-36,38-45
+  s_522dba34778a25::t_d9399da7977894 6,8-16,18,46
+  s_52e5f9f9d46e8f::t_7c949a656b42a4 29-32
+  s_a92d6a24acf287::t_adbcd2b1d69c51 1
+  s_b6a98109857a5a::t_6158c2220755ba 3-4
+  s_522dba34778a25::t_cb07ab92de7539 17
+packages/ytdlp-service/src/CookieStore.ts
+  s_f0afb1fdb726d6::t_8bad9b7f16a9f2 39
+  s_f0afb1fdb726d6::t_0da200ac37f975 1-38,40-64
+specs/005-ytdlp-vrtmax-wrapper/checklists/requirements.md
+  s_ee6f4dc7003fa4::t_ea4101ba90d5e1 1-36
+.omo/notepads/005-ytdlp-vrtmax-wrapper/learnings.md
+  s_ee6f4dc7003fa4::t_1e8debf8bb1d5b 1-10
+.omo/boulder.json
+  s_ee6f4dc7003fa4::t_8e95955c948a56 11,13-17,20-24,127,481-482,485-489,492-496,499-502
+  s_ee6f4dc7003fa4::t_20d8cf4773fd5e 87,89,97-126,128-477
+  s_ee6f4dc7003fa4::t_27a1f7656ee95e 3
+  s_4265f2dede4a54::t_14453d23574815 82-86,88,90-96
+  s_ee6f4dc7003fa4::t_122de0935e71f1 9,12,18,27-29
+  s_ee6f4dc7003fa4::t_d47388be83118c 5-8,10,19,25-26,30
+packages/web-app/vite.config.ts
+  s_ee6f4dc7003fa4::t_26b60e4d732fe4 15
+  s_73f9ad40497f3f::t_c031d3f8fb2272 34-37
+  s_a5694480c4b273::t_17204226711386 22-33,38-39
+packages/web-app/e2e/episode.discovery.test.ts
+  s_ee6f4dc7003fa4::t_1d648a1cbf9637 16,20
+  s_8997d3a448c794::t_feb3020483e1a4 28
+  s_ee6f4dc7003fa4::t_5cfd3d9a1ab305 1-15,17-19,21-27,29-33
+packages/core/src/graphql/types.ts
+  s_60dc7a4aa3dbd9::t_ec55dd3ee72bc6 6-14
+  s_60dc7a4aa3dbd9::t_015fdfca462f78 3
+packages/core/src/providers/vtmgo/VtmgoProviderAdapter.ts
+  s_af38c89b073cce::t_80bc8825da65ab 1,4-42
+  s_95cc1bbb66d2f3::t_6c5a2c944fa5ee 2-3
+packages/ytdlp-service/src/DownloadJob.ts
+  s_43b48b612d45a4::t_9a8b9b2ce80554 1-3,6,8-17,19-122,125-171,179,195,203,219,229,254-285
+  s_43b48b612d45a4::t_1304ef6967f98a 220-228,230-253
+  s_43b48b612d45a4::t_277f004d2fb796 123-124
+  s_43b48b612d45a4::t_d536ef6c5daa19 7
+  s_43b48b612d45a4::t_d070893831f9f9 196-202,204-218
+  s_43b48b612d45a4::t_62062ea4506b7e 4-5
+  s_43b48b612d45a4::t_a811e075d4b0c7 172-178,180-194
+  s_43b48b612d45a4::t_ae01d5f2a619dc 18
+packages/core/src/__tests__/providers/VrtProviderAdapter.test.ts
+  s_52e5f9f9d46e8f::t_2d8eae631b63a7 2-16,18-91,93,100-109,142
+  s_6a34f114b6f7fc::t_3388c138655372 110-141
+  s_a92d6a24acf287::t_b8f8de904efb9f 1
+  s_b6a98109857a5a::t_62f313b67d693b 17
+  s_2918e3b6b8bbdc::t_051390f0b20b55 92
+  s_52e5f9f9d46e8f::t_dd99dd5fccff7e 94-99
+packages/auth-server/src/index.ts
+  s_5357fa4cd18186::t_32e8b7c20e5ed3 1-22
+packages/core/src/providers/vrt/VrtProviderAdapter.ts
+  s_4c878e2cabd510::t_53bc4b072ec131 37,41,57-61
+  s_4c878e2cabd510::t_b97cd14e28ffa9 22-24,34,36
+  s_ee6f4dc7003fa4::t_2e4e9048548df7 10-14,25-31,45-46,111-115
+  s_95cc1bbb66d2f3::t_1cc61cf967f761 2-7
+  s_4c878e2cabd510::t_99a41bacc72337 8,65-104
+  s_4265f2dede4a54::t_cd1ac4dfd3c512 1
+  s_4c878e2cabd510::t_f8492c13cb92bd 9,15-21,32-33,38-40,42-44,62-64,105-110
+  s_4c878e2cabd510::t_3df47d641d8345 35
+  s_6a34f114b6f7fc::t_b284486fd135a6 47-56
+  s_4265f2dede4a54::t_ab5902cdd5cce4 116
+packages/web-app/e2e/episode.download.test.ts
+  s_ee6f4dc7003fa4::t_2d9913ad384754 16,20
+  s_ee6f4dc7003fa4::t_6ac1a6de8df1fb 1-15,17-19,21-31
+packages/core/src/auth/VrtAuthService.ts
+  s_b727f86840b59a::t_c722d512a4435e 85-86
+packages/web-app/e2e/helpers.ts
+  s_45409184750d3d::t_ccfac5ecc12275 22-28
+  s_fd72e437960f51::t_99b21e284d454f 89,95-96,98-100,109-110
+  s_ee6f4dc7003fa4::t_e267f3ee699d7e 1-11,33-35,37,77-88,90-94,97,101-108,111-118,121-131,134,137,139-149,151-166
+  s_fd72e437960f51::t_c057d1a3310923 150
+  s_ee6f4dc7003fa4::t_b32eb8396c9c67 46,56,59-62,64,66,68,71,73-74
+  s_ee6f4dc7003fa4::t_f955c5882bd3ad 12-21,29-32,36,38-43,49
+  s_ee6f4dc7003fa4::t_b248b10da0aeb4 44-45,47-48
+  s_ee6f4dc7003fa4::t_7d52026a340b1b 76
+  s_ee6f4dc7003fa4::t_49ab5aad120410 50-55,57-58,63,65,67,69-70,72,75
+  s_fd72e437960f51::t_f0d09a59a59cc7 119-120
+  s_fd72e437960f51::t_ccac4aba1f7a2a 132-133,135-136,138
+packages/web-app/src/pages/VaultPage.tsx
+  s_c816cf73dcafd5::t_8df16d68365d94 1,3,5
+  s_c816cf73dcafd5::t_7604cb5bd914ce 230-251,253-330,361-365,368-374,376
+  s_c816cf73dcafd5::t_09d917368a51e9 31-44
+  s_6f1ffbf63ebef1::t_210171a62eac6f 19
+  s_c816cf73dcafd5::t_d44e457c63b511 50-72
+  s_95cc1bbb66d2f3::t_73dccc43f8a9e2 2
+  s_c816cf73dcafd5::t_83512e7990b81f 20
+  s_c816cf73dcafd5::t_f13a7b85a6b74f 252
+packages/core/tsconfig.json
+  s_4265f2dede4a54::t_4f3fd883050125 9
+  s_e24ac25c56a4a2::t_d10b2deb1e5644 8
+  s_522dba34778a25::t_8de3f7a09a86fe 7
+  s_95cc1bbb66d2f3::t_1bd4efc2f5bdf5 11-12
+packages/web-app/src/hooks/useEpisode.ts
+  s_ae8e1b841ae38c::t_0f85f673468296 7,9-10,12
+  s_95cc1bbb66d2f3::t_7163f0854207c9 8
+  s_ae8e1b841ae38c::t_3eb6dcb593034e 2
+  s_ae8e1b841ae38c::t_4dadefdeceb810 27-28
+website/docs/credential-vault.md
+  s_963864a5a666bd::t_108b570b1a6f79 1-55
+packages/vrt-dlp/requirements.txt
+  s_ee6f4dc7003fa4::t_975859f40418ff 1
+packages/core/src/__tests__/performance/provider-benchmark.test.ts
+  s_2fcbecdeef6acf::t_db947eaac8e74a 42
+  s_0f3070b55a5d0a::t_e56e5967bfceb9 1-41,43-52,54-58,60-62
+  s_2fcbecdeef6acf::t_8f74244286b6fd 53
+  s_2fcbecdeef6acf::t_bd8b3e8f6ee425 59
+packages/web-app/src/__tests__/components/SeriesPage.test.tsx
+  s_993284a2123d88::t_ac3fb081d12b10 1-39
+packages/web-app/e2e/sso.login.test.ts
+  s_45409184750d3d::t_ed017f50d0da9d 53,63-64
+  s_ee6f4dc7003fa4::t_9d3a31c3f0b69f 1-5,32-46,49-52,54-62,65-74
+  s_8997d3a448c794::t_653a8563336a91 6-31
+  s_ee6f4dc7003fa4::t_55a5e89e82d9db 47-48
+packages/web-app/src/pages/EpisodeDetail.tsx
+  s_cf4daccfb646ac::t_d2ba46b7e8d2ed 310-311,313,315-317
+  s_cf4daccfb646ac::t_afd8bd5af4ec2d 22,32-33
+  s_cf4daccfb646ac::t_60d046b0eb4830 332,340-341
+  s_cf4daccfb646ac::t_7a44b38e945a6f 227-242
+  s_95cc1bbb66d2f3::t_0839de28f88994 21
+  s_cf4daccfb646ac::t_42e64ed49eb5d8 5-7
+  s_cf4daccfb646ac::t_426cef50b6f489 46,53-73,78-79
+.omo/plans/full-project-build.md
+  s_4265f2dede4a54::t_60043a19b0f6e0 819
+  s_4265f2dede4a54::t_7d40d727b24478 780-800,802-818,820-839,841-857,859-876,878-896,898-915,917-933,935-952,954-970
+  s_4265f2dede4a54::t_1780110aef4b55 760
+  s_4265f2dede4a54::t_afc667d11c8b5c 703
+  s_4265f2dede4a54::t_2b74dcad493d09 431-483,485-508,510-525,527-542,544-561,563-577
+  s_4265f2dede4a54::t_e714e8073b4a63 430
+  s_4265f2dede4a54::t_69922987369a60 916
+  s_4265f2dede4a54::t_f8ccf183212157 608
+  s_4265f2dede4a54::t_3e7810f27c9ce4 779
+  s_4265f2dede4a54::t_6f0809beef0137 650
+  s_4265f2dede4a54::t_41313e790a945f 979
+  s_4265f2dede4a54::t_07aa6c001a63a8 579-607,609-630,632-649,651-667,669-685,687-702,704-719,721-742,744-759,761-778
+  s_4265f2dede4a54::t_569fbe331cdb45 198-234,236-285,287-336,338-372,374-393,395-409,411-429
+  s_4265f2dede4a54::t_f5327e32ca56e6 668
+  s_4265f2dede4a54::t_d8154630e382fe 509
+  s_4265f2dede4a54::t_e65df705c486a5 720
+  s_4265f2dede4a54::t_a7b3ccc155148e 897
+  s_4265f2dede4a54::t_bdf9d69a3108aa 526
+  s_4265f2dede4a54::t_b573518f7f8ea8 877
+  s_4265f2dede4a54::t_fa5e2d81267560 484
+  s_4265f2dede4a54::t_70d7dd60429dc0 858
+  s_4265f2dede4a54::t_5436ba107a9ec4 543
+  s_4265f2dede4a54::t_0939765729d0bb 286
+  s_4265f2dede4a54::t_9b1399ee3ee8c8 801
+  s_4265f2dede4a54::t_0242a9ef98a9b0 394
+  s_4265f2dede4a54::t_1092bc0c6bd84c 631
+  s_4265f2dede4a54::t_e75645111cf85b 1,5-20,24-75,77,79-110,112,114-134,136,138-191,193,195,971,973,976-977,980-982,985-986,989-990,996-1007,1009,1011-1020
+  s_4265f2dede4a54::t_ade4151287fd01 934
+  s_4265f2dede4a54::t_51a3b66643b928 235
+  s_4265f2dede4a54::t_1e41f48a00a452 337
+  s_4265f2dede4a54::t_2ee7ade039cee7 743
+  s_4265f2dede4a54::t_9b7155444c3c68 410
+  s_4265f2dede4a54::t_503a664dd75a57 197
+  s_4265f2dede4a54::t_9a9029e2835994 373
+  s_4265f2dede4a54::t_389505c4abbfc7 578
+  s_4265f2dede4a54::t_6615672bf3067f 686
+  s_4265f2dede4a54::t_5a1a9c6df79743 562
+  s_4265f2dede4a54::t_4ca3234d2f7791 953
+  s_4265f2dede4a54::t_8a65e39131a608 2-4,21-23,76,78,111,113,135,137,192,194,196,972,974,978,983,987,991-995,1008,1010
+  s_4265f2dede4a54::t_77b4836c9f2cd7 975
+  s_4265f2dede4a54::t_993f44be3ffeac 840
+  s_4265f2dede4a54::t_5ad4bfbf30f082 984
+  s_4265f2dede4a54::t_f15734a718483b 988
+website/docs/api-reference.md
+  s_963864a5a666bd::t_c19ff7690e435b 1-81
+package.json
+  s_ee6f4dc7003fa4::t_e3899899aba82c 7-10,26,29-31
+specs/005-ytdlp-vrtmax-wrapper/spec.md
+  s_ee6f4dc7003fa4::t_6611605f48c395 1-160
+.specify/feature.json
+  s_ee6f4dc7003fa4::t_1925f4e200d56a 1
+packages/core/src/index.ts
+  s_f79e829b232531::t_a8c73624942f5c 72-74
+  s_7eea0690dd90ca::t_c2e340cf3bc035 4
+  s_c447ecbef0c6be::t_8c90bb45c6d795 75
+packages/core/src/__tests__/vault/Vault.test.ts
+  s_7eea0690dd90ca::t_4263a55282ac06 3-60
+  s_a92d6a24acf287::t_6b7e3d9406636b 1
+  s_b6a98109857a5a::t_ae5d8e760d2b21 2
+packages/ytdlp-service/src/YtDlpProviderAdapter.ts
+  s_f7eff0064d56bd::t_b2cb051b7875b8 1-67
+specs/002-thuis-web-downloader/spec.md
+  s_4265f2dede4a54::t_fdf72ffed1baaa 1-188
+packages/core/src/__tests__/providers/StubAdapter.test.ts
+  s_b1e81cbb64a344::t_cc8a71edb78632 1-40
+packages/ytdlp-service/package.json
+  s_43b48b612d45a4::t_aa41dce4661320 15
+  s_43b48b612d45a4::t_362bfe9a412a2d 16-19
+  s_b8b3e8fea839fe::t_316b4955830ec1 1-14,20-21
+packages/auth-server/package.json
+  s_5357fa4cd18186::t_e94a6acc3b4ca2 1-20
+packages/core/tsconfig.base.json
+  s_f79e829b232531::t_8979eba476048c 1-10
+packages/web-app/src/__tests__/components/EpisodeDetail.test.tsx
+  s_94a4de48841b8d::t_1d73da01f09ed0 1-30
+packages/web-app/package.json
+  s_ee6f4dc7003fa4::t_ae06c0cede6697 26
+  s_22348be8c62caf::t_2610fb6442d692 10-11
+  s_ee6f4dc7003fa4::t_a1a8b5f1f686f9 21
+packages/core/src/providers/types.ts
+  s_95cc1bbb66d2f3::t_6a0fab13150000 1-2
+  s_522dba34778a25::t_bba39cdb00f534 4-18
+  s_4265f2dede4a54::t_c324e8be582834 3
+tsconfig.base.json
+  s_ee6f4dc7003fa4::t_d96ca3c6d24127 22
+  s_7eea0690dd90ca::t_c11b6ce0eef1ef 8-9
+  s_ee6f4dc7003fa4::t_dd3cc08d6d8b14 18,21
+packages/web-app/tsconfig.json
+  s_95cc1bbb66d2f3::t_b51f014f7cc871 5
+  s_95cc1bbb66d2f3::t_ecf4642f244e79 11-12
+.dockerignore
+  s_95cc1bbb66d2f3::t_187be6901c102d 18
+packages/core/test.ts
+  s_72f5f54becf22e::t_5fd8a69afd90d1 1
+packages/web-app/e2e/vault.setup.test.ts
+  s_ee6f4dc7003fa4::t_b6a7d028d67421 2
+  s_45409184750d3d::t_16d55a083dbe26 48-49
+  s_ee6f4dc7003fa4::t_4499b88dbe4ce4 40-45
+  s_45409184750d3d::t_c60c590676d3b7 10
+  s_45409184750d3d::t_1bff12fbda5968 14-16,19
+  s_ee6f4dc7003fa4::t_689c4d26d3f7b5 46-47
+  s_ee6f4dc7003fa4::t_0eb05db65235ca 38
+  s_ee6f4dc7003fa4::t_3b23483f271e0e 50
+  s_ee6f4dc7003fa4::t_c277a0ebf23222 1,3-9,11-13,17-18,20-37,39,51-52
+packages/core/src/providers/ProviderRegistry.ts
+  s_f79e829b232531::t_e4e1b7202ac419 1
+  s_f79e829b232531::t_ef9f7f8b407617 2-35,37-64
+  s_b6a98109857a5a::t_3b2a12cdd921a8 36
+.omo/evidence/task-1-tsc-pass.txt
+  s_522dba34778a25::t_04b0a6dab14e28 1
+docker-compose.yml
+  s_95cc1bbb66d2f3::t_5e3aa38dec024c 8-13
+packages/web-app/src/__tests__/services/SearchService.test.ts
+  s_b99fece017e5bd::t_0e70c99e493939 1-85
+packages/core/src/__tests__/episode/VrtEpisodeService.test.ts
+  s_a92d6a24acf287::t_ed4a6dd4da34ef 4
+  s_b6a98109857a5a::t_fd4c36009fa18d 5
+  s_a92d6a24acf287::t_978610258ba31b 2
+  s_a92d6a24acf287::t_4c24ae02e108c3 3
+packages/web-app/src/__tests__/components/Vault.test.tsx
+  s_94a4de48841b8d::t_0f22563547e264 1-46
+packages/ytdlp-service/tsconfig.json
+  s_b8b3e8fea839fe::t_570eb9ac8f4c9a 1-11
+packages/core/src/providers/playtv/PlaytvProviderAdapter.ts
+  s_daaec70f05fa39::t_68ac8e4fe7645d 2-3
+  s_daaec70f05fa39::t_47b790a2131461 1,4-42
+packages/web-app/src/__tests__/components/DownloadQueue.test.tsx
+  s_94a4de48841b8d::t_036e9e38b794fb 1-10
+.omo/plans/005-ytdlp-vrtmax-wrapper.md
+  s_ee6f4dc7003fa4::t_a9477c5bec8d5a 91
+  s_ee6f4dc7003fa4::t_470cf40e091254 124
+  s_ee6f4dc7003fa4::t_c6a87e022067e3 86
+  s_ee6f4dc7003fa4::t_3c64a10c4ffb8b 139
+  s_ee6f4dc7003fa4::t_07346c2e3e18b9 133
+  s_ee6f4dc7003fa4::t_99e81b50fcb58b 174
+  s_ee6f4dc7003fa4::t_e9609c21d9916a 152
+  s_ee6f4dc7003fa4::t_bb136f4270a527 145
+  s_ee6f4dc7003fa4::t_09bec1c97e51e8 161
+  s_ee6f4dc7003fa4::t_c38d547f7d74e7 109
+  s_ee6f4dc7003fa4::t_0a15f6998f7c1f 3-4
+  s_ee6f4dc7003fa4::t_e854b52479b40c 81
+  s_ee6f4dc7003fa4::t_d1e4441db46a45 100
+  s_ee6f4dc7003fa4::t_08d13103614879 168
+  s_ee6f4dc7003fa4::t_170516e83ce001 117
+  s_ee6f4dc7003fa4::t_d5827c5241a49e 1-2,5-80,82-85,87-90,92-99,101-108,110-116,118-123,125-132,134-138,140-144,146-151,153-160,162-167,169-173,175-187
+specs/002-thuis-web-downloader/plan.md
+  s_4265f2dede4a54::t_57d4814eb5521e 1-113
+specs/004-video-viewer-download/spec.md
+  s_4265f2dede4a54::t_04e4ca3cf5089c 1-267
+pnpm-workspace.yaml
+  s_5357fa4cd18186::t_8e047f9ee8c6de 2
+  s_43b48b612d45a4::t_d19f0fe00b9131 6
+packages/core/src/provider-setup.d.ts
+  s_c447ecbef0c6be::t_9f520166d915af 1
+packages/web-app/src/__tests__/components/DownloadQueuePage.test.tsx
+  s_993284a2123d88::t_6c475071a2e79f 1-17
+test-e2e.mjs
+  s_0b2da19cff860d::t_7de148c38ebb9e 1-81
+Dockerfile
+  s_7838b558d6ace2::t_a7a9b0b87ba187 1,3,17,26,28,30,33-36,39,44-50,56,58
+  s_95cc1bbb66d2f3::t_243d2c3fd0d6f0 54
+  s_cc62515b584173::t_d6f740b6ba5668 55,57
+packages/web-app/src/components/vault/ProviderCredentialForm.tsx
+  s_10723280bd0bc9::t_15524cca589f12 82-83,87-88,91,96-97
+  s_10723280bd0bc9::t_d9d835ee1ee883 86
+  s_c816cf73dcafd5::t_443209a95d4c26 2-3
+  s_c816cf73dcafd5::t_323b75d6f80d9a 22-23
+  s_10723280bd0bc9::t_9902da2ec95e6c 84
+  s_c816cf73dcafd5::t_4c87bfbc2c7a26 213-219
+  s_ee6f4dc7003fa4::t_16ca2d3f22c50d 72,74-78
+  s_c816cf73dcafd5::t_ee0a48d44db519 232-250
+  s_c816cf73dcafd5::t_36e75ac9ebecdf 58-59,70,73,85,89-90,92-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "da4c7b09a568c7de637bc20063eb3529acb9326a",
+  "prompts": {},
+  "sessions": {
+    "s_0b2da19cff860d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10648a943ffe5ZJV6ibh2Ff9Gf",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_0f3070b55a5d0a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b440b86ffeat28fjwJGrX5Xo",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_10723280bd0bc9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b736edeffem1i28jzFWbLAep",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_110db783333ebd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10be92848ffezqcgK8bpFilfPp",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_125c72519ddd6f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10be01262ffeQMcSlmjSUZeavW",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_1946b2db800439": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b964167ffe3u3416iCJmQSS9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_1ae21eb3183569": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_107ffa5f0ffe5CeSob0pd2woIl",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_1b14b959d43e93": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b93b915ffeAcfqya6n7fHM3F",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_1c36adebc90b2c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_106d56d91ffe0W6q7T6K9C2887",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_22348be8c62caf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1054c073fffeQ9gOp5yGRC75Mq",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_2918e3b6b8bbdc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b7822caffeypkZzaBSiivEBc",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_2fcbecdeef6acf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10af7d7d6ffeepJhDLeM9U4Se7",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_30c59a514ebd21": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b9f50abffeRiFPaGZUYXmRC2",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_38cc358072389b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1053359a6ffeTBVMK4d3TcEwYr",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_4265f2dede4a54": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_110ad28a4ffe2GwN30Vf4xHyFu",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_43b48b612d45a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_106cccfaaffe4ZjNgYrxkFG57w",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_4534b7d7da5a3f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b813c40ffeCYevq5xy3YM22e",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_45409184750d3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_105435219ffeeYyqtb6UXwo2eC",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_46688b8ec465b9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b672e85ffeNkq1hUjgE2DK8O",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_4c878e2cabd510": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10bc24019ffeAFqX1oFMrzR28U",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_522dba34778a25": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10c1db828ffe0EXbY5DJM0o8Ag",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_52e5f9f9d46e8f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b9c162bffexXnBtByGOgZ7Gg",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_5357fa4cd18186": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10622a988ffe5q7lnQ1BdV0rJg",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_60dc7a4aa3dbd9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10eba6a46ffeBKQ8s3JwQ4x7Yb",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_6a34f114b6f7fc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10622aeecffeutHKxJ70Ttpph2",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_6d0eebb3666500": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_106b7816effepyfUMiGGt0JlE3",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_6f1ffbf63ebef1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b6e646dffeQD6C309IKDIrDJ",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_72f5f54becf22e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b54f85affeqQ6RJeY3yZUq0l",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_73f9ad40497f3f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_106223e46ffe33CWqQejebqT0p",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_7838b558d6ace2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1062240c6ffewg5pf4keyENTFf",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_7eea0690dd90ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10c0b07a3ffeYNcK0326b9qi3m",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_8997d3a448c794": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1052edbc5ffek9tQOLvnnbsTly",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_8d770207ae6d4d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10bf1a15cffeIJme26PmUWupUc",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_916edcae16d1ee": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b5c0cc0ffeXOl4YZ5CjmysTm",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_94a4de48841b8d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b1b8f67ffeUcXTf44ouOWK16",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_95cc1bbb66d2f3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10a7bba17ffe4PpR6KneK4QKxI",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_963864a5a666bd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10abae36dffeN9ID3E9iTa8uhA",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_993284a2123d88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1068bf68fffevr79Alq6FXa9oK",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_a5694480c4b273": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10634e227ffevU79ZHb19wB637",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_a6441336abf9ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b8c87c9ffe3DE4wpSdkl2CiR",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_a852c13f911944": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b75eda1ffeWkhKE5VRZf7bgo",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_a92d6a24acf287": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10aeaa7beffeyCu0RVvjwYnuv5",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_ae8e1b841ae38c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b8b413dffeV82v0zYtNQ6lZ3",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_af38c89b073cce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10ba55a8effeq2nt4gDPAS4uPz",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_b1743544adb5c0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10bfe9087ffe3DxDl85vPfFf67",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_b1e81cbb64a344": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b991d08ffe7alNPmdCgQJlwW",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_b6a98109857a5a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b215489ffeOYcut1URfPfgD4",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_b727f86840b59a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_106ddccb6ffenJkTK04DjhL2im",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_b8b3e8fea839fe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_106d80a71ffe6xzS14U2Vgay9a",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_b8f60ef600bb03": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10bd26a57ffecwu8k31ZdW514f",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_b989c131c42f0a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_106b54985ffe1CVWiDU9rh8BvF",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_b99fece017e5bd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b836a4cffeii96lzXpfvRg3c",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_bf84c100482c5a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10acf7055ffe1rIbYowXsLX8cq",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_c447ecbef0c6be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10839693cffeXIgPEQTSI0tfgz",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_c816cf73dcafd5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10a4caf20ffer4wkbP8vFXfM4l",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_cc62515b584173": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10eea13edffe71ErSV3r7L9bkg",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_cf4daccfb646ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b61c0a2ffe4Y2fc3E3XHlE6Z",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_daaec70f05fa39": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10ba39b08ffelpkzPTNNTAjVGI",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_dd5a9d08106368": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10b49b2fdffehVdWe027z8CFoM",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_dde34368dc13fc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_106d424b2ffemaMEivLhlyLint",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_e24ac25c56a4a2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10be28867ffez1TpCPuAxK0R77",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_ee6f4dc7003fa4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_106df76dcffePrZuDYwCp3zXo8",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_f0afb1fdb726d6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_106d1bfaeffeH1fCsv013jiW31",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_f79e829b232531": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10c50e643ffenGYuJmWE6hfb34",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_f7eff0064d56bd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_106ce3c1effewgFRsuoTvDmlvC",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_fd72e437960f51": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_10544f71bffekRbForWxEr2ix3",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
