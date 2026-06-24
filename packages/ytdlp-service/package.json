@@ -1,0 +1,21 @@
+{
+  "name": "@thuis/ytdlp-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "zod": "^3",
+    "@thuis/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.6.2"
+  }
+}

@@ -82,8 +82,8 @@ export class VrtAuthService {
 
   constructor(options: VrtAuthServiceOptions = {}) {
     this.storage = options.storage ?? new InMemoryTokenStorage();
-    this.baseUrl = options.baseUrl ?? "https://www.vrt.be";
-    this.loginBaseUrl = options.loginUrl ?? "https://login.vrt.be";
+    this.baseUrl = options.baseUrl ?? "/vrtbe";
+    this.loginBaseUrl = options.loginUrl ?? "/loginvrt";
   }
 
   // ─── Public API ─────────────────────────────────────────

@@ -74,6 +74,23 @@ Available at `http://localhost:3000`.
 
 ## First-Time Setup (Vault)
 
+### Registering a New Provider
+
+To add a custom provider, implement the `ProviderAdapter` interface and register it in `packages/core/src/providers/index.ts`. Once the adapter is compiled, it will be discovered automatically by the `SearchService`. The UI will show the new provider in the **Add Provider** dialog.
+
+### Configuring the Vault
+
+After registering a provider, you may need to store its credentials:
+
+1. Open the **Settings** page.
+2. Select the newly added provider from the list.
+3. Click **Configure Credentials** and enter the required fields (e.g., API key, username/password).
+4. Save – the credentials are encrypted with the master password and stored securely.
+
+The vault will auto‑lock after 5 minutes of inactivity; you will be prompted to re‑enter the master password when needed.
+
+## First-Time Setup (Vault)
+
 On first launch, you'll see the **Vault Setup** screen where you create a master password.
 
 > **⚠️ Warning:** This master password cannot be recovered if forgotten. All provider credentials will be permanently lost.

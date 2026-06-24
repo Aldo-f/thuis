@@ -5,6 +5,12 @@ services:
     restart: unless-stopped
     networks:
       - docker-stack_core-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.thuis-web.rule=Host(`thuis.aldof.duckdns.org`)"
+      - "traefik.http.routers.thuis-web.entrypoints=websecure"
+      - "traefik.http.routers.thuis-web.tls=true"
+      - "traefik.http.services.thuis-web.loadbalancer.server.port=80"
 
 networks:
   docker-stack_core-network:

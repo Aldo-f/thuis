@@ -2,7 +2,9 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.js";
 import { useEpisode } from "../hooks/useEpisode.js";
-import type { EpisodeDetail } from "@thuis/core";
+import { useVault } from "../hooks/useVault.js";
+import { ProviderRegistry } from "@thuis/core";
+import type { EpisodeDetail, StreamData } from "@thuis/core";
 
 type PageState = "loading" | "error" | "metadata" | "stream" | "playing";
 
@@ -16,7 +18,8 @@ function formatTime(t: number) {
 export default function EpisodeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { authService } = useAuth();
-  const { episode, stream, isLoading, error, fetchEpisode, resolveStream } = useEpisode(authService);
+  const { episode, isLoading, error, fetchEpisode } = useEpisode(authService as any);
+  const vault = useVault();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [pageState, setPageState] = useState<PageState>("loading");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -26,6 +29,8 @@ export default function EpisodeDetailPage() {
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [stream, setStream] = useState<StreamData | null>(null);
+  const [showTechDetails, setShowTechDetails] = useState(false);
   const hlsRef = useRef<any>(null);
 
   const episodeUrl = id
@@ -38,18 +43,40 @@ export default function EpisodeDetailPage() {
 
   async function loadEpisode() {
     setPageState("loading");
+    setStream(null);
     const ep = await fetchEpisode(episodeUrl);
     if (!ep) {
       setPageState("error");
       return;
     }
     setPageState("metadata");
-    const s = await resolveStream(ep.streamId);
-    if (s) {
+
+    // Resolve stream via provider adapter with vault credentials
+    try {
+      const adapter = ProviderRegistry.getInstance().get("vrt");
+      if (!adapter) {
+        setPageState("error");
+        return;
+      }
+
+      // Fetch credentials from vault before stream resolution
+      try {
+        const creds = vault.getCredentials("vrt");
+        if (creds) {
+          await adapter.login({ username: creds.email, password: creds.password });
+        }
+      } catch {
+        // Vault locked of login mislukt — adapter heeft mogelijk al geldige tokens
+      }
+
+      const s = await adapter.resolveStream(ep);
+      setStream(s);
       setPageState("stream");
       if (s.code) {
         setPageState("error");
       }
+    } catch {
+      setPageState("error");
     }
   }
 
@@ -197,7 +224,22 @@ export default function EpisodeDetailPage() {
             Probeer opnieuw
           </button>
         </div>
-        {episode && <EpisodeMetadata episode={episode} />}
+      {showTechDetails && stream && (
+        <div className="mt-4 rounded-lg border border-stone-200 bg-stone-50 p-4 text-xs text-stone-500 font-mono">
+          {stream.targetUrls.filter((t: { type: string }) => t.type === "hls" || t.type === "hls_aes").map((t: { type: string; url: string }, i: number) => (
+            <div key={i} className="mb-1">
+              <span className="font-semibold text-stone-600">HLS-URL:</span>{" "}
+              <a href={t.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 break-all">
+                {t.url}
+              </a>
+            </div>
+          ))}
+          {stream.drm && <p className="text-amber-600">DRM-beveiliging actief</p>}
+          {stream.code && <p className="text-red-600">Code: {stream.code}</p>}
+        </div>
+      )}
+
+      {episode && <EpisodeMetadata episode={episode} providerName="VRT MAX" />}
       </div>
     );
   }
@@ -265,16 +307,14 @@ export default function EpisodeDetailPage() {
                 ))}
               </select>
               {stream && !stream.drm && (
-                <a
-                  href={stream.targetUrls.find((t: { type: string }) => t.type === "hls")?.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => setShowTechDetails((v) => !v)}
                   className="flex items-center gap-1 rounded bg-white/20 px-2 py-1 text-xs text-white hover:bg-white/30"
-                  title="HLS-stream URL"
+                  title={showTechDetails ? "Technische details verbergen" : "Technische details tonen"}
                 >
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" /></svg>
-                  Download
-                </a>
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5zm7.43-2.53c.76-1 .76-2.47 0-3.47l-1.21-1.58.34-2.06c.13-.8-.14-1.57-.7-2.06s-1.24-.72-2.02-.56l-2.01.47-1.69-1.19c-.9-.65-2.11-.65-3.02 0l-1.69 1.19-2.01-.47c-.78-.16-1.59.07-2.02.56s-.83 1.26-.7 2.06l.34 2.06L4.57 9.5c-.76 1-.76 2.47 0 3.47l1.21 1.58-.34 2.06c-.13.8.14 1.57.7 2.06s1.24.72 2.02.56l2.01-.47 1.69 1.19c.45.32.98.48 1.51.48s1.06-.16 1.51-.48l1.69-1.19 2.01.47c.78.16 1.59-.07 2.02-.56s.83-1.26.7-2.06l-.34-2.06 1.21-1.58z"/></svg>
+                  {showTechDetails ? "Details verbergen" : "Technische details"}
+                </button>
               )}
               <button onClick={toggleFullscreen} className="text-white hover:text-stone-300">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" /></svg>
@@ -289,7 +329,7 @@ export default function EpisodeDetailPage() {
   );
 }
 
-function EpisodeMetadata({ episode }: { episode: EpisodeDetail }) {
+function EpisodeMetadata({ episode, providerName }: { episode: EpisodeDetail; providerName?: string }) {
   return (
     <div className="mt-6">
       <Link to={`/search?q=${encodeURIComponent(episode.seriesTitle)}`} className="text-sm text-stone-500 hover:text-stone-700">
@@ -297,6 +337,8 @@ function EpisodeMetadata({ episode }: { episode: EpisodeDetail }) {
       </Link>
       <h1 className="mt-1 text-2xl font-bold text-stone-900">{episode.title}</h1>
       <p className="mt-1 text-sm text-stone-500">
+        {providerName && <span className="font-medium">{providerName}</span>}
+        {providerName && <span className="mx-1.5">•</span>}
         Seizoen {episode.season} • Aflevering {episode.episode}
         {episode.brand && <> • <span className="capitalize">{episode.brand}</span></>}
         {episode.airedAt && <> • {new Date(episode.airedAt).toLocaleDateString("nl-BE")}</>}

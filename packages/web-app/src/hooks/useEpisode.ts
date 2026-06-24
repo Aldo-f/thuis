@@ -1,15 +1,15 @@
 import { useState, useCallback } from "react";
-import { VrtEpisodeService, VrtAuthService } from "@thuis/core";
+import { ProviderRegistry, VrtAuthService } from "@thuis/core";
 import type { EpisodeDetail, StreamData } from "@thuis/core";
 
 // Hook returns authService dependency — in production, inject via context
-let episodeService: VrtEpisodeService | null = null;
 
-function getService(auth: VrtAuthService): VrtEpisodeService {
-  if (!episodeService) {
-    episodeService = new VrtEpisodeService(auth);
+function getVrtAdapter(): any {
+  const provider = ProviderRegistry.getInstance().get('vrt');
+  if (!provider) {
+    throw new Error('VRT provider is not registered.');
   }
-  return episodeService;
+  return provider;
 }
 
 export function useEpisode(authService: VrtAuthService) {
@@ -24,8 +24,8 @@ export function useEpisode(authService: VrtAuthService) {
     setEpisode(null);
     setStream(null);
     try {
-      const service = getService(authService);
-      const ep = await service.getEpisode(url);
+const provider = getVrtAdapter();
+       const ep = await provider.getEpisode(url);
       setEpisode(ep);
       return ep;
     } catch (err: any) {

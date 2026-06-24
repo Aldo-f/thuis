@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from "react";
+import { ProviderRegistry } from "@thuis/core";
+import { useVault } from "../../hooks/useVault.js";
 
 type ProviderId = "vrt" | "vtm" | "playtv";
 
@@ -17,6 +19,8 @@ interface Credentials {
 interface ProviderCredentialFormProps {
   provider: Provider;
   onSubmit: (credentials: Credentials) => void;
+  onCancel?: () => void;
+  onError?: (error: string) => void;
   initialValues?: Partial<Credentials>;
   isSubmitting?: boolean;
 }
@@ -51,6 +55,8 @@ const PROVIDER_STYLES: Record<
 function ProviderCredentialForm({
   provider,
   onSubmit,
+  onCancel,
+  onError,
   initialValues,
   isSubmitting = false,
 }: ProviderCredentialFormProps) {
@@ -61,16 +67,34 @@ function ProviderCredentialForm({
     initialValues?.verifyAfterSave ?? false,
   );
   const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const styles = PROVIDER_STYLES[provider.id];
-  const isImplemented = provider.id === "vrt";
-  const canSubmit = email.length > 0 && password.length > 0 && isImplemented;
+const { addProvider } = useVault();
+
+const styles = PROVIDER_STYLES[provider.id];
+const registry = ProviderRegistry.getInstance();
+const adapter = registry.get(provider.id);
+const isImplemented = !!adapter && adapter.supportsAuth;
+const canSubmit = email.length > 0 && password.length > 0 && isImplemented;
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (canSubmit && !isSubmitting) {
-      onSubmit({ email, password, label, verifyAfterSave });
-    }
+    if (!canSubmit || isSubmitting) return;
+    if (!adapter?.supportsAuth) return;
+
+    setFormError(null);
+
+    (async () => {
+      try {
+        await adapter.login({ username: email, password });
+        await addProvider(provider.id, email, password);
+        onSubmit({ email, password, label, verifyAfterSave });
+      } catch (err: any) {
+        const msg = err?.message ?? "Onbekende fout bij inloggen";
+        setFormError(msg);
+        onError?.(msg);
+      }
+    })();
   }
 
   return (
@@ -186,6 +210,13 @@ function ProviderCredentialForm({
               />
             </div>
 
+            {/* Error message */}
+            {formError && (
+              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                {formError}
+              </div>
+            )}
+
             {/* Verify checkbox */}
             <label className="flex items-center gap-2 text-sm text-stone-600">
               <input
@@ -198,13 +229,25 @@ function ProviderCredentialForm({
               Verifieer nu
             </label>
 
-            <button
-              type="submit"
-              disabled={!canSubmit || isSubmitting}
-              className="w-full rounded-lg bg-stone-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isSubmitting ? "Bezig met opslaan…" : "Opslaan"}
-            </button>
+            <div className="flex gap-3">
+              {onCancel && (
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  disabled={isSubmitting}
+                  className="flex-1 rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Annuleren
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={!canSubmit || isSubmitting}
+                className="flex-1 rounded-lg bg-stone-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSubmitting ? "Bezig met opslaan…" : "Opslaan"}
+              </button>
+            </div>
           </form>
         </div>
       </div>

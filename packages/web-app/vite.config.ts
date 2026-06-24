@@ -12,10 +12,29 @@ export default defineConfig({
   resolve: {
     alias: {
       "@thuis/core": path.resolve(__dirname, "../core/src"),
+      "@thuis/ytdlp-service": path.resolve(__dirname, "../ytdlp-service/src"),
     },
   },
   build: {
     outDir: "dist",
     sourcemap: true,
+  },
+  server: {
+    proxy: {
+      "/vrtbe": {
+        target: "https://www.vrt.be",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/vrtbe/, ""),
+      },
+      "/loginvrt": {
+        target: "https://login.vrt.be",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/loginvrt/, ""),
+      },
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+      },
+    },
   },
 });

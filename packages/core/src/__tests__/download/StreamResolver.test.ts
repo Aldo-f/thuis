@@ -1,8 +1,8 @@
 import nock from "nock";
-import { StreamResolver } from "../../download/StreamResolver.js";
-import { InMemoryTokenStorage } from "../../auth/VrtAuthService.js";
-import { VrtAuthService } from "../../auth/VrtAuthService.js";
-import { VrtTokens } from "../../auth/types.js";
+import { StreamResolver } from "../../download/StreamResolver.ts";
+import { InMemoryTokenStorage } from "../../auth/VrtAuthService.ts";
+import { VrtAuthService } from "../../auth/VrtAuthService.ts";
+import { VrtTokens } from "../../auth/types";
 
 const FAKE_VIDEO_TOKEN = "eyJhbGciOiJIUzI1NiIsImtpZCI6IjAifQ.eyJleHAiOjk5OTk5OTk5OTksImlhdCI6MTcwMDAwMDAwMH0.def";
 const FAKE_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsImtpZCI6IjAifQ.eyJleHAiOjk5OTk5OTk5OTksImlhdCI6MTcwMDAwMDAwMH0.abc";

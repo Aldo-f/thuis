@@ -1,7 +1,7 @@
 import nock from "nock";
-import { VrtAuthService } from "../../auth/VrtAuthService.js";
-import { InMemoryTokenStorage } from "../../auth/VrtAuthService.js";
-import { VrtTokens } from "../../auth/types.js";
+import { VrtAuthService } from "../../auth/VrtAuthService.ts";
+import { InMemoryTokenStorage } from "../../auth/VrtAuthService";
+import { VrtTokens } from "../../auth/types";
 
 // ─── Fixtures ──────────────────────────────────────────────
 

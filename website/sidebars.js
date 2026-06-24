@@ -5,6 +5,10 @@ const sidebars = {
     'getting-started',
     'architecture',
     'usage',
+    'provider-adapter',
+    'credential-vault',
+    'search-service',
+    'api-reference',
   ],
 };
 

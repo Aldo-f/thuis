@@ -13,10 +13,10 @@
  *   VRT_USERNAME=... VRT_PASSWORD=... npx jest --testPathPattern="thuis-download"
  */
 
-import { VrtAuthService, InMemoryTokenStorage } from "../../auth/VrtAuthService.js";
-import { VrtEpisodeService } from "../../episode/VrtEpisodeService.js";
-import { StreamResolver } from "../../download/StreamResolver.js";
-import { DrmError, GeoBlockedError } from "../../download/types.js";
+import { VrtAuthService, InMemoryTokenStorage } from "../../auth/VrtAuthService.ts";
+import { VrtEpisodeService } from "../../episode/VrtEpisodeService";
+import { StreamResolver } from "../../download/StreamResolver";
+import { DrmError, GeoBlockedError } from "../../download/types";
 
 const hasCredentials = !!(
   process.env.VRT_USERNAME && process.env.VRT_PASSWORD

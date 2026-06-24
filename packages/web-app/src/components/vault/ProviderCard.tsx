@@ -1,8 +1,13 @@
-type ProviderId = "vrt" | "vtm" | "playtv";
+import React from "react";
+import { ProviderRegistry } from "@thuis/core";
+import { useVault } from "../../hooks/useVault.ts";
+
+type ProviderId = "vrt" | "vtm" | "playtv" | "yt-dlp";
 
 interface Provider {
   id: ProviderId;
   displayName: string;
+  supportsAuth?: boolean;
 }
 
 interface ProviderCardProps {
@@ -18,6 +23,7 @@ const PROVIDER_COLORS: Record<ProviderId, string> = {
   vrt: "#FFC00E",
   vtm: "#E10A1D",
   playtv: "#00B8A9",
+  "yt-dlp": "#6C4E9B",
 };
 
 function maskEmail(email: string): string {
@@ -29,6 +35,7 @@ function maskEmail(email: string): string {
   return `${maskedLocal}@${domain}`;
 }
 
+
 function ProviderCard({
   provider,
   email,
@@ -39,8 +46,20 @@ function ProviderCard({
 }: ProviderCardProps) {
   const color = PROVIDER_COLORS[provider.id] ?? "#78716c";
 
+  const [ytDlpAvailable] = React.useState<boolean>(false);
+  const [ytDlpVersion] = React.useState<string>('');
+  const [ytDlpEnabled, setYtDlpEnabled] = React.useState<boolean>(() => {
+    return localStorage.getItem('thuis-yt-dlp-enabled') === 'true';
+  });
+
+  const toggleYtDlp = () => {
+    const newValue = !ytDlpEnabled;
+    setYtDlpEnabled(newValue);
+    localStorage.setItem('thuis-yt-dlp-enabled', String(newValue));
+  };
+
   return (
-    <div className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
+    <div data-test-id="provider-card" className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
       {/* Color bar */}
       <div className="h-1.5" style={{ backgroundColor: color }} />
 
@@ -63,6 +82,18 @@ function ProviderCard({
                   {provider.displayName}
                 </h3>
                 <p className="text-xs text-stone-400">{maskEmail(email)}</p>
+                {/* Badge for configuratie status */}
+                {isImplemented && isActive && (
+                  <span className="ml-2 inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-600">
+                    Geconfigureerd
+                  </span>
+                )}
+                {/* Badge for niet ondersteund */}
+                {!provider.supportsAuth && (
+                  <span className="ml-2 inline-flex items-center rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-400">
+                    Niet ondersteund
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -103,4 +134,56 @@ function ProviderCard({
   );
 }
 
-export default ProviderCard;
+
+interface ProviderListProps {
+  onEdit?: (providerId: string) => void;
+  onRemove?: (providerId: string) => void;
+}
+
+export function ProviderList({ onEdit: onEditProp, onRemove: onRemoveProp }: ProviderListProps) {
+  const { vaultState, providers } = useVault();
+  const [allProviders, setAllProviders] = React.useState<Provider[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const registry = ProviderRegistry.getInstance();
+    const adapters = registry.getAll();
+    const list = adapters.map((a) => ({
+      id: a.id as ProviderId,
+      displayName: a.displayName,
+      supportsAuth: a.supportsAuth,
+    }));
+    setAllProviders(list);
+    setLoading(false);
+  }, []);
+
+  if (loading) {
+    return <div>Loading providers...</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {allProviders.map((provider) => {
+        const cred = providers.find((c) => c.provider === provider.id);
+        const isActive = !!cred?.isActive;
+        const isImplemented = !!provider.supportsAuth;
+        const onEdit = onEditProp ? () => onEditProp(provider.id) : undefined;
+        const onRemove = onRemoveProp ? () => onRemoveProp(provider.id) : undefined;
+        const email = cred?.email ?? "";
+        return (
+          <ProviderCard
+            key={provider.id}
+            provider={provider}
+            email={email}
+            isActive={isActive}
+            isImplemented={isImplemented}
+            onEdit={onEdit ?? (() => {})}
+            onRemove={onRemove ?? (() => {})}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+export default ProviderList;

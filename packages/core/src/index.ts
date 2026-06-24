@@ -1,6 +1,7 @@
 // @thuis/core — Shared business logic, API clients, and state management
 
 export * from "./types/index.js";
+export * from "./vault/Vault.js";
 
 // Auth
 export {
@@ -66,6 +67,9 @@ export type {
   SubtitleUrl,
 } from "./download/types.js";
 
-// URL resolver
 export { parseVrtUrl, VrtUrlError } from "./url-resolver.js";
 export type { VrtUrlComponents } from "./url-resolver.js";
+
+export { ProviderRegistry } from "./providers/ProviderRegistry.js";
+export type { ProviderAdapter } from "./providers/ProviderAdapter.js";
+export { initializeProviders } from "./provider-setup.js";

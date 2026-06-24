@@ -15,9 +15,7 @@ packages/electron-app/package.json
 # Source code (allowing native Android build)
 packages/electron-app/src
 
-# Scripts
-package.json
-pnpm-lock.yaml
+# Scripts (package.json and pnpm-lock.yaml are needed by Docker build)
 
 # Exclude too much
 *.dockerignore

@@ -1,7 +1,16 @@
 import { z } from "zod";
 
-// Minimal GraphQL response types for VRT MAX
+
 export const ComponentIdSchema = z.string();
+
+export const ProviderCredentialSchema = z.object({
+  providerId: z.string(),
+  email: z.string().email(),
+  encryptedPassword: z.string(),
+});
+
+export type ProviderCredential = z.infer<typeof ProviderCredentialSchema>;
+
 
 export const TileFragmentSchema = z.object({
   __typename: z.string(),

@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import ProviderList from "../components/vault/ProviderCard.js";
+import ProviderCredentialForm from "../components/vault/ProviderCredentialForm.js";
 import { useVault } from "../hooks/useVault.js";
+import { ProviderRegistry } from "@thuis/core";
 
-const PROVIDERS = [
-  { id: "vrt", displayName: "VRT MAX", color: "#FFC00E", implemented: true },
-  { id: "vtm", displayName: "VTM GO", color: "#E10A1D", implemented: false },
-  { id: "playtv", displayName: "Play.TV", color: "#00B8A9", implemented: false },
-];
+
 
 function maskEmail(email: string): string {
   const [name, domain] = email.split("@");
@@ -17,7 +16,8 @@ function maskEmail(email: string): string {
 export default function VaultPage() {
   const {
     vaultState, providers, error,
-    setup, unlock, lock, addProvider, removeProvider, resetVault, clearError,
+    setup, unlock, lock, resetVault, clearError,
+    addProvider, removeProvider, getCredentials,
   } = useVault();
 
   const [masterPassword, setMasterPassword] = useState("");
@@ -28,10 +28,47 @@ export default function VaultPage() {
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [providerEmail, setProviderEmail] = useState("");
   const [providerPassword, setProviderPassword] = useState("");
+  const [showAddPicker, setShowAddPicker] = useState(false);
+
+  // Pre-fill form when editing an existing provider
+  useEffect(() => {
+    if (!selectedProvider) return;
+    const creds = getCredentials(selectedProvider);
+    if (creds) {
+      setProviderEmail(creds.email);
+      setProviderPassword(creds.password ?? "");
+    } else {
+      setProviderEmail("");
+      setProviderPassword("");
+    }
+  }, [selectedProvider, getCredentials]);
 
   // Reset confirmation
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [, /* unused masterPassword for locked state */] = useState("");
+
+  // ── Provider list callbacks ──
+  const handleEditProvider = (providerId: string) => {
+    setShowAddPicker(false);
+    setSelectedProvider(providerId);
+  };
+
+  const handleRemoveProvider = async (providerId: string) => {
+    await removeProvider(providerId);
+  };
+
+  const handleFormSubmit = () => {
+    setSelectedProvider(null);
+    setProviderEmail("");
+    setProviderPassword("");
+  };
+
+  const handleFormCancel = () => {
+    setSelectedProvider(null);
+    setShowAddPicker(false);
+    setProviderEmail("");
+    setProviderPassword("");
+  };
 
   // ── Uninitialized vault — create master password ──
   if (vaultState === "uninitialized") {
@@ -190,6 +227,107 @@ export default function VaultPage() {
   }
 
   // ── Unlocked vault — manage providers ──
+  if (selectedProvider) {
+    // Get provider info for the credential form
+    const registry = ProviderRegistry.getInstance();
+    const adapter = registry.get(selectedProvider);
+
+    return (
+      <div className="mx-auto max-w-2xl py-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-stone-900">
+            Inloggegevens
+          </h1>
+          <button
+            onClick={lock}
+            className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
+          >
+            Vergrendelen
+          </button>
+        </div>
+
+        <div className="mt-6">
+          <ProviderCredentialForm
+            provider={{
+              id: selectedProvider as "vrt" | "vtm" | "playtv",
+              displayName: adapter?.displayName ?? selectedProvider,
+            }}
+            initialValues={{
+              email: providerEmail,
+              password: providerPassword,
+            }}
+            onSubmit={handleFormSubmit}
+            onCancel={handleFormCancel}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (showAddPicker) {
+    const registry = ProviderRegistry.getInstance();
+    const allAdapters = registry.getAll();
+    const configuredIds = new Set(providers.map((p) => p.provider));
+    const available = allAdapters.filter((a) => !configuredIds.has(a.id));
+
+    return (
+      <div className="mx-auto max-w-2xl py-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-stone-900">
+            Inloggegevens
+          </h1>
+          <button
+            onClick={lock}
+            className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
+          >
+            Vergrendelen
+          </button>
+        </div>
+
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-stone-800">
+            Kies een provider
+          </h2>
+          <p className="mt-1 text-sm text-stone-500">
+            Selecteer de provider waarvoor je inloggegevens wilt toevoegen.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {available.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => {
+                  setShowAddPicker(false);
+                  setSelectedProvider(a.id);
+                }}
+                className="rounded-lg border border-stone-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-stone-300 hover:shadow"
+              >
+                <span className="text-sm font-semibold text-stone-800">
+                  {a.displayName}
+                </span>
+                {a.supportsAuth && (
+                  <span className="ml-2 inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-600">
+                    Beschikbaar
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+          {available.length === 0 && (
+            <p className="mt-4 text-sm text-stone-400">
+              Alle providers zijn al geconfigureerd.
+            </p>
+          )}
+          <button
+            onClick={handleFormCancel}
+            className="mt-4 text-sm text-stone-400 underline hover:text-stone-600"
+          >
+            Annuleren
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-2xl py-8">
       <div className="flex items-center justify-between">
@@ -220,115 +358,22 @@ export default function VaultPage() {
         </div>
       )}
 
-      {/* Provider list */}
-      <div className="mt-6 space-y-3">
-        {PROVIDERS.map((p) => {
-          const stored = providers.find((s) => s.provider === p.id);
-          return (
-            <div
-              key={p.id}
-              className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm"
-            >
-              <div className="flex" style={{ borderLeft: `4px solid ${p.color}` }}>
-                <div className="flex flex-1 items-center justify-between p-4">
-                  <div>
-                    <h3 className="font-medium text-stone-900">{p.displayName}</h3>
-                    {stored ? (
-                      <p className="text-sm text-stone-500">
-                        {maskEmail(stored.email)}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-stone-400">
-                        {p.implemented ? "Nog niet geconfigureerd" : "Nog niet beschikbaar"}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {stored && (
-                      <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs text-green-700">
-                        Actief
-                      </span>
-                    )}
-                    {!p.implemented && (
-                      <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500">
-                        Binnenkort
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {p.implemented && (
-                  <div className="flex items-center gap-1 border-l border-stone-200 px-3">
-                    {selectedProvider === p.id ? (
-                      <button
-                        onClick={() => setSelectedProvider(null)}
-                        className="rounded px-2 py-1 text-sm text-stone-500 hover:bg-stone-100"
-                      >
-                        Annuleren
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setSelectedProvider(p.id)}
-                        className="rounded px-2 py-1 text-sm text-stone-500 hover:bg-stone-100"
-                      >
-                        {stored ? "Wijzigen" : "Toevoegen"}
-                      </button>
-                    )}
-                    {stored && (
-                      <button
-                        onClick={() => removeProvider(p.id)}
-                        className="rounded px-2 py-1 text-sm text-red-500 hover:bg-red-50"
-                      >
-                        Verwijderen
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Inline form */}
-              {selectedProvider === p.id && (
-                <div className="border-t border-stone-200 bg-stone-50 p-4">
-                  <div className="space-y-3">
-                    <input
-                      type="email"
-                      value={providerEmail}
-                      onChange={(e) => setProviderEmail(e.target.value)}
-                      placeholder="E-mailadres"
-                      className="block w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400"
-                    />
-                    <input
-                      type="password"
-                      value={providerPassword}
-                      onChange={(e) => setProviderPassword(e.target.value)}
-                      placeholder="Wachtwoord"
-                      className="block w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400"
-                    />
-                    <div className="flex gap-3">
-                      <button
-                        onClick={async () => {
-                          if (providerEmail && providerPassword) {
-                            await addProvider(p.id, providerEmail, providerPassword);
-                            setProviderEmail("");
-                            setProviderPassword("");
-                            setSelectedProvider(null);
-                          }
-                        }}
-                        disabled={!providerEmail || !providerPassword}
-                        className="rounded-lg bg-stone-800 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Opslaan
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+      <div className="mt-6">
+        <ProviderList
+          onEdit={handleEditProvider}
+          onRemove={handleRemoveProvider}
+        />
       </div>
 
+      <button
+        onClick={() => setShowAddPicker(true)}
+        className="mt-4 w-full rounded-lg border border-dashed border-stone-300 px-4 py-3 text-sm font-medium text-stone-500 transition-colors hover:border-stone-400 hover:text-stone-700"
+      >
+        + Nieuwe provider toevoegen
+      </button>
+
       {providers.length === 0 && (
-        <div className="mt-8 rounded-lg border border-dashed border-stone-300 p-8 text-center text-sm text-stone-400">
+        <div className="mt-4 rounded-lg border border-dashed border-stone-300 p-8 text-center text-sm text-stone-400">
           Nog geen providers geconfigureerd. Voeg hierboven je VRT MAX-account toe om te beginnen.
         </div>
       )}

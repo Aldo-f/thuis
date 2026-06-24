@@ -1,4 +1,10 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import {
+  CredentialVault,
+  VaultLockedError,
+  MissingPasswordError,
+} from "@thuis/core";
+import type { ProviderCredential } from "@thuis/core";
 
 export type VaultState = "uninitialized" | "locked" | "unlocked";
 
@@ -8,101 +14,228 @@ interface StoredCredential {
   isActive: boolean;
 }
 
-// Simulated vault — in production this uses crypto.subtle + IndexedDB
-const VAULT_KEY = "thuis-vault-state";
+/** LocalStorage key that marks whether the vault has ever been set up. */
+const VAULT_INIT_KEY = "thuis-vault-setup";
 
-function getStoredState(): VaultState {
-  const raw = localStorage.getItem(VAULT_KEY);
-  if (!raw) return "uninitialized";
-  try {
-    const state = JSON.parse(raw);
-    return state.locked === false ? "unlocked" : "locked";
-  } catch {
-    return "uninitialized";
-  }
-}
+// Singleton vault instance — the in-memory state (locked/unlocked, decrypted cache)
+// is shared across all hook consumers so they stay in sync.
+const vault = new CredentialVault();
 
+/**
+ * React hook that wraps the {@link CredentialVault} service and exposes both
+ * the original (localStorage‑based) API and the new vault‑centric API.
+ *
+ * **Backward‑compatible surface:** `vaultState`, `providers`, `error`,
+ * `setup()`, `unlock()`, `lock()`, `addProvider()`, `removeProvider()`,
+ * `resetVault()`, `clearError()`.
+ *
+ * **New API:** `isLocked`, `addCredentials()`, `getCredentials()`.
+ */
 export function useVault() {
-  const [vaultState, setVaultState] = useState<VaultState>(getStoredState);
+  const [vaultState, setVaultState] = useState<VaultState>(() =>
+    localStorage.getItem(VAULT_INIT_KEY) === "true" ? "locked" : "uninitialized",
+  );
   const [providers, setProviders] = useState<StoredCredential[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const lockCheckTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Load providers when vault unlocks
-  useEffect(() => {
-    if (vaultState === "unlocked") {
+  // ── Helpers ──────────────────────────────────────────────────────────
+
+  /** Reload the provider list from the vault's in‑memory cache. */
+  const refreshProviders = useCallback(() => {
+    if (!vault.isLocked()) {
       try {
-        const raw = localStorage.getItem("thuis-providers");
-        if (raw) {
-          setProviders(JSON.parse(raw));
-        }
+        const list = vault.listProviders();
+        setProviders(
+          list.map((p: { provider: string; email: string }) => ({ provider: p.provider, email: p.email, isActive: true })),
+        );
       } catch {
         setProviders([]);
       }
+    } else {
+      setProviders([]);
     }
+  }, []);
+
+  // ── Lifecycle ────────────────────────────────────────────────────────
+
+  // Sync React state with the vault when vaultState becomes unlocked.
+  useEffect(() => {
+    if (vaultState === "unlocked") {
+      refreshProviders();
+    } else {
+      setProviders([]);
+    }
+  }, [vaultState, refreshProviders]);
+
+  // Poll vault.isLocked() while unlocked so the UI reacts to auto‑lock.
+  useEffect(() => {
+    if (vaultState !== "unlocked") {
+      if (lockCheckTimer.current) {
+        clearInterval(lockCheckTimer.current);
+        lockCheckTimer.current = null;
+      }
+      return;
+    }
+    lockCheckTimer.current = setInterval(() => {
+      if (vault.isLocked()) {
+        setVaultState("locked");
+      }
+    }, 2_000);
+    return () => {
+      if (lockCheckTimer.current) {
+        clearInterval(lockCheckTimer.current);
+        lockCheckTimer.current = null;
+      }
+    };
   }, [vaultState]);
 
+  // ── Public API ───────────────────────────────────────────────────────
+
+  /**
+   * First‑time setup.
+   * Delegates to `vault.unlock(password)` which creates an empty encrypted
+   * blob when none exists yet.
+   */
   const setup = useCallback(async (password: string) => {
-    // In production: derive key with PBKDF2, store encrypted blob
-    localStorage.setItem(VAULT_KEY, JSON.stringify({ locked: false, hint: "" }));
-    localStorage.setItem("thuis-providers", JSON.stringify([]));
-    setVaultState("unlocked");
-    setProviders([]);
-    setError(null);
+    try {
+      await vault.unlock(password);
+      localStorage.setItem(VAULT_INIT_KEY, "true");
+      setVaultState("unlocked");
+      setError(null);
+    } catch (e) {
+      if (e instanceof MissingPasswordError) {
+        setError("Wachtwoord vereist");
+      } else {
+        setError("Er is een fout opgetreden bij het aanmaken van de vault.");
+      }
+    }
   }, []);
 
-  const unlock = useCallback(async (password: string) => {
-    // In production: attempt to decrypt, if fails → wrong password
-    const raw = localStorage.getItem(VAULT_KEY);
-    if (!raw) {
-      setError("Geen vault gevonden. Start opnieuw met een nieuw wachtwoord.");
+  /**
+   * Unlock the vault with the master password.
+   * Returns `true` on success, `false` on wrong password / error.
+   */
+  const unlock = useCallback(async (password: string): Promise<boolean> => {
+    try {
+      await vault.unlock(password);
+      setVaultState("unlocked");
+      setError(null);
+      return true;
+    } catch (e) {
+      if (e instanceof VaultLockedError) {
+        setError("Ongeldig hoofdwachtwoord.");
+      } else if (e instanceof MissingPasswordError) {
+        setError("Wachtwoord vereist.");
+      } else {
+        setError("Er is een fout opgetreden bij het ontgrendelen.");
+      }
       return false;
     }
-    // Password check simulation — in production this tries AES-GCM decryption
-    if (password.length < 3) {
-      // Simulated wrong password
-      setError("Ongeldig hoofdwachtwoord.");
-      return false;
-    }
-    localStorage.setItem(VAULT_KEY, JSON.stringify({ locked: false }));
-    setVaultState("unlocked");
-    setError(null);
-    return true;
   }, []);
 
+  /** Lock the vault. */
   const lock = useCallback(() => {
-    localStorage.setItem(VAULT_KEY, JSON.stringify({ locked: true }));
+    vault.lock();
     setVaultState("locked");
     setError(null);
   }, []);
 
-  const addProvider = useCallback(async (
-    provider: string,
-    email: string,
-    _password: string,
-  ) => {
-    // In production: encrypt and store in vault
-    const updated = [...providers.filter((p) => p.provider !== provider), { provider, email, isActive: true }];
-    setProviders(updated);
-    localStorage.setItem("thuis-providers", JSON.stringify(updated));
-  }, [providers]);
+  /**
+   * Add or update credentials for a provider.
+   * (Original API – kept for backward compatibility.)
+   */
+  const addProvider = useCallback(
+    async (provider: string, email: string, password: string) => {
+      try {
+        await vault.addCredentials(provider, email, password);
+        refreshProviders();
+        setError(null);
+      } catch (e) {
+        if (e instanceof VaultLockedError) {
+          setError("Vault is vergrendeld.");
+        } else {
+          setError("Fout bij opslaan van inloggegevens.");
+        }
+      }
+    },
+    [refreshProviders],
+  );
 
-  const removeProvider = useCallback((provider: string) => {
-    const updated = providers.filter((p) => p.provider !== provider);
-    setProviders(updated);
-    localStorage.setItem("thuis-providers", JSON.stringify(updated));
-  }, [providers]);
+  /**
+   * Remove credentials for a provider.
+   * (Original API – kept for backward compatibility.)
+   */
+  const removeProvider = useCallback(
+    async (provider: string) => {
+      try {
+        await vault.removeCredentials(provider);
+        refreshProviders();
+        setError(null);
+      } catch (e) {
+        if (e instanceof VaultLockedError) {
+          setError("Vault is vergrendeld.");
+        } else {
+          setError("Fout bij verwijderen van inloggegevens.");
+        }
+      }
+    },
+    [refreshProviders],
+  );
 
+  /**
+   * Reset the vault – destroys all stored data and returns to
+   * the "uninitialized" screen.
+   */
   const resetVault = useCallback(() => {
-    localStorage.removeItem(VAULT_KEY);
-    localStorage.removeItem("thuis-providers");
+    vault.lock();
+    // Delete the entire IndexedDB database so a fresh vault starts clean.
+    try {
+      const req = indexedDB.deleteDatabase("credential-vault");
+      req.onerror = () => {
+        /* ignore – will be re‑created on next setup */
+      };
+    } catch {
+      /* noop in non‑browser environments */
+    }
+    localStorage.removeItem(VAULT_INIT_KEY);
     setVaultState("uninitialized");
     setProviders([]);
     setError(null);
   }, []);
 
+  /** Clear any displayed error. */
   const clearError = useCallback(() => setError(null), []);
 
+  // ── New API surface ──────────────────────────────────────────────────
+
+  /**
+   * Retrieve stored credentials for a provider (including the decrypted
+   * password, only available in memory). Returns `null` if not found or
+   * when vault is locked.
+   */
+  const getCredentials = useCallback(
+    (provider: string): ProviderCredential | null => {
+      try {
+        return vault.getCredentials(provider);
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  /**
+   * Alias for {@link addProvider} — new API name.
+   */
+  const addCredentials = addProvider;
+
+  // ── Return ───────────────────────────────────────────────────────────
+
+  const isLocked = vaultState !== "unlocked";
+
   return {
+    // Legacy API (stable)
     vaultState,
     providers,
     error,
@@ -113,5 +246,9 @@ export function useVault() {
     removeProvider,
     resetVault,
     clearError,
+    // New API
+    isLocked,
+    getCredentials,
+    addCredentials,
   };
 }
