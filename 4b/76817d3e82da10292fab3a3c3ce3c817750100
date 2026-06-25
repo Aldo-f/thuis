@@ -1,0 +1,153 @@
+README.md
+  s_42c49e60b0c65e::t_55c88aabb8bd44 5,11-12,14,28-30,38,40,42-44,46,49-51,53,56-57,59-60,63,65-66,68-69,72
+  s_c6214bfd2a9d08::t_31320aefbb7c76 47
+tests/test_credentials.py
+  s_42c49e60b0c65e::t_6115fef908fe4f 7,83-84,141-142
+  s_42c49e60b0c65e::t_05703e20d337b1 37,99-100
+  s_42c49e60b0c65e::t_ba5055e25aa3bf 66,119-120
+  s_4f6505183da980::t_0cd86b9235e2b4 1-6,8-15,33-36,40,46-48,50,52,54,61-63,65,67,69-71,77-79,81-82,85-92,94,98,101-111,114,116-118,121-134
+  s_4f6505183da980::t_c1cc897b13f42a 115
+  s_4f6505183da980::t_3da6359b89aeff 16
+  s_4f6505183da980::t_910064fb433f42 38-39,41-45,49,53,55-60,64,68,72-76,80
+  s_42c49e60b0c65e::t_6d588c273886ac 51
+  s_4f6505183da980::t_255d4155a31f7a 135-136
+  s_4f6505183da980::t_c3ab8085b03e4c 17-32,139-140,143-144,146-152,154,158-159
+  s_4f6505183da980::t_6d674aaba58986 93,95-97,112-113,137-138,145
+  s_4f6505183da980::t_17fd6f4c0ab7a8 153,155-157
+thuis/cli.py
+  s_3aec1dc355058e::t_1d398f2c02e54e 9,97,157
+  s_42c49e60b0c65e::t_487d5776556fd9 3,7,11,13-14,16-17,20-23,25,28-31,34-38,40-44,47-51,54-61,64-72,75-78,80-87,89-92,94,98,100,103-105,108-111,114-117,120-123,128-138,141,143,147-152,154,156,160-161,164-167,170-191,193-196,198-201,203,205-207,209-211
+  s_6d05e683c5e2d9::t_e6afe2f7ef2a1d 192
+downloader.py
+  s_4bc5dbc5201ece::t_8c5609ea63bf09 1,3-4,10,12-13
+  s_42c49e60b0c65e::t_df419149a28f1e 2,6-9,11,14
+  s_0a32ca490a3a71::t_f268e36d3ced1e 5
+tests/test_downloader.py
+  s_42c49e60b0c65e::t_eedb3e53deaeb1 104
+  s_42c49e60b0c65e::t_e2465171d2d2b8 24,68
+  s_42c49e60b0c65e::t_d3f6547934809f 151
+  s_42c49e60b0c65e::t_d46f5c4f973968 1-23,25-45,47-67,69-103,105-150,152-196
+  s_42c49e60b0c65e::t_94332867456e54 46
+thuis/__init__.py
+  s_42c49e60b0c65e::t_90ac683932d74c 1
+pyproject.toml
+  s_42c49e60b0c65e::t_23ef029cc1b639 1-4,6-8,11,17-18
+  s_3aec1dc355058e::t_125184bf662f28 5,9-10,12-16
+tests/test_system_check.py
+  s_42c49e60b0c65e::t_a14b7f1534824c 5
+  s_4bc5dbc5201ece::t_be5f7c402ce143 1-4,6-26
+thuis/system_check.py
+  s_42c49e60b0c65e::t_0e571da3ed1498 1-13
+tests/test_integration.py
+  s_be269f80ce9ed3::t_f6302f2345767d 13-15,24,90,93,100,141,162,169,183
+  s_be269f80ce9ed3::t_47d523457f9933 52
+  s_be269f80ce9ed3::t_160c60a3fb50a8 56
+  s_be269f80ce9ed3::t_c41fe3a2dd1502 1-7,9-12,16-20,22-23,25-51,53-55,57-58,60-61,67
+  s_be269f80ce9ed3::t_a0a1783decb461 62-66
+  s_be269f80ce9ed3::t_38198719c9b314 21
+  s_be269f80ce9ed3::t_55faf58304d665 59
+  s_be269f80ce9ed3::t_3d755db1c70a47 8,68-72,74-89,91-92,94-99,101-140,142-161,163-168,170-182
+  s_42c49e60b0c65e::t_def17c2090e048 73
+thuis/credentials.py
+  s_42c49e60b0c65e::t_7e50112dc87fe4 1-158
+tests/conftest.py
+  s_4bc5dbc5201ece::t_53dbe5ee39539a 4
+  s_14f9d1e799e7cc::t_01250b0a6ee874 6
+  s_14f9d1e799e7cc::t_6a56cb68e022c1 7
+thuis/downloader.py
+  s_42c49e60b0c65e::t_8c3a53709a698f 2-3,6-19,21-55,57-62,64-68,70-122,124-149
+  s_3aec1dc355058e::t_c72bf2dae6e4ff 4,20,56,69
+  s_42c49e60b0c65e::t_17aac6be9f0a3c 123
+.gitignore
+  s_42c49e60b0c65e::t_25d6b4995cb2ed 2,8,13
+.specify/specs/vrt-dlp-downloader.md
+  s_5eeca335e58847::t_4d913c58e600aa 1-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "4b76817d3e82da10292fab3a3c3ce3c817750100",
+  "prompts": {},
+  "sessions": {
+    "s_0a32ca490a3a71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ff9b0792ffeZGD5oJdW0snKCO",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_14f9d1e799e7cc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0fefc5186ffeiqgSRkuVmxcyVA",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_3aec1dc355058e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1013c505cffe8UM2Tt1tcm8huy",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_42c49e60b0c65e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ff11a502ffep6QLVd9palYAve",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_4bc5dbc5201ece": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100420f68ffetLsFuGtob13Cc9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_4f6505183da980": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ff956abcffeXWK6GJFCU6nam0",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_5eeca335e58847": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ff67bdd5ffeD6UJV0K9lANs4g",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_6d05e683c5e2d9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100c85463ffexvbEyfQQcNWKqJ",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_be269f80ce9ed3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ff831db5ffeAEZmI7P4pz45yL",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_c6214bfd2a9d08": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ff657370ffel8RyGHp0sXp9BH",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
