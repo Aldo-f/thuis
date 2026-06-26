@@ -1,0 +1,19 @@
+poc.py
+  s_4bc5dbc5201ece::t_49cd0ae555bdb3 55-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "e4a0905be3c943b0710b6f83f6b9e1febe1899fb",
+  "prompts": {},
+  "sessions": {
+    "s_4bc5dbc5201ece": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100420f68ffetLsFuGtob13Cc9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
