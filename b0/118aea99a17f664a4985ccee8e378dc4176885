@@ -1,0 +1,23 @@
+.omo/plans/update-ytdlp-dependency.md
+  s_4bc5dbc5201ece::t_d2cb97057d53f5 483
+  s_4bc5dbc5201ece::t_e65fd17856d761 475
+  s_4bc5dbc5201ece::t_406f31cc8825bc 471
+  s_4bc5dbc5201ece::t_0afdd1ca4c74e2 479
+  s_4bc5dbc5201ece::t_13554d63ce2f16 513-518
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "b0118aea99a17f664a4985ccee8e378dc4176885",
+  "prompts": {},
+  "sessions": {
+    "s_4bc5dbc5201ece": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100420f68ffetLsFuGtob13Cc9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
