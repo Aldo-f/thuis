@@ -1,0 +1,38 @@
+thuis/credentials.py
+  s_4bc5dbc5201ece::t_621d961df3c298 127-131
+  s_4bc5dbc5201ece::t_5856bc0969def9 99-100
+  s_f7747dbf8eead6::t_9da37768613f2a 14
+  s_193b34c5a29cb9::t_b0d9738f6f15b2 101-105,111-113,115,118,123,125-126,132-134,144-146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "3b743d9394f92000ffd7db4264a6e7082253da3e",
+  "prompts": {},
+  "sessions": {
+    "s_193b34c5a29cb9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0fd91926dffevSWiZARTppWZGh",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_4bc5dbc5201ece": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100420f68ffetLsFuGtob13Cc9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_f7747dbf8eead6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0fd966843ffe45zaKqPklyznfi",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
