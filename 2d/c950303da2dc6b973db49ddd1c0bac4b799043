@@ -1,0 +1,42 @@
+test_real_download.py
+  s_4bc5dbc5201ece::t_ca71059263072e 33,49
+  s_4bc5dbc5201ece::t_8c284189824c03 1-7,9-32,90-104,106-107,110,113,115-142
+  s_4bc5dbc5201ece::t_2e4cd4a8d645ee 34,41,45-48,50-58
+  s_4bc5dbc5201ece::t_09c8e528c00680 35-40,42-44,59-76,84-89
+  s_4bc5dbc5201ece::t_998a0b8afd27c5 105,108-109,111-112,114
+  s_3dee69e53acda1::t_2023768e0fff25 77-83
+  s_4bc5dbc5201ece::t_5322457e6068a6 8
+.omo/plans/update-ytdlp-dependency.md
+  s_4bc5dbc5201ece::t_dcd4ab80397fe5 300
+  s_4bc5dbc5201ece::t_aa6848e0acb693 354
+  s_4bc5dbc5201ece::t_7009769e1b8e1f 141
+  s_4bc5dbc5201ece::t_f18b8ffa76c773 356
+  s_4bc5dbc5201ece::t_86568708e65623 407
+  s_4bc5dbc5201ece::t_08c43e938e9bc6 192
+  s_4bc5dbc5201ece::t_155a2b01f4322c 246
+  s_4bc5dbc5201ece::t_feab5d194bec3e 355
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "2dc950303da2dc6b973db49ddd1c0bac4b799043",
+  "prompts": {},
+  "sessions": {
+    "s_3dee69e53acda1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0fbb62cedffe87B7EYy50Ts24v",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_4bc5dbc5201ece": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100420f68ffetLsFuGtob13Cc9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
