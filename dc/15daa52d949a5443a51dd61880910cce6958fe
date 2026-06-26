@@ -1,0 +1,37 @@
+poc.py
+  s_94d5fd304be5d3::t_601aa8bbdaa112 39-43,45-47,49-53,62-66
+  s_94d5fd304be5d3::t_6c00b9ed646689 54-61
+  s_94d5fd304be5d3::t_5d957958b0a5c8 15
+  s_94d5fd304be5d3::t_91e91b899f8d7d 44,48
+test_real_download.py
+  s_4bc5dbc5201ece::t_ce2b4be41cb0f1 105
+  s_4bc5dbc5201ece::t_863ed381947e3d 74,84,96
+  s_4bc5dbc5201ece::t_3b42fe29cdd4c0 6
+  s_4bc5dbc5201ece::t_01c4a72eed6809 5,17,36,53-69
+test_poc.py
+  s_94d5fd304be5d3::t_107e344db237ce 134-141
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "dc15daa52d949a5443a51dd61880910cce6958fe",
+  "prompts": {},
+  "sessions": {
+    "s_4bc5dbc5201ece": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100420f68ffetLsFuGtob13Cc9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_94d5fd304be5d3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0fb4cce65ffewbv004EWnq9nO3",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
