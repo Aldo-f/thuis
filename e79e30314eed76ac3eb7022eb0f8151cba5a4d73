@@ -1,0 +1,19 @@
+.github/workflows/pages.yml
+  s_72deed920d2a12::t_ccc17264fd80df 28,31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "e79e30314eed76ac3eb7022eb0f8151cba5a4d73",
+  "prompts": {},
+  "sessions": {
+    "s_72deed920d2a12": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_104dcb3a8ffe7EL3hPHBms2o6P",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}

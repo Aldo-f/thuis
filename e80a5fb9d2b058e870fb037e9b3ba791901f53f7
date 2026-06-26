@@ -1,0 +1,105 @@
+packages/electron-app/tsconfig.json
+  s_93dc388cd27214::t_c15d4b4117f9f2 13
+website/docs/usage.md
+  s_49f965ed9d82eb::t_ced2c2ae230d22 1-24
+package.json
+  s_93dc388cd27214::t_37e30e2646e57b 6-8
+  s_93dc388cd27214::t_36f2e0af85f955 21-25
+.omo/plans/sdd.md
+  s_93dc388cd27214::t_4315637f8d9ab5 1101
+  s_93dc388cd27214::t_e615658b49f1e3 1100
+  s_93dc388cd27214::t_31d81a73ca5603 1099
+  s_93dc388cd27214::t_1f47ff8fead792 1098
+  s_93dc388cd27214::t_2aca1513a49dc2 1097
+.github/workflows/ci.yml
+  s_93dc388cd27214::t_40bed98ebe5480 24-28
+  s_93dc388cd27214::t_2d5ae9522e9421 47
+website/static/img/favicon.svg
+  s_93dc388cd27214::t_69e26e4dd0f6d9 1-4
+website/src/pages/index.js
+  s_93dc388cd27214::t_cfac91432a3733 1-21
+packages/core/src/store/index.ts
+  s_93dc388cd27214::t_4fcfd04687d2a5 3-6,8,12
+  s_28caf4b323a835::t_ba8e79217fc182 2,10-11,13-16,18-31
+packages/core/src/store/episode-slice.ts
+  s_28caf4b323a835::t_a86930831293e8 1,12-13,16-18,22,24-25
+  s_93dc388cd27214::t_181a5a2310d8cd 10-11,14-15,19-20
+  s_93dc388cd27214::t_3e54c009ed154c 21
+packages/electron-app/electron-builder.yml
+  s_93dc388cd27214::t_68c74d90656101 18
+.gitignore
+  s_93dc388cd27214::t_53657b56288633 9,28-30
+website/docs/getting-started.md
+  s_49f965ed9d82eb::t_fbbaa664dbd5c8 1-58
+packages/core/jest.config.js
+  s_93dc388cd27214::t_307e1d54eacc68 1-30
+website/docs/architecture.md
+  s_49f965ed9d82eb::t_c1b1ff2d2653c6 1-28
+website/docusaurus.config.js
+  s_93dc388cd27214::t_d7d745acb7bc63 5
+  s_93dc388cd27214::t_58c1debcc7b28c 66
+website/src/css/custom.css
+  s_93dc388cd27214::t_7634c33cad57ed 1-22
+eslint.config.js
+  s_93dc388cd27214::t_59b3df29622beb 22,25
+  s_93dc388cd27214::t_3d3abbd0b08715 1-18,20-21,23-24,26
+  s_93dc388cd27214::t_fabb5f6d9e5097 19
+packages/core/src/store/ui-slice.ts
+  s_28caf4b323a835::t_68e1c3adbacbbe 1-7,10-12,15
+  s_93dc388cd27214::t_fa7d4d26c4e945 8-9,13-14
+packages/core/src/graphql/client.ts
+  s_93dc388cd27214::t_4105a3c090a2e7 16
+  s_93dc388cd27214::t_6c5cc20f2337dd 38
+  s_93dc388cd27214::t_8332348b3ff36a 46
+  s_93dc388cd27214::t_b6fdb455eb6097 58
+packages/core/src/store/download-slice.ts
+  s_93dc388cd27214::t_1b9bf2904bb1d3 14-15,19-20,36-37,43-44,51-52,59-60,67-68
+  s_28caf4b323a835::t_46f5fc01aa42ff 1-13,16-18,21-35,38-42,45-50,53-58,61-66,69-71
+pnpm-workspace.yaml
+  s_93dc388cd27214::t_089692bd552755 5
+website/static/img/logo.svg
+  s_93dc388cd27214::t_e739e56c07dd50 1-4
+packages/core/src/store/types.ts
+  s_93dc388cd27214::t_b0478f387e68ff 1-7
+packages/electron-app/package.json
+  s_93dc388cd27214::t_c72229bf0d4b1f 7-12
+  s_93dc388cd27214::t_6f90acc0522a7e 15-16
+tsconfig.base.json
+  s_93dc388cd27214::t_60200f730416b3 4
+packages/core/src/url-resolver.ts
+  s_93dc388cd27214::t_f38349ea493ee1 25-27
+website/docs/intro.md
+  s_49f965ed9d82eb::t_eeb7878a8e3a65 1-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "e80a5fb9d2b058e870fb037e9b3ba791901f53f7",
+  "prompts": {},
+  "sessions": {
+    "s_28caf4b323a835": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_116fb6614ffeVdBDW34r2v13k1",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_49f965ed9d82eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_116f9397bffeeWNdlnGHWZnr17",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_93dc388cd27214": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_11fe5cc2bffeXM2fcibuTjJ0vj",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}

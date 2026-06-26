@@ -1,0 +1,19 @@
+.gitignore
+  s_93dc388cd27214::t_449aa7446c7e77 1-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "3397ef2e2e6c3d96a8c02ef0521f14d9a1c89f2b",
+  "prompts": {},
+  "sessions": {
+    "s_93dc388cd27214": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_11fe5cc2bffeXM2fcibuTjJ0vj",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}

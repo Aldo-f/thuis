@@ -1,0 +1,59 @@
+packages/electron-app/src/main/tray-manager.ts
+  s_4265f2dede4a54::t_0542f578633d53 2-57
+  s_4265f2dede4a54::t_91396293e0f3a1 1
+Dockerfile
+  s_163ebd76f0497c::t_95533a1cd2f2e5 8-9
+  s_163ebd76f0497c::t_fc0b1f151197d1 11,14
+  s_163ebd76f0497c::t_8105eb45aca624 1-7,10,12-13,15-41
+website/docs/getting-started.md
+  s_4265f2dede4a54::t_4e25003a061c61 9-22,26-31,41,43,46,49,51,53,56,59-63,65,69,72-135
+  s_4265f2dede4a54::t_063ebd23385052 136
+docker-compose.yml
+  s_163ebd76f0497c::t_1c008213d24895 1-11
+.dockerignore
+  s_163ebd76f0497c::t_980cb87d0af21c 1-12
+packages/electron-app/src/preload/index.d.ts
+  s_4265f2dede4a54::t_07a96888ef93ad 3,5-13,17,23-26
+packages/electron-app/src/main/ipc-handlers.ts
+  s_4265f2dede4a54::t_90ad4461083597 1-7
+  s_4265f2dede4a54::t_4cb4c8d564cb79 8,10-17,21-41,44-45,53-62,74-87
+packages/electron-app/electron-builder.yml
+  s_4265f2dede4a54::t_6072db2c30f4ad 1-2,4-5,7-12,14-15,17-18
+packages/electron-app/src/main/index.ts
+  s_4265f2dede4a54::t_c58fed30dcba4b 1-3
+  s_4265f2dede4a54::t_3a99f52f8dac1f 47-50
+  s_4265f2dede4a54::t_5084b6c9dc18bf 35,38-43
+nginx.conf
+  s_163ebd76f0497c::t_b047e62f65a119 1-28
+packages/electron-app/src/preload/index.ts
+  s_4265f2dede4a54::t_4bbf3a974aa33a 5-6,9-14,19,26-29
+packages/electron-app/package.json
+  s_4265f2dede4a54::t_81e20ff3678870 18-19
+packages/electron-app/src/main/download-engine.ts
+  s_4265f2dede4a54::t_57dd02c0198432 1-11,13-200
+  s_4265f2dede4a54::t_eefa4de32edb52 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.10",
+  "base_commit_sha": "5f2733caf3603515e0f4eaffab30a34fd2829b47",
+  "prompts": {},
+  "sessions": {
+    "s_163ebd76f0497c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_110d24a25ffe8hORhLLpNojscs",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_4265f2dede4a54": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_110ad28a4ffe2GwN30Vf4xHyFu",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}

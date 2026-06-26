@@ -1,0 +1,121 @@
+.specify/specs/004-video-viewer-download/spec.md
+  s_4265f2dede4a54::t_4038d9b37585de 1
+  s_4265f2dede4a54::t_8edaac39831554 107-151
+  s_4265f2dede4a54::t_e4a24ddac7605e 5-6
+  s_4265f2dede4a54::t_8dee2a8da8ad32 17-19
+  s_4265f2dede4a54::t_ee58f6ae1d4def 2-4,7-16,20-106,152-267
+packages/core/src/auth/types.ts
+  s_4265f2dede4a54::t_e161941ca87626 7
+  s_4265f2dede4a54::t_ea6e5ed36663fe 1-6,8-55
+packages/core/src/__tests__/download/StreamResolver.test.ts
+  s_4265f2dede4a54::t_e35f630bc16c5c 1-136
+packages/core/src/episode/VrtEpisodeService.ts
+  s_4265f2dede4a54::t_9dea46ac5e8f93 1-117,124,126-169
+  s_4265f2dede4a54::t_c6c03618422722 118-123,125
+packages/core/src/download/StreamResolver.ts
+  s_4265f2dede4a54::t_10814b24ae6eaf 106-110
+  s_4265f2dede4a54::t_d3d7eab9aa86c1 1-105,111-185
+packages/core/src/auth/VrtAuthService.ts
+  s_4265f2dede4a54::t_c0a2693a4a3781 291
+  s_4265f2dede4a54::t_1cd7499fbf6b8d 380
+  s_4265f2dede4a54::t_3a914719f60b93 1-118,124-156,159-290,292-308,312-343,349-350,389-438
+  s_4265f2dede4a54::t_ff8d3e66bcac63 119-123
+  s_4265f2dede4a54::t_1ca71b0925ee72 157-158
+  s_4265f2dede4a54::t_a74dde7b8a6b9f 309-311
+  s_4265f2dede4a54::t_a6851c14cfb236 344-348,351-379,381-388
+packages/core/src/__tests__/auth/VrtAuthService.test.ts
+  s_4265f2dede4a54::t_36607b15635345 131
+  s_4265f2dede4a54::t_bab2d9d28f4b06 1-130,132-293
+packages/core/src/__tests__/integration/thuis-download.test.ts
+  s_4265f2dede4a54::t_445506a7d10834 1-230
+packages/core/src/graphql/queries.ts
+  s_4265f2dede4a54::t_a7e3a0f9e7b1f6 47-86
+.specify/memory/constitution.md
+  s_4265f2dede4a54::t_c0e23bf941f094 23-27,29,31-32,34-42
+  s_4265f2dede4a54::t_2ff3bad598201d 1,5-6,8-9,11-12,14-15,17-18,20-21,43-59,61-85,87
+SPEC.md
+  s_4265f2dede4a54::t_dc7dd73a65aa37 3,15
+  s_4265f2dede4a54::t_05fceb174956ff 79-91,93
+  s_4265f2dede4a54::t_850d29b83e2133 603
+  s_4265f2dede4a54::t_1eeff29e329774 77-78,92
+  s_4265f2dede4a54::t_a9badd79b2bc4f 1197
+  s_4265f2dede4a54::t_33fbe6d7e01ef9 1566
+  s_4265f2dede4a54::t_51fd10b90c0d03 21,25-26,29
+  s_4265f2dede4a54::t_a8efb62ec06408 1408
+  s_4265f2dede4a54::t_121f1ab95f9ed8 1390
+  s_4265f2dede4a54::t_f42dfe1b424cdc 1330
+  s_4265f2dede4a54::t_34dc97e4023d83 57-71
+  s_4265f2dede4a54::t_76b3c5ed91056a 458,465-469,472-511,513-515,517-528,530-531,537-538,540-571,573-602,604-615,617-632,634-657
+  s_4265f2dede4a54::t_8d0685e51a3776 772,775
+  s_4265f2dede4a54::t_8016d11f2e57f0 470
+  s_4265f2dede4a54::t_5bcfbb0e84bdd6 572
+  s_4265f2dede4a54::t_a71e9ef624e63a 464
+  s_4265f2dede4a54::t_f61d8184c21631 1470
+  s_4265f2dede4a54::t_a35b9a876d177a 1501
+  s_4265f2dede4a54::t_7f7224f639d160 1568-1577
+  s_4265f2dede4a54::t_6834e7955ca753 821
+  s_4265f2dede4a54::t_6d4f9979d3ec8d 1317
+  s_4265f2dede4a54::t_bd5936ec1ddcc6 1,9-14,16-18,35,38-39,49-51,99-100,103-148,150-163,166-175,179-228,230-231,236-380,382-394,398-447,449-454,459-463,471,516,529,532-536,539,658-722,1076,1078-1125,1127-1170,1172-1196,1198-1240,1242,1244-1316,1318-1329,1331-1389,1391-1407,1409,1411-1425,1427-1440,1442-1469,1471-1497,1499,1503-1507,1509,1585-1592,1594,1597-1598
+  s_4265f2dede4a54::t_106aebfb640002 1077
+  s_4265f2dede4a54::t_7d011c9c92b227 1410
+  s_4265f2dede4a54::t_d93c2ce6b41e00 1441
+  s_4265f2dede4a54::t_072525542b4b96 881
+  s_4265f2dede4a54::t_16b2b385c32eed 1511
+  s_4265f2dede4a54::t_e4532476ffd10b 1514-1517,1526-1534,1539-1540,1542-1546,1548-1549,1552-1557,1560-1562
+  s_4265f2dede4a54::t_bde72692b160a9 23-24,27-28
+  s_4265f2dede4a54::t_81afc7908e905b 512
+  s_4265f2dede4a54::t_d83da2df318a4a 1126
+  s_4265f2dede4a54::t_b5c5c7fde58833 866
+  s_4265f2dede4a54::t_b831c88a671fbd 1171
+  s_4265f2dede4a54::t_03358f8f1c832c 1241
+  s_4265f2dede4a54::t_6244316495b595 1518-1525,1535-1538,1541,1547,1550-1551,1558-1559
+  s_4265f2dede4a54::t_f373c69b288a57 616
+  s_4265f2dede4a54::t_7353eea5c57e28 1426
+  s_4265f2dede4a54::t_b57878bad2b9ed 1581
+  s_4265f2dede4a54::t_87417dddcf6cc1 723-771,773-774,776-820,822-865,867-880,882-1075
+  s_4265f2dede4a54::t_b7bef1f610e114 1243
+  s_4265f2dede4a54::t_92550aac8ef651 633
+.specify/specs/003-multi-provider-platform/spec.md
+  s_4265f2dede4a54::t_23db637636d655 48,50,52,54-59,63-68,73-76,79-89
+  s_4265f2dede4a54::t_6d3d46b17a108d 91
+  s_4265f2dede4a54::t_4bebdc9ae297db 1-47,49,51,53,60-62,69-72,77-78,90,92-221
+.specify/feature.json
+  s_4265f2dede4a54::t_77f0aba61c5806 1
+.omo/drafts/vrtmax-download-analysis.md
+  s_4265f2dede4a54::t_62e006e7b332cb 1-698
+packages/core/jest.config.js
+  s_4265f2dede4a54::t_90b46c99a5fa18 7,9
+  s_4265f2dede4a54::t_4a14e727881b81 8
+packages/core/src/types/episode.ts
+  s_4265f2dede4a54::t_52461931590d42 6,17-18
+packages/core/src/download/types.ts
+  s_4265f2dede4a54::t_4874f7f76b3fef 34-35
+  s_4265f2dede4a54::t_836e3b7cafc14f 17-19
+  s_4265f2dede4a54::t_11087c46637d20 1-16,20-33,36-66
+packages/core/src/index.ts
+  s_4265f2dede4a54::t_0c80e3d272aab6 2-71
+packages/core/src/__tests__/episode/VrtEpisodeService.test.ts
+  s_4265f2dede4a54::t_c2bfbc2437106b 1-155,157-170,172-175
+  s_4265f2dede4a54::t_3e5f1695bce70d 156
+  s_4265f2dede4a54::t_2beee8513a3353 171
+.specify/specs/002-thuis-web-downloader/spec.md
+  s_4265f2dede4a54::t_6a248c76dd13ec 1-188
+packages/core/src/graphql/types.ts
+  s_4265f2dede4a54::t_0b6f18fdd608f8 44-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "c6750f5b342bbc0327d5064f97f9394b5f4341c1",
+  "prompts": {},
+  "sessions": {
+    "s_4265f2dede4a54": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_110ad28a4ffe2GwN30Vf4xHyFu",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}

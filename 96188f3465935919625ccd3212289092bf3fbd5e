@@ -1,0 +1,19 @@
+packages/electron-app/package.json
+  s_93dc388cd27214::t_30e2b726e33ffc 15-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "96188f3465935919625ccd3212289092bf3fbd5e",
+  "prompts": {},
+  "sessions": {
+    "s_93dc388cd27214": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_11fe5cc2bffeXM2fcibuTjJ0vj",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}

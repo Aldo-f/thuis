@@ -1,0 +1,22 @@
+thuis/credentials.py
+  s_4bc5dbc5201ece::t_fa374b49d0068b 145
+README.md
+  s_4bc5dbc5201ece::t_7219746430fceb 78-95
+  s_4bc5dbc5201ece::t_1f8c5e1e34ea6b 23-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "3c756e6399671a5f1635e48ce650b81851cb7576",
+  "prompts": {},
+  "sessions": {
+    "s_4bc5dbc5201ece": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100420f68ffetLsFuGtob13Cc9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}

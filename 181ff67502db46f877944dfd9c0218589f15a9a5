@@ -1,0 +1,21 @@
+.github/workflows/ci.yml
+  s_93dc388cd27214::t_9902d2316401f1 25
+eslint.config.js
+  s_93dc388cd27214::t_53036cc38c12c5 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "181ff67502db46f877944dfd9c0218589f15a9a5",
+  "prompts": {},
+  "sessions": {
+    "s_93dc388cd27214": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_11fe5cc2bffeXM2fcibuTjJ0vj",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
