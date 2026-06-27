@@ -1,0 +1,58 @@
+website/src/css/custom.css
+  s_d856f2af067200::t_c550c28b68c219 1-12,36
+.omo/plans/docusaurus-documentation.md
+  s_4bc5dbc5201ece::t_21b30d6aa03e3a 12,16-19
+website/docusaurus.config.ts
+  s_d856f2af067200::t_baabf48f5dcab3 52-62,67-71
+  s_d856f2af067200::t_8ea6fac695ab51 72
+.omo/boulder.json
+  s_4bc5dbc5201ece::t_3c219e19b1a700 98,100,139-141,146-147,187-189
+  s_952b458dc3f5b1::t_4a4b1b15c4196a 149,161,179,181
+  s_4bc5dbc5201ece::t_e0608a03b2f82f 102-111,114-123,131-132,134-137,150-158,162-170,178,182-184
+website/src/pages/index.module.css
+  s_e5fe284b9ba0e1::t_24b661ed83ee90 1,4,8-11,14-34,37,39,41-64,66-330
+website/src/pages/index.tsx
+  s_e5fe284b9ba0e1::t_b37afbd0e477b2 1,10-146,150-170,177-189,191-201,207-208,217,219-225,227-230
+website/postcss.config.mjs
+  s_d856f2af067200::t_9abfc04e35c3e6 1-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "3ccf55bece04a307c2d2c8dd7f16055243578731",
+  "prompts": {},
+  "sessions": {
+    "s_4bc5dbc5201ece": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100420f68ffetLsFuGtob13Cc9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_952b458dc3f5b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0fa606f7dffet57z6ipFGDggJI",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_d856f2af067200": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f5cfd10dffewZJNDCakFYRoT1",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_e5fe284b9ba0e1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f5d40867ffeAtVmMncXTe736d",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
