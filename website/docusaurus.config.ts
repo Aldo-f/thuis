@@ -85,8 +85,10 @@ const config: Config = {
         },
         {
           href: 'https://github.com/Aldo-f/thuis',
-          label: 'GitHub',
           position: 'right',
+          html: '<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg>',
+          target: '_blank',
+          rel: 'noopener noreferrer',
         },
       ],
     },
