@@ -1,0 +1,19 @@
+website/docusaurus.config.ts
+  s_44cd8b8266de0b::t_3bfd2ae9c0b44e 89-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "6e48169aff460674ec8ade2fea4fbacca9b59660",
+  "prompts": {},
+  "sessions": {
+    "s_44cd8b8266de0b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f5a73494ffeWkElbB71by2K1N",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
