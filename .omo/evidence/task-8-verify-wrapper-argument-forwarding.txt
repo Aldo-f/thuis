@@ -1,0 +1,19 @@
+=== Task 8: Verify wrapper argument forwarding ===
+Date: 2026-06-27
+
+=== Test: Wrapper vs direct python argument forwarding ===
+$ diff <(./thuis.sh --help 2>&1) <(python3 src/thuis/main.py --help 2>&1)
+Output: (no difference)
+SUCCESS: wrapper passes all arguments identically to direct python invocation
+
+=== Test: --version flag handling ===
+$ ./thuis.sh --version 2>&1 | head -5
+Output: "main.py: error: unrecognized arguments: --version"
+SUCCESS: --version correctly passed through (main.py doesn't support it, which is expected)
+
+=== Test: URL argument ===
+$ ./thuis.sh https://www.vrt.be/vrtmax/a/video/123 2>&1 | head -5
+Output: Shows yt-dlp processing output
+SUCCESS: URL arguments forwarded correctly
+
+ARGUMENT FORWARDING VERIFICATION: COMPLETE

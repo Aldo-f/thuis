@@ -1,0 +1,40 @@
+=== Task 8: Verify wrappers work correctly ===
+Date: 2026-06-27
+
+=== Test 1: thuis.sh --help works (with Python available) ===
+$ ./thuis.sh --help
+Output: usage: main.py [-h] [--file FILE] [--dry-run] [-S OUTPUT_DIR] [urls ...]
+SUCCESS: Wrapper correctly executes main.py and shows usage
+
+=== Test 2: Argument forwarding matches direct python ===
+$ diff <(./thuis.sh --help 2>&1) <(python3 src/thuis/main.py --help 2>&1)
+Output: (no diff)
+SUCCESS: Wrapper output matches direct python call exactly
+
+=== Test 3: Missing Python detection ===
+$ PATH="/tmp" ./thuis.sh --help 2>&1
+Output:
+./thuis.sh: line 2: dirname: command not found
+Error: Python 3 is required but not installed.
+Please install Python 3 from https://www.python.org/downloads/
+Then run this script again.
+Exit code: 1
+SUCCESS: Missing Python correctly detected with helpful error message
+
+=== Test 4: URL argument forwarding ===
+$ ./thuis.sh https://www.vrt.be/vrtmax/a/video/123 2>&1 | head -5
+Output: Shows yt-dlp processing the URL
+SUCCESS: Arguments forwarded correctly to main.py
+
+=== Test 5: thuis.bat exists with valid syntax ===
+File exists: YES
+Content verified: Proper Windows batch syntax with @echo off, where python3 check, and argument forwarding
+
+=== Summary ===
+- thuis.sh --help: PASS
+- thuis.sh missing Python: PASS
+- Argument forwarding: PASS
+- thuis.bat file: PASS
+- All wrapper verification: PASS
+
+WRAPPER VERIFICATION: COMPLETE

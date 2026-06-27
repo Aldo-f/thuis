@@ -1,0 +1,18 @@
+=== Task 12: Run all tests to confirm nothing broken ===
+Date: 2026-06-27
+Command: .venv/bin/python -m pytest tests/ -v
+Duration: 78.41s
+
+Results:
+- tests/test_poc.py::test_poc_uses_default_credentials_when_env_missing PASSED
+- tests/test_poc.py::test_poc_uses_provided_credentials PASSED
+- tests/test_poc.py::test_poc_handles_file_input PASSED
+- tests/test_poc.py::test_poc_dry_run_flag PASSED
+- tests/test_poc.py::test_get_yt_dlp_cmd_returns_patched_version PASSED
+- tests/test_real_download.py::TestRealDownload::test_single_download PASSED
+- tests/test_real_download.py::TestRealDownload::test_multiple_downloads PASSED
+- tests/test_real_download.py::TestRealDownload::test_single_download_with_part PASSED
+- tests/test_real_download.py::TestRealDownload::test_single_download_another PASSED
+
+Total: 9 passed, 0 failed, 0 errors
+Status: ALL TESTS PASS

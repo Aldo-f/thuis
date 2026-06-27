@@ -1,0 +1,148 @@
+{
+  "schema_version": 2,
+  "active_work_id": "project-cleanup-release-c9997a42",
+  "works": {
+    "update-ytdlp-dependency-3f9ff196": {
+      "work_id": "update-ytdlp-dependency-3f9ff196",
+      "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/update-ytdlp-dependency.md",
+      "plan_name": "update-ytdlp-dependency",
+      "status": "completed",
+      "started_at": "2026-06-26T13:48:55.827Z",
+      "updated_at": "2026-06-26T16:06:53.469Z",
+      "session_ids": [
+        "opencode:ses_100420f68ffetLsFuGtob13Cc9",
+        "opencode:ses_0fbb18be6ffeMBI5ZBk05iuoFc",
+        "opencode:ses_0fbb165b3ffeSCpujM4wmvk4kG",
+        "opencode:ses_0fbb1408bffeydCvhoTAWoNeQn",
+        "opencode:ses_0fbb11b85ffeNWZ06GgSGdLgdh",
+        "opencode:ses_0fbb0f11affe2wCPGsX2g5mEE1",
+        "opencode:ses_0fbacd46affe4i1gMqdX9Is9Ku"
+      ],
+      "session_origins": {
+        "opencode:ses_100420f68ffetLsFuGtob13Cc9": "direct",
+        "opencode:ses_0fbb18be6ffeMBI5ZBk05iuoFc": "appended",
+        "opencode:ses_0fbb165b3ffeSCpujM4wmvk4kG": "appended",
+        "opencode:ses_0fbb1408bffeydCvhoTAWoNeQn": "appended",
+        "opencode:ses_0fbb11b85ffeNWZ06GgSGdLgdh": "appended",
+        "opencode:ses_0fbb0f11affe2wCPGsX2g5mEE1": "appended",
+        "opencode:ses_0fbacd46affe4i1gMqdX9Is9Ku": "appended"
+      },
+      "agent": "atlas",
+      "task_sessions": {
+        "todo:2": {
+          "task_key": "todo:2",
+          "task_label": "2",
+          "task_title": "Install `yt-dlp` from the specified tag",
+          "session_id": "opencode:ses_0fbb62cedffe87B7EYy50Ts24v",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-06-26T14:19:18.455Z",
+          "started_at": "2026-06-26T14:18:05.127Z",
+          "status": "completed",
+          "ended_at": "2026-06-26T14:19:18.443Z",
+          "elapsed_ms": 73316
+        },
+        "final-wave:f1": {
+          "task_key": "final-wave:f1",
+          "task_label": "F1",
+          "task_title": "**Plan Compliance Audit** — `oracle`",
+          "session_id": "opencode:ses_0fbacd46affe4i1gMqdX9Is9Ku",
+          "agent": "oracle",
+          "started_at": "2026-06-26T14:23:25.677Z",
+          "status": "completed",
+          "updated_at": "2026-06-26T16:05:41.845Z",
+          "ended_at": "2026-06-26T16:05:41.845Z",
+          "elapsed_ms": 6136168
+        },
+        "final-wave:f2": {
+          "task_key": "final-wave:f2",
+          "task_label": "F2",
+          "task_title": "Final Verification: Code Quality Review",
+          "session_id": "opencode:ses_0fbb1408bffeydCvhoTAWoNeQn",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-low",
+          "updated_at": "2026-06-26T16:05:52.381Z",
+          "ended_at": "2026-06-26T16:05:52.381Z",
+          "status": "completed"
+        },
+        "final-wave:f3": {
+          "task_key": "final-wave:f3",
+          "task_label": "F3",
+          "task_title": "Final Verification: Real Manual QA",
+          "session_id": "opencode:ses_0fbb11b85ffeNWZ06GgSGdLgdh",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "updated_at": "2026-06-26T16:05:58.493Z",
+          "ended_at": "2026-06-26T16:05:58.493Z",
+          "status": "completed"
+        },
+        "final-wave:f4": {
+          "task_key": "final-wave:f4",
+          "task_label": "F4",
+          "task_title": "Final Verification: Scope Fidelity Check",
+          "session_id": "opencode:ses_0fbb0f11affe2wCPGsX2g5mEE1",
+          "agent": "Sisyphus-Junior",
+          "category": "deep",
+          "updated_at": "2026-06-26T16:06:03.934Z",
+          "ended_at": "2026-06-26T16:06:03.934Z",
+          "status": "completed"
+        }
+      },
+      "ended_at": "2026-06-26T16:06:53.469Z",
+      "elapsed_ms": 8277642
+    },
+    "project-cleanup-release-c9997a42": {
+      "work_id": "project-cleanup-release-c9997a42",
+      "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/project-cleanup-release.md",
+      "plan_name": "project-cleanup-release",
+      "status": "active",
+      "started_at": "2026-06-26T21:59:01.355Z",
+      "updated_at": "2026-06-26T22:40:19.906Z",
+      "session_ids": [
+        "opencode:ses_100420f68ffetLsFuGtob13Cc9"
+      ],
+      "session_origins": {
+        "opencode:ses_100420f68ffetLsFuGtob13Cc9": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {
+        "final-wave:f1": {
+          "task_key": "final-wave:f1",
+          "task_label": "F1",
+          "task_title": "**Plan Compliance Audit** — `oracle`",
+          "session_id": "opencode:ses_0f9e909ffffeQDpvp1u6h86Zyx",
+          "agent": "Sisyphus-Junior",
+          "category": "writing",
+          "started_at": "2026-06-26T22:39:18.179Z",
+          "status": "running",
+          "updated_at": "2026-06-26T22:40:19.907Z"
+        }
+      }
+    }
+  },
+  "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/project-cleanup-release.md",
+  "started_at": "2026-06-26T21:59:01.355Z",
+  "status": "active",
+  "updated_at": "2026-06-26T22:40:19.906Z",
+  "session_ids": [
+    "opencode:ses_100420f68ffetLsFuGtob13Cc9"
+  ],
+  "session_origins": {
+    "opencode:ses_100420f68ffetLsFuGtob13Cc9": "direct"
+  },
+  "plan_name": "project-cleanup-release",
+  "task_sessions": {
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "**Plan Compliance Audit** — `oracle`",
+      "session_id": "opencode:ses_0f9e909ffffeQDpvp1u6h86Zyx",
+      "agent": "Sisyphus-Junior",
+      "category": "writing",
+      "started_at": "2026-06-26T22:39:18.179Z",
+      "status": "running",
+      "updated_at": "2026-06-26T22:40:19.907Z"
+    }
+  },
+  "agent": "atlas"
+}

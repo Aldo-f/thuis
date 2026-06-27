@@ -1,0 +1,2 @@
+Line 1: git+https://github.com/Aldo-f/yt-dlp.git@v2026.06.09-patch1#egg=yt-dlp
+PASS: requirements.txt contains fork tag

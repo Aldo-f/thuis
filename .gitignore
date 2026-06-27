@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Downloaded media (default output dir for poc.py)
+media/
+
+# Environment / credentials
+.env
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Legacy subrepo (has its own .git)
+legacy/
+
+# Omo work tracking (runtime state, not committed artifacts)
+.omo/boulder.json
+.omo/run-continuation/
+.omo/notepads/

@@ -1,0 +1,16 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.1.1, pluggy-1.6.0 -- /home/aldo/docker-stack/06-apps/_pocs/thuis/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/aldo/docker-stack/06-apps/_pocs/thuis
+collecting ... collected 8 items
+
+test_poc.py::test_poc_uses_default_credentials_when_env_missing PASSED   [ 12%]
+test_poc.py::test_poc_uses_provided_credentials PASSED                   [ 25%]
+test_poc.py::test_poc_handles_file_input PASSED                          [ 37%]
+test_poc.py::test_poc_dry_run_flag PASSED                                [ 50%]
+test_real_download.py::TestRealDownload::test_single_download PASSED     [ 62%]
+test_real_download.py::TestRealDownload::test_multiple_downloads PASSED  [ 75%]
+test_real_download.py::TestRealDownload::test_single_download_with_part PASSED [ 87%]
+test_real_download.py::TestRealDownload::test_single_download_another PASSED [100%]
+
+============================== 8 passed in 0.07s ===============================
