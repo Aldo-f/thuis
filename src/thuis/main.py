@@ -45,7 +45,9 @@ def get_yt_dlp_cmd():
     venv = os.environ.get('VIRTUAL_ENV')
     if venv:
         candidates.append(os.path.join(venv, 'bin', 'yt-dlp'))
-    candidates.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.venv', 'bin', 'yt-dlp'))
+    # Also check .venv/bin/yt-dlp relative to project root (parent of src/thuis/)
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    candidates.append(os.path.join(project_root, '.venv', 'bin', 'yt-dlp'))
 
     for candidate in candidates:
         if not candidate or not os.path.exists(candidate):
