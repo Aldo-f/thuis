@@ -95,14 +95,32 @@
       "work_id": "project-cleanup-release-c9997a42",
       "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/project-cleanup-release.md",
       "plan_name": "project-cleanup-release",
-      "status": "active",
+      "status": "completed",
       "started_at": "2026-06-26T21:59:01.355Z",
-      "updated_at": "2026-06-26T22:40:19.906Z",
+      "updated_at": "2026-06-27T06:30:18.542Z",
       "session_ids": [
-        "opencode:ses_100420f68ffetLsFuGtob13Cc9"
+        "opencode:ses_100420f68ffetLsFuGtob13Cc9",
+        "opencode:ses_0f85884d2ffe33RFS3qstmwRka",
+        "opencode:ses_0f85883a7ffeI1yGcTe0vnnkgk",
+        "opencode:ses_0f8588050ffefOPZ2pYukK0Sgc",
+        "opencode:ses_0f8584658ffe6E4ziASSFpXfNq",
+        "opencode:ses_0f84d7438ffeKv9PQ5FtqZjsUA",
+        "opencode:ses_0f84c8825ffes4T9nJ7EscM92f",
+        "opencode:ses_0f84c87bfffe3XTdjpc8yzUNHo",
+        "opencode:ses_0f84c81e5ffeRavLR81JGwfbw6",
+        "opencode:ses_0f84c866cffevgN5RHRhugjgpG"
       ],
       "session_origins": {
-        "opencode:ses_100420f68ffetLsFuGtob13Cc9": "direct"
+        "opencode:ses_100420f68ffetLsFuGtob13Cc9": "direct",
+        "opencode:ses_0f85884d2ffe33RFS3qstmwRka": "appended",
+        "opencode:ses_0f85883a7ffeI1yGcTe0vnnkgk": "appended",
+        "opencode:ses_0f8588050ffefOPZ2pYukK0Sgc": "appended",
+        "opencode:ses_0f8584658ffe6E4ziASSFpXfNq": "appended",
+        "opencode:ses_0f84d7438ffeKv9PQ5FtqZjsUA": "appended",
+        "opencode:ses_0f84c8825ffes4T9nJ7EscM92f": "appended",
+        "opencode:ses_0f84c87bfffe3XTdjpc8yzUNHo": "appended",
+        "opencode:ses_0f84c81e5ffeRavLR81JGwfbw6": "appended",
+        "opencode:ses_0f84c866cffevgN5RHRhugjgpG": "appended"
       },
       "agent": "atlas",
       "task_sessions": {
@@ -110,25 +128,46 @@
           "task_key": "final-wave:f1",
           "task_label": "F1",
           "task_title": "**Plan Compliance Audit** — `oracle`",
-          "session_id": "opencode:ses_0f9e909ffffeQDpvp1u6h86Zyx",
-          "agent": "Sisyphus-Junior",
-          "category": "writing",
+          "session_id": "opencode:ses_0f84c87bfffe3XTdjpc8yzUNHo",
+          "agent": "oracle",
           "started_at": "2026-06-26T22:39:18.179Z",
-          "status": "running",
-          "updated_at": "2026-06-26T22:40:19.907Z"
+          "status": "completed",
+          "updated_at": "2026-06-27T06:29:26.092Z",
+          "ended_at": "2026-06-27T06:29:26.027Z",
+          "elapsed_ms": 28207848
         }
-      }
+      },
+      "ended_at": "2026-06-27T06:30:18.542Z",
+      "elapsed_ms": 30677187
     }
   },
   "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/project-cleanup-release.md",
   "started_at": "2026-06-26T21:59:01.355Z",
-  "status": "active",
-  "updated_at": "2026-06-26T22:40:19.906Z",
+  "status": "completed",
+  "updated_at": "2026-06-27T06:30:18.542Z",
   "session_ids": [
-    "opencode:ses_100420f68ffetLsFuGtob13Cc9"
+    "opencode:ses_100420f68ffetLsFuGtob13Cc9",
+    "opencode:ses_0f85884d2ffe33RFS3qstmwRka",
+    "opencode:ses_0f85883a7ffeI1yGcTe0vnnkgk",
+    "opencode:ses_0f8588050ffefOPZ2pYukK0Sgc",
+    "opencode:ses_0f8584658ffe6E4ziASSFpXfNq",
+    "opencode:ses_0f84d7438ffeKv9PQ5FtqZjsUA",
+    "opencode:ses_0f84c8825ffes4T9nJ7EscM92f",
+    "opencode:ses_0f84c87bfffe3XTdjpc8yzUNHo",
+    "opencode:ses_0f84c81e5ffeRavLR81JGwfbw6",
+    "opencode:ses_0f84c866cffevgN5RHRhugjgpG"
   ],
   "session_origins": {
-    "opencode:ses_100420f68ffetLsFuGtob13Cc9": "direct"
+    "opencode:ses_100420f68ffetLsFuGtob13Cc9": "direct",
+    "opencode:ses_0f85884d2ffe33RFS3qstmwRka": "appended",
+    "opencode:ses_0f85883a7ffeI1yGcTe0vnnkgk": "appended",
+    "opencode:ses_0f8588050ffefOPZ2pYukK0Sgc": "appended",
+    "opencode:ses_0f8584658ffe6E4ziASSFpXfNq": "appended",
+    "opencode:ses_0f84d7438ffeKv9PQ5FtqZjsUA": "appended",
+    "opencode:ses_0f84c8825ffes4T9nJ7EscM92f": "appended",
+    "opencode:ses_0f84c87bfffe3XTdjpc8yzUNHo": "appended",
+    "opencode:ses_0f84c81e5ffeRavLR81JGwfbw6": "appended",
+    "opencode:ses_0f84c866cffevgN5RHRhugjgpG": "appended"
   },
   "plan_name": "project-cleanup-release",
   "task_sessions": {
@@ -136,13 +175,16 @@
       "task_key": "final-wave:f1",
       "task_label": "F1",
       "task_title": "**Plan Compliance Audit** — `oracle`",
-      "session_id": "opencode:ses_0f9e909ffffeQDpvp1u6h86Zyx",
-      "agent": "Sisyphus-Junior",
-      "category": "writing",
+      "session_id": "opencode:ses_0f84c87bfffe3XTdjpc8yzUNHo",
+      "agent": "oracle",
       "started_at": "2026-06-26T22:39:18.179Z",
-      "status": "running",
-      "updated_at": "2026-06-26T22:40:19.907Z"
+      "status": "completed",
+      "updated_at": "2026-06-27T06:29:26.092Z",
+      "ended_at": "2026-06-27T06:29:26.027Z",
+      "elapsed_ms": 28207848
     }
   },
-  "agent": "atlas"
+  "agent": "atlas",
+  "ended_at": "2026-06-27T06:30:18.542Z",
+  "elapsed_ms": 30677187
 }

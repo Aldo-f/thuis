@@ -9,11 +9,11 @@ Add a Docusaurus documentation site and publish via GitHub Actions to GitHub Pag
 - [x] 3. **Write documentation content** — Create pages for: intro, installation, usage, credentials, project structure, development
 - [x] 4. **Create GitHub Actions workflow** — Create `.github/workflows/deploy-docs.yml` that builds and deploys to GitHub Pages on push to v4/main
 - [x] 5. **Build and verify** — Run `npm run build` and confirm output is clean
-- [ ] 6. **Commit and push** — Commit all new files and push to remote
+- [x] 6. **Commit and push** — Commit all new files and push to remote
 
 ## Final Verification Wave
 
-- [ ] F1. **Docs build passes** — `npm run build` exits 0
-- [ ] F2. **Pages config correct** — baseUrl is `/thuis/`, org/user is `Aldo-f`, project is `thuis`
-- [ ] F3. **Workflow valid** — GitHub Actions YAML is syntactically correct with proper triggers and permissions
-- [ ] F4. **Content reasonable** — At least 4 doc pages exist with real content about the project
+- [x] F1. **Docs build passes** — `npm run build` exits 0
+- [x] F2. **Pages config correct** — baseUrl is `/thuis/`, org/user is `Aldo-f`, project is `thuis`
+- [x] F3. **Workflow valid** — GitHub Actions YAML is syntactically correct with proper triggers and permissions
+- [x] F4. **Content reasonable** — At least 4 doc pages exist with real content about the project
