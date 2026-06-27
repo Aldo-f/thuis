@@ -1,0 +1,31 @@
+thuis.sh
+  s_4bc5dbc5201ece::t_70d100994fad38 3-9,15-16
+.omo/plans/project-cleanup-release.md
+  s_4bc5dbc5201ece::t_874d5ecc9f1467 971
+  s_4bc5dbc5201ece::t_e556341b176632 870
+  s_4bc5dbc5201ece::t_37c7517501e2ce 819
+  s_4bc5dbc5201ece::t_97dad9636c5ba9 703
+  s_4bc5dbc5201ece::t_015f69afa4190b 919
+  s_4bc5dbc5201ece::t_a9ae05523a8c8f 1037-1038,1040-1042,1044-1046,1048-1050
+  s_4bc5dbc5201ece::t_597313a333f477 744
+  s_4bc5dbc5201ece::t_9507d0043eb763 1036
+  s_4bc5dbc5201ece::t_a62c798f8938fc 623
+src/thuis/main.py
+  s_4bc5dbc5201ece::t_d21a3abdeab8a2 48-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "89eeb6693d5023c134db884e12d30275fcde98fd",
+  "prompts": {},
+  "sessions": {
+    "s_4bc5dbc5201ece": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100420f68ffetLsFuGtob13Cc9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
