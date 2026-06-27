@@ -1,0 +1,19 @@
+.github/workflows/deploy-docs.yml
+  s_4bc5dbc5201ece::t_d8b49baaa01615 39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "3a1b1f88e1b2aea87494a65a62ef599bf12fff43",
+  "prompts": {},
+  "sessions": {
+    "s_4bc5dbc5201ece": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100420f68ffetLsFuGtob13Cc9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
