@@ -27,6 +27,9 @@
 /* Prevent external icon from causing line wrap in footer links */
 .footer__link-item {
   white-space: nowrap;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 [data-theme='dark'] {
