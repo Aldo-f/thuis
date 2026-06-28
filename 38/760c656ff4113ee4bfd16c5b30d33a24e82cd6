@@ -1,0 +1,19 @@
+website/src/css/custom.css
+  s_4bc5dbc5201ece::t_19f7e9b0530fe3 30-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "38760c656ff4113ee4bfd16c5b30d33a24e82cd6",
+  "prompts": {},
+  "sessions": {
+    "s_4bc5dbc5201ece": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_100420f68ffetLsFuGtob13Cc9",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
