@@ -1,0 +1,337 @@
+src/thuis/url_parser.py
+  s_e021ab3d582d26::t_f09a11446ff4a5 1-94
+src/thuis/classifier.py
+  s_fbe08d026fb380::t_aa118296858ada 1-79
+src/thuis/metadata_fetcher.py
+  s_b46eabadb432ce::t_e312527985499b 1-148
+thuis/config.py
+  s_d2c6547bb1bbc0::t_e149a2177b1880 3-5
+  s_d2c6547bb1bbc0::t_4411a27d3b5ba0 1-2,6-9
+  s_d2c6547bb1bbc0::t_0f27d66ecb84b3 10
+.omo/evidence/task-10-e2e-tv.out
+  s_7abb3761d2ff73::t_360d1124db6f79 1-17
+thuis/downloader_yt.py
+  s_d5f047903f3012::t_1c760f1c4dfee2 1-5,7-8,10-34,36-37,39,65,68-70,78,81,83-84,87,89,92-95,98,102-104,107,109,111-113,117-124,126,128
+  s_d2c6547bb1bbc0::t_29d78e0735340a 86,97
+  s_df2b52756ccf6a::t_88b9d2c69d1193 110,114
+  s_3aec1dc355058e::t_f3712a2358bc89 71-77
+  s_df2b52756ccf6a::t_61426096d4db53 6
+  s_df2b52756ccf6a::t_20cb74d6c6dc05 91
+  s_df2b52756ccf6a::t_e2cea9e99d57db 9
+  s_3aec1dc355058e::t_544e5abfc13866 35
+  s_df2b52756ccf6a::t_0f823494ae1bac 85,88,90,96,99-101,105-106,108,115-116,125,127,129
+  s_df2b52756ccf6a::t_4f50312182bf05 50
+  s_df2b52756ccf6a::t_f60fe0ca16cbf9 38,40-49,51-64,66-67,79-80,82
+.omo/evidence/task-10-e2e-multi.out
+  s_7abb3761d2ff73::t_810de628448437 1-15
+tests/test_poc.py
+  s_829c73efe8a6ed::t_69c888c80c6cb4 72
+  s_829c73efe8a6ed::t_292d0538090f43 66-70,94,97-100
+  s_829c73efe8a6ed::t_9aa68b4fefb362 325-337
+  s_829c73efe8a6ed::t_e007cce0f3422a 19-23,25-26,30,52,55-58
+  s_829c73efe8a6ed::t_36e2e0d0e17ba9 199-234,237,239-251,253-293,296,298-320
+  s_a09a443fbc11df::t_c83cf04a29188c 132-138,143-147,152-158
+  s_829c73efe8a6ed::t_510c3982c2c4e9 174-176
+  s_829c73efe8a6ed::t_22b1adef04384a 235-236,238,252,294-295,297
+  s_829c73efe8a6ed::t_6913190c2d8628 27-29
+  s_829c73efe8a6ed::t_b07d9c4d4dfbbb 73-75
+  s_829c73efe8a6ed::t_4afe107642c408 166-170,193-196
+  s_829c73efe8a6ed::t_b008252471733f 172-173
+  s_829c73efe8a6ed::t_e3ad66ce9f0fce 119-121
+  s_829c73efe8a6ed::t_6d502cc0063549 177
+  s_829c73efe8a6ed::t_07b4c2adea6621 111-115,117-118,122,139-142,148-151
+  s_829c73efe8a6ed::t_6fbc345781c765 197-198
+src/thuis/scene_namer.py
+  s_248ceea06dce60::t_c1c3211615f9b1 1-187
+.omo/evidence/task-fix-main-py-types.out
+  s_c71dcaa60aa297::t_c7d6da2153ba31 1-5
+.omo/plans/yt-dlp-migration.md
+  s_3aec1dc355058e::t_e7c3661a5fb9fb 40
+  s_3aec1dc355058e::t_5d0b433b34b961 27
+  s_3aec1dc355058e::t_8a915423f557f0 30
+  s_3aec1dc355058e::t_efdf4b5a8f9a93 35-36
+  s_3aec1dc355058e::t_fb31ef2e6b101f 26
+  s_3aec1dc355058e::t_398f00a8de6cdb 31-32
+  s_3aec1dc355058e::t_834061836a92da 1-24,28-29,33-34,37-38,41-51
+  s_3aec1dc355058e::t_a0c48e30d1e68b 39
+  s_3aec1dc355058e::t_201d5ba50408de 25
+src/thuis/__init__.py
+  s_21c4ac981808cf::t_8e2e20bc8afd99 1-7
+pyproject.toml
+  s_9fbc5c3042347b::t_60a2b97f1a51f9 1-8
+tests/scene_namer_test.py
+  s_248ceea06dce60::t_fc71e905cc9a46 1-172
+tests/metadata_fetcher_test.py
+  s_b46eabadb432ce::t_0465cf2fbdc730 1-204
+tests/classifier_test.py
+  s_fbe08d026fb380::t_909ae7573a8b90 1-121
+.omo/plans/scene-naming.md
+  s_e515c800d6237e::t_024396f2662403 576
+  s_e515c800d6237e::t_9c40d63b7f96f4 905
+  s_e515c800d6237e::t_3d098269dadcd2 524
+  s_e515c800d6237e::t_0da50d24754477 913
+  s_e515c800d6237e::t_e996618bf884da 658
+  s_e515c800d6237e::t_acdf0425be1369 719
+  s_e515c800d6237e::t_e7d4388563d6b5 1-74,76-129,131-163
+  s_e515c800d6237e::t_4ab38ac7ee7519 130
+  s_e515c800d6237e::t_0b5fc2f037ee2f 575,577-657,659-718,720-765
+  s_e515c800d6237e::t_8c585bf0f19792 909
+  s_e515c800d6237e::t_e7872450ee524d 164,166-257,259-335,337-434,436-523,525-574
+  s_e515c800d6237e::t_244fd0294a40bb 771
+  s_e515c800d6237e::t_8f6123b008d411 258
+  s_e515c800d6237e::t_2c719a3419b1da 165
+  s_e515c800d6237e::t_1320f8b37cbac4 336
+  s_e515c800d6237e::t_a7cb91868219ee 435
+  s_e515c800d6237e::t_d95f31c11a01d1 918
+  s_e515c800d6237e::t_1d31fcca91b21a 830
+  s_3aec1dc355058e::t_bcbe785dc826b2 75
+  s_e515c800d6237e::t_d8a8e7b784a051 914
+  s_e515c800d6237e::t_79922c8afd04d5 766-770,772-829,831-904,906-908,910-912,915-917,919-969
+tests/test_edge_cases.py
+  s_28a3f0668f59d0::t_e61de55a1ec61e 1-961
+tests/url_parser_test.py
+  s_e021ab3d582d26::t_f219c682d0b202 1-102
+.omo/evidence/task-9-error-isolation.out
+  s_b37b77eafc3da3::t_4ef2acb80376b3 1-31
+  s_b37b77eafc3da3::t_c7b57c58fad562 32
+thuis/__init__.py
+  s_21c4ac981808cf::t_489614b6cec899 2,5-7
+  s_df2b52756ccf6a::t_8561c078dc248c 1,4
+  s_d2c6547bb1bbc0::t_98cc61f3f3cf62 3
+requirements.txt
+  s_0b69bb6430da21::t_0cab391a61993f 1-3
+tests/test_integration.py
+  s_7abb3761d2ff73::t_f44c9ab2e50de5 1-435
+src/thuis/main.py
+  s_21c4ac981808cf::t_a530dde06b0a4e 252-254
+  s_ea39763ca63c0e::t_ef5f2a682999eb 239
+  s_21c4ac981808cf::t_9ce8438ecde4e9 15-18
+  s_21c4ac981808cf::t_704e16a04a8e9a 55-63,66-68
+  s_a09a443fbc11df::t_dc6caf5cdb8e18 248-249,262-264
+  s_21c4ac981808cf::t_e59462244e8bfd 158
+  s_c71dcaa60aa297::t_b1f86158cf884d 178
+  s_ea39763ca63c0e::t_b88e67dcbdbd61 88,107-108
+  s_795c1239695417::t_6738b35970e06a 22
+  s_a09a443fbc11df::t_2564a9f2ed1e84 31,41
+  s_a09a443fbc11df::t_b2a3710d9d2a99 32-40
+  s_ea39763ca63c0e::t_d0b4dc90b4c04c 105
+  s_a09a443fbc11df::t_47f74506af15ba 155,227-230,234,238,241,243-246,265-269,271-275
+  s_3aec1dc355058e::t_90673baaec87c5 247,256,258-260
+  s_a09a443fbc11df::t_36e6143896f73b 103-104
+  s_3aec1dc355058e::t_ffc1c97e9925c7 250-251,255,257,261
+  s_c71dcaa60aa297::t_78a3aa10fe78b9 177
+  s_ea39763ca63c0e::t_c9641012931aa0 146-148
+  s_a09a443fbc11df::t_a6828ebfce860e 156,159-176,179-226,231-233,235-237,240,242,270,276
+.omo/evidence/task-7-all-tests-pass.out
+  s_829c73efe8a6ed::t_498cae33294842 1-6,8,15
+  s_829c73efe8a6ed::t_96873c44562250 7,9-14,16
+.omo/boulder.json
+  s_e515c800d6237e::t_d8e0dab1a4df19 3,142-223,226-227,229,231,234,236,238-263,268-280,282-296
+tests/test_downloader_yt.py
+  s_3aec1dc355058e::t_bad6e24959c9e1 5
+  s_d2c6547bb1bbc0::t_c2cf64dc7c9559 62
+  s_d2c6547bb1bbc0::t_5527176deb79dd 13-61,63-104,125-145
+  s_d2c6547bb1bbc0::t_1df2020e2834ee 9-11
+  s_065e9d2700be67::t_33ede35b3d4d7b 1,4,12
+  s_3aec1dc355058e::t_0375365cca72db 2-3
+  s_d2c6547bb1bbc0::t_0f59b2c177b24f 6
+  s_ad11523df87b72::t_e824a531627526 105-124
+  s_50b5a575dee350::t_f61ecbed00989e 7
+  s_065e9d2700be67::t_43159fef16767e 8
+__init__.py
+  s_df2b52756ccf6a::t_84b8a10880142a 1,3-6
+  s_d2c6547bb1bbc0::t_9b3f1fca248f9a 2
+  s_d2c6547bb1bbc0::t_f9aadf334603df 7-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.4",
+  "base_commit_sha": "467209163ced8276da00f5f673f1ad1ee4d3e026",
+  "prompts": {},
+  "sessions": {
+    "s_065e9d2700be67": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ed700e40ffebddTknl1ZFc1Nu",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_0b69bb6430da21": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f0cf2a41ffe8DVK3UkEgVh9Aj",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_21c4ac981808cf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ec654921ffezw8JguyEZmq50L",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_248ceea06dce60": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f0cf2919ffeIucY4Ej7ZAzhVU",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_28a3f0668f59d0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f0b270b4ffelufs0UIv8OrQ1A",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_3aec1dc355058e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1013c505cffe8UM2Tt1tcm8huy",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_50b5a575dee350": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ecb9c768ffeZqWHMONoj7znw5",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_795c1239695417": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0eb38f45fffes9lUH3O6EO127T",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_7abb3761d2ff73": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f0a8f04fffeKJHkelA74zpUrZ",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_829c73efe8a6ed": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f0c0f275ffep89GeT61FZSwnt",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_9fbc5c3042347b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0eb02290fffeyNGhwwfx6h4MqC",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_a09a443fbc11df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f0ca968dffePk4aFPWoZ4hYyP",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_ad11523df87b72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ecc3f675ffe82vUCEmUy2TUsa",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_b37b77eafc3da3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f07f0a81ffe0Wgz52tlGY5iOG",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_b46eabadb432ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f0cf26a4ffex8w5YqdXX66cpR",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_c71dcaa60aa297": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f08441e7ffexRRMIfQ3HPZ5fe",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_d2c6547bb1bbc0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ed15647dffebQ7QlNhivlENQE",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_d5f047903f3012": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ed3a4a62ffehlYPB0d7bnbmxz",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_df2b52756ccf6a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ed2fd98affesn8f71GsHeKDqU",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_e021ab3d582d26": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f0d1dfc9ffedCsg6ZcfzVJDdZ",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_e515c800d6237e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f11cb625ffeOb7DJqNKB3hm7v",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_ea39763ca63c0e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ecd5c416ffe8oDbDoUHOIvwlC",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_fbe08d026fb380": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f0cf27cfffeok48vUe4yc2Rr2",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
