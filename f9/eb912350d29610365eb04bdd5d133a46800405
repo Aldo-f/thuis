@@ -1,0 +1,21 @@
+src/thuis/classifier.py
+  s_e515c800d6237e::t_a424ce9e02ddf6 6-9
+thuis/__init__.py
+  s_e515c800d6237e::t_8ba30772221137 5-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.4",
+  "base_commit_sha": "f9eb912350d29610365eb04bdd5d133a46800405",
+  "prompts": {},
+  "sessions": {
+    "s_e515c800d6237e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f11cb625ffeOb7DJqNKB3hm7v",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
