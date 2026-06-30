@@ -1,0 +1,36 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+rootdir: /home/aldo/docker-stack/06-apps/_pocs/thuis
+plugins: anyio-4.12.1, mock-3.15.1, asyncio-1.4.0, typeguard-4.4.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 26 items
+
+tests/metadata_fetcher_test.py::test_lookup_codec_all[avc1.64002A-x264] PASSED [  3%]
+tests/metadata_fetcher_test.py::test_lookup_codec_all[hev1.1.6.L150.90-x265] PASSED [  7%]
+tests/metadata_fetcher_test.py::test_lookup_codec_all[hvc1.1.6.L150.90-x265] PASSED [ 11%]
+tests/metadata_fetcher_test.py::test_lookup_codec_all[vp09.00.10.08-VP9] PASSED [ 15%]
+tests/metadata_fetcher_test.py::test_lookup_codec_all[av01.0.05M.08-AV1] PASSED [ 19%]
+tests/metadata_fetcher_test.py::test_lookup_codec_all[mp4a.40.2-AAC] PASSED [ 23%]
+tests/metadata_fetcher_test.py::test_lookup_codec_all[ac-3-AC3] PASSED   [ 26%]
+tests/metadata_fetcher_test.py::test_lookup_codec_all[ec-3-EAC3] PASSED  [ 30%]
+tests/metadata_fetcher_test.py::test_lookup_codec_all[opus-Opus] PASSED  [ 34%]
+tests/metadata_fetcher_test.py::test_lookup_codec_all[dts-DTS] PASSED    [ 38%]
+tests/metadata_fetcher_test.py::test_lookup_codec_unknown PASSED         [ 42%]
+tests/metadata_fetcher_test.py::test_lookup_codec_empty PASSED           [ 46%]
+tests/metadata_fetcher_test.py::test_parse_resolution_valid[1080-1080p] PASSED [ 50%]
+tests/metadata_fetcher_test.py::test_parse_resolution_valid[720-720p] PASSED [ 53%]
+tests/metadata_fetcher_test.py::test_parse_resolution_valid[480-480p] PASSED [ 57%]
+tests/metadata_fetcher_test.py::test_parse_resolution_valid[2160-2160p] PASSED [ 61%]
+tests/metadata_fetcher_test.py::test_parse_resolution_none[None] PASSED  [ 65%]
+tests/metadata_fetcher_test.py::test_parse_resolution_none[] PASSED      [ 69%]
+tests/metadata_fetcher_test.py::test_parse_resolution_none[NA] PASSED    [ 73%]
+tests/metadata_fetcher_test.py::test_fetch_metadata_parses_correctly PASSED [ 76%]
+tests/metadata_fetcher_test.py::test_fetch_metadata_all_na PASSED        [ 80%]
+tests/metadata_fetcher_test.py::test_fetch_metadata_subprocess_failure PASSED [ 84%]
+tests/metadata_fetcher_test.py::test_fetch_metadata_subprocess_exception PASSED [ 88%]
+tests/metadata_fetcher_test.py::test_fetch_metadata_empty_output PASSED  [ 92%]
+tests/metadata_fetcher_test.py::test_fetch_metadata_credentials_passed PASSED [ 96%]
+tests/metadata_fetcher_test.py::test_codec_map_entries PASSED            [100%]
+
+============================== 26 passed in 0.09s ==============================

@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+rootdir: /home/aldo/docker-stack/06-apps/_pocs/thuis
+plugins: anyio-4.12.1, mock-3.15.1, asyncio-1.4.0, typeguard-4.4.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 9 items
+
+tests/classifier_test.py::test_standard_tv PASSED                        [ 11%]
+tests/classifier_test.py::test_tv_no_metadata PASSED                     [ 22%]
+tests/classifier_test.py::test_special_url PASSED                        [ 33%]
+tests/classifier_test.py::test_trailer_url PASSED                        [ 44%]
+tests/classifier_test.py::test_tv_with_ytdlp_series PASSED               [ 55%]
+tests/classifier_test.py::test_movie_with_ytdlp PASSED                   [ 66%]
+tests/classifier_test.py::test_unknown_fallback PASSED                   [ 77%]
+tests/classifier_test.py::test_classify_requires_vrt_info PASSED         [ 88%]
+tests/classifier_test.py::test_classify_none_meta PASSED                 [100%]
+
+============================== 9 passed in 0.11s ===============================

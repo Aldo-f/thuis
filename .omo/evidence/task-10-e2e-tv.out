@@ -1,0 +1,17 @@
+=== Task 10 — E2E Integration Test: TV URL ===
+
+Command: python -m pytest tests/test_integration.py::test_integration_tv_url -v
+Result: PASSED
+
+Test: test_integration_tv_url
+Scenario: TV URL → TV scene filename in yt-dlp -o argument
+Pipeline: VrtUrlInfo(show_slug="test-show", season=1, episode=1)
+          → classify → ContentType.TV
+          → build_tv_filename → "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+          → subprocess.run called with -o containing scene filename
+Verified:
+  - subprocess.run called once
+  - -o argument contains "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+  - %(title)s NOT in output (no fallback)
+  - URL passed to yt-dlp
+  - --username and --password passed

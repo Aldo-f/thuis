@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+rootdir: /home/aldo/docker-stack/06-apps/_pocs/thuis
+plugins: anyio-4.12.1, mock-3.15.1, asyncio-1.4.0, typeguard-4.4.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 9 items
+
+tests/url_parser_test.py::test_parse_standard_tv PASSED                  [ 11%]
+tests/url_parser_test.py::test_parse_special PASSED                      [ 22%]
+tests/url_parser_test.py::test_parse_trailer PASSED                      [ 33%]
+tests/url_parser_test.py::test_normalize_slug PASSED                     [ 44%]
+tests/url_parser_test.py::test_invalid_url PASSED                        [ 55%]
+tests/url_parser_test.py::test_no_season_episode_pattern PASSED          [ 66%]
+tests/url_parser_test.py::test_double_slash_normalization PASSED         [ 77%]
+tests/url_parser_test.py::test_url_does_not_require_trailing_slash PASSED [ 88%]
+tests/url_parser_test.py::test_vrt_info_dataclass_fields PASSED          [100%]
+
+============================== 9 passed in 0.04s ===============================

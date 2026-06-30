@@ -1,0 +1,16 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+rootdir: /home/aldo/docker-stack/06-apps/_pocs/thuis
+plugins: anyio-4.12.1, mock-3.15.1, asyncio-1.4.0, typeguard-4.4.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 6 items
+
+tests/test_poc.py::test_poc_uses_default_credentials_when_env_missing PASSED [ 16%]
+tests/test_poc.py::test_poc_uses_provided_credentials PASSED             [ 33%]
+tests/test_poc.py::test_poc_handles_file_input PASSED                    [ 50%]
+tests/test_poc.py::test_poc_dry_run_flag PASSED                          [ 66%]
+tests/test_poc.py::test_scene_name_appears_in_output PASSED              [ 83%]
+tests/test_poc.py::test_get_yt_dlp_cmd_returns_patched_version PASSED    [100%]
+
+============================== 6 passed in 9.72s ===============================

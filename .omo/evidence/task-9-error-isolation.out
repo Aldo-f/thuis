@@ -1,0 +1,32 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+rootdir: /home/aldo/docker-stack/06-apps/_pocs/thuis
+plugins: anyio-4.12.1, mock-3.15.1, asyncio-1.4.0, typeguard-4.4.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 22 items
+
+tests/test_edge_cases.py::test_special_chars_ampersand_causes_parse_failure PASSED [  4%]
+tests/test_edge_cases.py::test_special_chars_percent_in_url_triggers_fallback PASSED [  9%]
+tests/test_edge_cases.py::test_special_chars_hash_in_url_triggers_fallback PASSED [ 13%]
+tests/test_edge_cases.py::test_normalize_path_collapses_double_slashes PASSED [ 18%]
+tests/test_edge_cases.py::test_double_slashes_still_process_successfully PASSED [ 22%]
+tests/test_edge_cases.py::test_metadata_all_none_falls_back_to_unknown PASSED [ 27%]
+tests/test_edge_cases.py::test_metadata_all_na_values_from_fetcher PASSED [ 31%]
+tests/test_edge_cases.py::test_high_episode_number_formatting PASSED     [ 36%]
+tests/test_edge_cases.py::test_high_episode_number_in_pipeline PASSED    [ 40%]
+tests/test_edge_cases.py::test_metadata_fetch_network_failure_uses_fallback PASSED [ 45%]
+tests/test_edge_cases.py::test_ytdlp_subprocess_nonzero_exit PASSED      [ 50%]
+tests/test_edge_cases.py::test_classifier_unknown_triggers_fallback PASSED [ 54%]
+tests/test_edge_cases.py::test_error_isolation_mixed_good_and_bad_urls PASSED [ 59%]
+tests/test_edge_cases.py::test_fallback_template_after_parse_failure PASSED [ 63%]
+tests/test_edge_cases.py::test_fallback_template_after_unknown_classification PASSED [ 68%]
+tests/test_edge_cases.py::test_dry_run_with_bad_url_shows_fallback PASSED [ 72%]
+tests/test_edge_cases.py::test_dry_run_with_good_url_shows_scene_name PASSED [ 77%]
+tests/test_edge_cases.py::test_dry_run_with_mixed_urls PASSED            [ 81%]
+tests/test_edge_cases.py::test_build_args_with_fallback_template PASSED  [ 86%]
+tests/test_edge_cases.py::test_build_args_handles_dry_run_flag PASSED    [ 90%]
+tests/test_edge_cases.py::test_get_credentials_fallback_to_defaults PASSED [ 95%]
+tests/test_edge_cases.py::test_get_credentials_uses_env_vars PASSED      [100%]
+
+============================= 22 passed in 47.56s ==============================

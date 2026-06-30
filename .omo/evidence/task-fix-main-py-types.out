@@ -1,0 +1,5 @@
+[vrtmax] Extracting URL: https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6108/
+[vrtmax] thuis-s31a6108: Downloading asset JSON
+ERROR: [vrtmax] thuis-s31a6108: Unable to download asset JSON: HTTP Error 400: Bad Request (caused by <HTTPError 400: Bad Request>)
+[DRY-RUN] Thuis.S31E6108.WEB-DL.mp4 ← https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6108/
+Running: /usr/bin/python -m yt_dlp -f bestvideo+bestaudio --merge-output-format mp4 --no-warnings --no-color --simulate -o media/Thuis.S31E6108.WEB-DL.mp4 --username kuxelu@ipdeer.com --password Els123456 https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6108/

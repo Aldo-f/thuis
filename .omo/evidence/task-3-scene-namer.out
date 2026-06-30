@@ -1,0 +1,33 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+rootdir: /home/aldo/docker-stack/06-apps/_pocs/thuis
+plugins: anyio-4.12.1, mock-3.15.1, asyncio-1.4.0, typeguard-4.4.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 23 items
+
+tests/scene_namer_test.py::TestLookupCodec::test_all_codec_map_entries PASSED [  4%]
+tests/scene_namer_test.py::TestLookupCodec::test_prefix_matching PASSED  [  8%]
+tests/scene_namer_test.py::TestLookupCodec::test_no_match_returns_original PASSED [ 13%]
+tests/scene_namer_test.py::TestLookupCodec::test_empty_string PASSED     [ 17%]
+tests/scene_namer_test.py::TestNormalizeShowName::test_spaces_become_dots PASSED [ 21%]
+tests/scene_namer_test.py::TestNormalizeShowName::test_ampersand_becomes_and PASSED [ 26%]
+tests/scene_namer_test.py::TestNormalizeShowName::test_special_chars_removed PASSED [ 30%]
+tests/scene_namer_test.py::TestNormalizeShowName::test_collapses_multiple_dots PASSED [ 34%]
+tests/scene_namer_test.py::TestNormalizeShowName::test_strips_leading_trailing_dots PASSED [ 39%]
+tests/scene_namer_test.py::TestNormalizeShowName::test_preserves_case PASSED [ 43%]
+tests/scene_namer_test.py::TestBuildTvFilename::test_standard PASSED     [ 47%]
+tests/scene_namer_test.py::TestBuildTvFilename::test_high_episode_no_zeropad PASSED [ 52%]
+tests/scene_namer_test.py::TestBuildTvFilename::test_two_digit_episode PASSED [ 56%]
+tests/scene_namer_test.py::TestBuildTvFilename::test_episode_zero PASSED [ 60%]
+tests/scene_namer_test.py::TestBuildTvFilename::test_no_codecs PASSED    [ 65%]
+tests/scene_namer_test.py::TestBuildTvFilename::test_some_codecs PASSED  [ 69%]
+tests/scene_namer_test.py::TestBuildTvFilename::test_long_show_name_gets_normalized PASSED [ 73%]
+tests/scene_namer_test.py::TestBuildMovieFilename::test_standard_movie PASSED [ 78%]
+tests/scene_namer_test.py::TestBuildMovieFilename::test_movie_without_year PASSED [ 82%]
+tests/scene_namer_test.py::TestBuildMovieFilename::test_movie_with_year_zero PASSED [ 86%]
+tests/scene_namer_test.py::TestBuildMovieFilename::test_movie_no_tags PASSED [ 91%]
+tests/scene_namer_test.py::TestBuildSpecialFilename::test_standard_special PASSED [ 95%]
+tests/scene_namer_test.py::TestBuildSpecialFilename::test_special_no_tags PASSED [100%]
+
+============================== 23 passed in 0.44s ==============================

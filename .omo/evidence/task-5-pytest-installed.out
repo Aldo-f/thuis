@@ -1,0 +1,13 @@
+=== Task 5: pytest + python-dotenv installed ===
+Date: 2026-06-28
+
+requirements.txt now contains:
+- git+https://github.com/Aldo-f/yt-dlp.git@v2026.06.09-patch1#egg=yt-dlp
+- pytest>=8.0
+- python-dotenv>=1.0
+
+Verification:
+$ python -m pytest --version
+pytest 9.1.1
+
+python-dotenv 1.2.2 installed.

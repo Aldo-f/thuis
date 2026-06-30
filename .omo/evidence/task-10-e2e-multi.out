@@ -1,0 +1,15 @@
+=== Task 10 — E2E Integration Test: Multi-URL Batch ===
+
+Command: python -m pytest tests/test_integration.py::test_integration_multi_url_batch -v
+Result: PASSED
+
+Test: test_integration_multi_url_batch
+Scenario: Multiple URLs → each processed with correct scene filename
+Pipeline for URL 1 (TV):   VrtUrlInfo("show-a", s=1, e=1) → TV → "Show.A.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+Pipeline for URL 2 (Special): VrtUrlInfo("show-b", s=0, e=0) → SPECIAL → "Show.B.Special.WEB-DL.720p.AAC.x264.mp4"
+Verified:
+  - subprocess.run called 2 times (one per URL)
+  - Each call has correct scene filename in -o
+  - No %(title)s fallback in either call
+  - Both URLs passed correctly
+  - Credentials in both calls
