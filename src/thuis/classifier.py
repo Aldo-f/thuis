@@ -3,7 +3,10 @@
 import enum
 from typing import Optional
 
-from thuis.url_parser import VrtUrlInfo
+try:
+    from .url_parser import VrtUrlInfo
+except ImportError:
+    from url_parser import VrtUrlInfo
 
 
 class ContentType(enum.Enum):
