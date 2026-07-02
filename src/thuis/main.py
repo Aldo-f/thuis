@@ -52,19 +52,24 @@ def get_credentials():
 
 
 def get_yt_dlp_cmd():
-    """Return the command to invoke yt-dlp, preferring the bundled binary in the project's bin directory."""
-    # Determine project root (two levels up from this file)
+    """Return the command to invoke yt-dlp, preferring the packaged binary in the project's bin directory.
+    If a virtual environment is active, it will always use the venv's python -m yt_dlp.
+    """
+    # Try to find a bundled binary first
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    # Binary name based on platform
     binary_name = 'yt-dlp.exe' if platform.system().lower().startswith('win') else 'yt-dlp'
     bundled_path = os.path.join(project_root, 'bin', binary_name)
     if os.path.isfile(bundled_path):
         return [bundled_path]
+    # If running inside a virtualenv, prefer python -m yt_dlp
+    # (sys.prefix != sys.base_prefix works even when the venv was never activated)
+    if hasattr(sys, 'base_prefix') and sys.prefix != sys.base_prefix:
+        return [sys.executable, '-m', 'yt_dlp']
     # Fallback to system yt-dlp if available
     path_ytdlp = shutil.which('yt-dlp')
     if path_ytdlp:
         return [path_ytdlp]
-    # Ultimate fallback to module execution
+    # Final fallback to module execution
     return [sys.executable, '-m', 'yt_dlp']
 
 
