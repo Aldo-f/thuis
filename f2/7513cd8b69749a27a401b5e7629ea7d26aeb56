@@ -1,0 +1,20 @@
+src/thuis/main.py
+  s_e515c800d6237e::t_ead8282c2cdea4 55-58,64,67,72
+  s_e515c800d6237e::t_67177d4532cacf 65-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.5",
+  "base_commit_sha": "f27513cd8b69749a27a401b5e7629ea7d26aeb56",
+  "prompts": {},
+  "sessions": {
+    "s_e515c800d6237e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0f11cb625ffeOb7DJqNKB3hm7v",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
