@@ -103,6 +103,24 @@ Then run:
 ./thuis.sh -S ~/Videos https://www.vrt.be/vrtmax/a/show/...
 ```
 
+### Download a full season
+
+Pass a season URL to download every episode in that season:
+
+```bash
+# By season number in path
+./thuis.sh https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/
+
+# By query parameter
+./thuis.sh 'https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/?seizoen=seizoen-2'
+```
+
+The tool automatically expands the season URL to individual episode URLs using yt-dlp's playlist extraction. Combine with `--dry-run` to preview what would be downloaded:
+
+```bash
+./thuis.sh --dry-run 'https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/?seizoen=seizoen-2'
+```
+
 ## Credentials
 
 The tool uses default credentials out of the box. You do not need to set up anything to get started.

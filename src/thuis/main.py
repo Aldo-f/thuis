@@ -12,6 +12,8 @@ This is a simple wrapper that:
 
 import sys
 import os
+import json
+from urllib.parse import urlparse
 # Ensure project root and src/thuis are on sys.path for absolute imports
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, project_root)
@@ -118,6 +120,42 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path("media"), output_temp
     return args
 
 
+def fetch_playlist_urls(url: str) -> list:
+    """Return a list of episode URLs for a VRT MAX season/playlist URL.
+    Uses ``yt-dlp -J --flat-playlist`` which returns a JSON object with an
+    ``entries`` list where each entry contains a ``url`` field.
+    If the command fails or returns no entries, an empty list is returned.
+    """
+    try:
+        result = subprocess.run(
+            [*get_yt_dlp_cmd(), '-J', '--flat-playlist', url],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            return []
+        data = json.loads(result.stdout)
+        return [entry.get('url') for entry in data.get('entries', []) if entry.get('url')]
+    except Exception:
+        return []
+
+def is_season_url(url: str) -> bool:
+    """Detect if *url* points to a season page rather than a single episode.
+    Covers two patterns used by VRT MAX:
+    1. Query parameter ``?seizoen=seizoen-<num>``
+    2. Path ending with the season number (e.g. ``/.../2``)
+    """
+    if 'seizoen=' in url:
+        return True
+    # Path ending with a slash‑separated integer (e.g. …/2/ or …/2)
+    path = urlparse(url).path.rstrip('/')
+    last = path.split('/')[-1]
+    if last.isdigit():
+        return int(last) > 0
+    return False
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="Download VRT MAX videos using yt-dlp (POC)")
@@ -147,6 +185,21 @@ def main():
     if not unique_urls:
         parser.print_help()
         sys.exit(1)
+
+    # Expand season URLs to individual episode URLs
+    expanded_urls = []
+    for u in unique_urls:
+        if is_season_url(u):
+            playlist = fetch_playlist_urls(u)
+            if playlist:
+                expanded_urls.extend(playlist)
+            else:
+                # If we can't expand, keep the original URL (fallback will handle it)
+                expanded_urls.append(u)
+        else:
+            expanded_urls.append(u)
+    # Use the expanded list for further processing
+    unique_urls = expanded_urls
 
     # Get credentials once
     email, password = get_credentials()
