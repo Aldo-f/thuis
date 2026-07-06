@@ -1,0 +1,8 @@
+task-4-pycache-cleared
+======================
+- Ran: find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null; find . -name '*.pyc' -delete
+- Verified: python -c "from thuis.main import *" — success (no output = clean import)
+- QA: find . -type d -name __pycache__ → 0 results, DONE
+
+Status: All __pycache__ directories and .pyc files removed. No stale cache issues.
+Date: 2026-07-06

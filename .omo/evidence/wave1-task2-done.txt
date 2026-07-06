@@ -1,0 +1,10 @@
+Task: Simplify thuis/__init__.py
+Date: 2026-07-06
+
+Changes:
+- Changed `import os, sys` to `import os`
+- Removed `try/except ImportError` block for `downloader_yt`
+- Kept path redirect logic (adds `src/thuis` to package path)
+
+QA:
+- `python -c "import thuis; print('OK')"` → OK (no ImportError)

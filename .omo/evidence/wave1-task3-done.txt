@@ -1,0 +1,11 @@
+Task: Clean src/thuis/__init__.py
+
+Changes made:
+- Replaced src/thuis/__init__.py with a simple "# src/thuis package" comment
+- Removed: [DEBUG] print line, cross-reference to root thuis/, unused imports
+
+QA results:
+1. python -c "from thuis.main import get_credentials; print('OK')" → "OK" (no [DEBUG] line)
+2. python -c "from thuis.url_parser import parse_vrt_url; print('OK')" → "OK" (exit 0)
+
+Status: PASSED

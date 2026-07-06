@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "active_work_id": "scene-naming-c0ed4c7a",
+  "active_work_id": "cleanup-en-logging-01",
   "works": {
     "update-ytdlp-dependency-3f9ff196": {
       "work_id": "update-ytdlp-dependency-3f9ff196",
@@ -28,66 +28,7 @@
         "opencode:ses_0fbacd46affe4i1gMqdX9Is9Ku": "appended"
       },
       "agent": "atlas",
-      "task_sessions": {
-        "todo:2": {
-          "task_key": "todo:2",
-          "task_label": "2",
-          "task_title": "Install `yt-dlp` from the specified tag",
-          "session_id": "opencode:ses_0fbb62cedffe87B7EYy50Ts24v",
-          "agent": "Sisyphus-Junior",
-          "category": "quick",
-          "updated_at": "2026-06-26T14:19:18.455Z",
-          "started_at": "2026-06-26T14:18:05.127Z",
-          "status": "completed",
-          "ended_at": "2026-06-26T14:19:18.443Z",
-          "elapsed_ms": 73316
-        },
-        "final-wave:f1": {
-          "task_key": "final-wave:f1",
-          "task_label": "F1",
-          "task_title": "**Plan Compliance Audit** — `oracle`",
-          "session_id": "opencode:ses_0fbacd46affe4i1gMqdX9Is9Ku",
-          "agent": "oracle",
-          "started_at": "2026-06-26T14:23:25.677Z",
-          "status": "completed",
-          "updated_at": "2026-06-26T16:05:41.845Z",
-          "ended_at": "2026-06-26T16:05:41.845Z",
-          "elapsed_ms": 6136168
-        },
-        "final-wave:f2": {
-          "task_key": "final-wave:f2",
-          "task_label": "F2",
-          "task_title": "Final Verification: Code Quality Review",
-          "session_id": "opencode:ses_0fbb1408bffeydCvhoTAWoNeQn",
-          "agent": "Sisyphus-Junior",
-          "category": "unspecified-low",
-          "updated_at": "2026-06-26T16:05:52.381Z",
-          "ended_at": "2026-06-26T16:05:52.381Z",
-          "status": "completed"
-        },
-        "final-wave:f3": {
-          "task_key": "final-wave:f3",
-          "task_label": "F3",
-          "task_title": "Final Verification: Real Manual QA",
-          "session_id": "opencode:ses_0fbb11b85ffeNWZ06GgSGdLgdh",
-          "agent": "Sisyphus-Junior",
-          "category": "unspecified-high",
-          "updated_at": "2026-06-26T16:05:58.493Z",
-          "ended_at": "2026-06-26T16:05:58.493Z",
-          "status": "completed"
-        },
-        "final-wave:f4": {
-          "task_key": "final-wave:f4",
-          "task_label": "F4",
-          "task_title": "Final Verification: Scope Fidelity Check",
-          "session_id": "opencode:ses_0fbb0f11affe2wCPGsX2g5mEE1",
-          "agent": "Sisyphus-Junior",
-          "category": "deep",
-          "updated_at": "2026-06-26T16:06:03.934Z",
-          "ended_at": "2026-06-26T16:06:03.934Z",
-          "status": "completed"
-        }
-      },
+      "task_sessions": {},
       "ended_at": "2026-06-26T16:06:53.469Z",
       "elapsed_ms": 8277642
     },
@@ -98,45 +39,10 @@
       "status": "completed",
       "started_at": "2026-06-26T21:59:01.355Z",
       "updated_at": "2026-06-27T06:30:18.542Z",
-      "session_ids": [
-        "opencode:ses_100420f68ffetLsFuGtob13Cc9",
-        "opencode:ses_0f85884d2ffe33RFS3qstmwRka",
-        "opencode:ses_0f85883a7ffeI1yGcTe0vnnkgk",
-        "opencode:ses_0f8588050ffefOPZ2pYukK0Sgc",
-        "opencode:ses_0f8584658ffe6E4ziASSFpXfNq",
-        "opencode:ses_0f84d7438ffeKv9PQ5FtqZjsUA",
-        "opencode:ses_0f84c8825ffes4T9nJ7EscM92f",
-        "opencode:ses_0f84c87bfffe3XTdjpc8yzUNHo",
-        "opencode:ses_0f84c81e5ffeRavLR81JGwfbw6",
-        "opencode:ses_0f84c866cffevgN5RHRhugjgpG"
-      ],
-      "session_origins": {
-        "opencode:ses_100420f68ffetLsFuGtob13Cc9": "direct",
-        "opencode:ses_0f85884d2ffe33RFS3qstmwRka": "appended",
-        "opencode:ses_0f85883a7ffeI1yGcTe0vnnkgk": "appended",
-        "opencode:ses_0f8588050ffefOPZ2pYukK0Sgc": "appended",
-        "opencode:ses_0f8584658ffe6E4ziASSFpXfNq": "appended",
-        "opencode:ses_0f84d7438ffeKv9PQ5FtqZjsUA": "appended",
-        "opencode:ses_0f84c8825ffes4T9nJ7EscM92f": "appended",
-        "opencode:ses_0f84c87bfffe3XTdjpc8yzUNHo": "appended",
-        "opencode:ses_0f84c81e5ffeRavLR81JGwfbw6": "appended",
-        "opencode:ses_0f84c866cffevgN5RHRhugjgpG": "appended"
-      },
+      "session_ids": [],
+      "session_origins": {},
       "agent": "atlas",
-      "task_sessions": {
-        "final-wave:f1": {
-          "task_key": "final-wave:f1",
-          "task_label": "F1",
-          "task_title": "**Plan Compliance Audit** — `oracle`",
-          "session_id": "opencode:ses_0f84c87bfffe3XTdjpc8yzUNHo",
-          "agent": "oracle",
-          "started_at": "2026-06-26T22:39:18.179Z",
-          "status": "completed",
-          "updated_at": "2026-06-27T06:29:26.092Z",
-          "ended_at": "2026-06-27T06:29:26.027Z",
-          "elapsed_ms": 28207848
-        }
-      },
+      "task_sessions": {},
       "ended_at": "2026-06-27T06:30:18.542Z",
       "elapsed_ms": 30677187
     },
@@ -147,159 +53,40 @@
       "status": "completed",
       "started_at": "2026-06-28T17:00:40.054Z",
       "updated_at": "2026-06-30T18:45:10.885Z",
-      "session_ids": [
-        "opencode:ses_0f11cb625ffeOb7DJqNKB3hm7v"
-      ],
-      "session_origins": {
-        "opencode:ses_0f11cb625ffeOb7DJqNKB3hm7v": "direct"
-      },
+      "session_ids": [],
+      "session_origins": {},
       "agent": "atlas",
-      "task_sessions": {
-        "todo:1": {
-          "task_key": "todo:1",
-          "task_label": "1",
-          "task_title": "**url_parser.py — VRT MAX URL parser**",
-          "session_id": "opencode:ses_0f0d1dfc9ffedCsg6ZcfzVJDdZ",
-          "agent": "Sisyphus-Junior",
-          "category": "quick",
-          "updated_at": "2026-06-28T17:04:07.147Z",
-          "started_at": "2026-06-28T17:03:37.186Z",
-          "status": "completed",
-          "ended_at": "2026-06-28T17:04:07.147Z",
-          "elapsed_ms": 29961
-        },
-        "todo:2": {
-          "task_key": "todo:2",
-          "task_label": "2",
-          "task_title": "**classifier.py — TV/movie/special classifier**",
-          "session_id": "opencode:ses_0f0cf2a41ffe8DVK3UkEgVh9Aj",
-          "agent": "Sisyphus-Junior",
-          "category": "quick",
-          "updated_at": "2026-06-28T17:08:25.392Z",
-          "started_at": "2026-06-28T17:05:49.384Z",
-          "status": "completed",
-          "ended_at": "2026-06-28T17:08:25.392Z",
-          "elapsed_ms": 156008
-        },
-        "final-wave:f1": {
-          "task_key": "final-wave:f1",
-          "task_label": "F1",
-          "task_title": "**Plan Compliance Audit** — `oracle`",
-          "session_id": "opencode:ses_0f0a3841effehKcBXO1tnfq0gA",
-          "agent": "oracle",
-          "started_at": "2026-06-28T17:18:48.640Z",
-          "status": "completed",
-          "updated_at": "2026-06-28T17:55:09.969Z",
-          "ended_at": "2026-06-28T17:55:09.969Z",
-          "elapsed_ms": 2181329
-        },
-        "final-wave:f2": {
-          "task_key": "final-wave:f2",
-          "task_label": "F2",
-          "task_title": "**Code Quality Review** — `unspecified-high`",
-          "session_id": "opencode:ses_0f09ff13dffec5GsxO0ngEWnx1",
-          "agent": "oracle",
-          "updated_at": "2026-06-28T18:45:33.210Z",
-          "started_at": "2026-06-28T18:00:12.948Z",
-          "status": "completed",
-          "ended_at": "2026-06-28T18:45:33.210Z",
-          "elapsed_ms": 2720262
-        },
-        "final-wave:f4": {
-          "task_key": "final-wave:f4",
-          "task_label": "F4",
-          "task_title": "**Scope Fidelity Check** — `deep`",
-          "session_id": "opencode:ses_0f0735a98ffe1Y48K4URTSnpBq",
-          "agent": "Sisyphus-Junior",
-          "category": "quick",
-          "updated_at": "2026-06-28T18:51:11.394Z",
-          "started_at": "2026-06-28T18:45:27.279Z",
-          "status": "completed",
-          "ended_at": "2026-06-28T18:51:11.394Z",
-          "elapsed_ms": 344115
-        }
-      },
+      "task_sessions": {},
       "ended_at": "2026-06-30T18:45:10.885Z",
       "elapsed_ms": 179070831
+    },
+    "cleanup-en-logging-01": {
+      "work_id": "cleanup-en-logging-01",
+      "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/cleanup-en-logging.md",
+      "plan_name": "cleanup-en-logging",
+      "status": "active",
+      "started_at": "2026-07-06T16:02:03.697Z",
+      "updated_at": "2026-07-06T16:02:03.697Z",
+      "session_ids": [
+        "opencode:ses_0cc17be48ffeBj1tb0LznaymmO"
+      ],
+      "session_origins": {
+        "opencode:ses_0cc17be48ffeBj1tb0LznaymmO": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {}
     }
   },
-  "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/scene-naming.md",
-  "started_at": "2026-06-28T17:00:40.054Z",
-  "status": "completed",
-  "updated_at": "2026-06-30T18:45:10.885Z",
+  "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/cleanup-en-logging.md",
+  "started_at": "2026-07-06T16:02:03.697Z",
+  "status": "active",
+  "updated_at": "2026-07-06T16:02:03.697Z",
   "session_ids": [
-    "opencode:ses_0f11cb625ffeOb7DJqNKB3hm7v"
+    "opencode:ses_0cc17be48ffeBj1tb0LznaymmO"
   ],
   "session_origins": {
-    "opencode:ses_0f11cb625ffeOb7DJqNKB3hm7v": "direct"
+    "opencode:ses_0cc17be48ffeBj1tb0LznaymmO": "direct"
   },
-  "plan_name": "scene-naming",
-  "task_sessions": {
-    "todo:1": {
-      "task_key": "todo:1",
-      "task_label": "1",
-      "task_title": "**url_parser.py — VRT MAX URL parser**",
-      "session_id": "opencode:ses_0f0d1dfc9ffedCsg6ZcfzVJDdZ",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-06-28T17:04:07.147Z",
-      "started_at": "2026-06-28T17:03:37.186Z",
-      "status": "completed",
-      "ended_at": "2026-06-28T17:04:07.147Z",
-      "elapsed_ms": 29961
-    },
-    "todo:2": {
-      "task_key": "todo:2",
-      "task_label": "2",
-      "task_title": "**classifier.py — TV/movie/special classifier**",
-      "session_id": "opencode:ses_0f0cf2a41ffe8DVK3UkEgVh9Aj",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-06-28T17:08:25.392Z",
-      "started_at": "2026-06-28T17:05:49.384Z",
-      "status": "completed",
-      "ended_at": "2026-06-28T17:08:25.392Z",
-      "elapsed_ms": 156008
-    },
-    "final-wave:f1": {
-      "task_key": "final-wave:f1",
-      "task_label": "F1",
-      "task_title": "**Plan Compliance Audit** — `oracle`",
-      "session_id": "opencode:ses_0f0a3841effehKcBXO1tnfq0gA",
-      "agent": "oracle",
-      "started_at": "2026-06-28T17:18:48.640Z",
-      "status": "completed",
-      "updated_at": "2026-06-28T17:55:09.969Z",
-      "ended_at": "2026-06-28T17:55:09.969Z",
-      "elapsed_ms": 2181329
-    },
-    "final-wave:f2": {
-      "task_key": "final-wave:f2",
-      "task_label": "F2",
-      "task_title": "**Code Quality Review** — `unspecified-high`",
-      "session_id": "opencode:ses_0f09ff13dffec5GsxO0ngEWnx1",
-      "agent": "oracle",
-      "updated_at": "2026-06-28T18:45:33.210Z",
-      "started_at": "2026-06-28T18:00:12.948Z",
-      "status": "completed",
-      "ended_at": "2026-06-28T18:45:33.210Z",
-      "elapsed_ms": 2720262
-    },
-    "final-wave:f4": {
-      "task_key": "final-wave:f4",
-      "task_label": "F4",
-      "task_title": "**Scope Fidelity Check** — `deep`",
-      "session_id": "opencode:ses_0f0735a98ffe1Y48K4URTSnpBq",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-06-28T18:51:11.394Z",
-      "started_at": "2026-06-28T18:45:27.279Z",
-      "status": "completed",
-      "ended_at": "2026-06-28T18:51:11.394Z",
-      "elapsed_ms": 344115
-    }
-  },
-  "agent": "atlas",
-  "ended_at": "2026-06-30T18:45:10.885Z",
-  "elapsed_ms": 179070831
+  "plan_name": "cleanup-en-logging",
+  "agent": "atlas"
 }

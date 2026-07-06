@@ -1,4 +1,5 @@
-"""Test season URL expansion via yt-dlp --flat-playlist."""
+"""Test season URL expansion via GraphQL/HEAD-fallback."""
+
 import sys
 import os
 # Add the repository src directory so we can import thuis.main
@@ -8,14 +9,8 @@ import pytest
 from unittest.mock import patch, MagicMock
 from thuis.main import main
 
-PLAYLIST_JSON = '''
-{
-  "entries": [
-    {"url": "https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/1/f-c--de-kampioenen-s1a1/"},
-    {"url": "https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/1/f-c--de-kampioenen-s1a2/"}
-  ]
-}
-'''
+EXPECTED_EP1 = "https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/1/f-c--de-kampioenen-s1a1/"
+EXPECTED_EP2 = "https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/1/f-c--de-kampioenen-s1a2/"
 
 METADATA_EP1 = {
     "series": "Fc De Kampioenen",
@@ -48,16 +43,16 @@ def test_season_expand_dry_run(capsys):
     """Given a season URL, dry-run prints scene-named filenames for each episode."""
     original_argv = sys.argv
 
-    with patch('thuis.main.subprocess.run') as mock_run, \
+    with patch('thuis.main.fetch_season_episodes') as mock_fetch_season, \
+         patch('thuis.main.subprocess.run') as mock_run, \
          patch('thuis.main.get_yt_dlp_cmd', return_value=['yt-dlp']), \
          patch('thuis.main.metadata_fetcher.fetch_metadata') as mock_fetch:
 
-        # mock_run calls:
-        #   1: fetch_playlist_urls  (yt-dlp -J --flat-playlist)
-        #   2: subprocess.run(url_args_list) for episode 1
-        #   3: subprocess.run(url_args_list) for episode 2
+        # Mock fetch_season_episodes to return two episode URLs
+        mock_fetch_season.return_value = [EXPECTED_EP1, EXPECTED_EP2]
+
+        # mock_run: one call per episode URL's subprocess.run()
         mock_run.side_effect = [
-            MagicMock(returncode=0, stdout=PLAYLIST_JSON, stderr=''),
             MagicMock(returncode=0, stdout='', stderr=''),
             MagicMock(returncode=0, stdout='', stderr=''),
         ]

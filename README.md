@@ -115,10 +115,17 @@ Pass a season URL to download every episode in that season:
 ./thuis.sh 'https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/?seizoen=seizoen-2'
 ```
 
-The tool automatically expands the season URL to individual episode URLs using yt-dlp's playlist extraction. Combine with `--dry-run` to preview what would be downloaded:
+The tool expands the season URL to individual episode URLs by querying the VRT MAX GraphQL API, falling back to HEAD-request guessing if the API returns no results. Combine with `--dry-run` to preview what would be downloaded:
 
 ```bash
 ./thuis.sh --dry-run 'https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/?seizoen=seizoen-2'
+```
+
+Limit the number of episodes processed per season with `--max-episodes`:
+
+```bash
+# Download only the first 5 episodes of a season
+./thuis.sh --max-episodes 5 https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/
 ```
 
 ## Credentials

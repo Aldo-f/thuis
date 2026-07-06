@@ -1,0 +1,12 @@
+=== Deletion Evidence ===
+1. poc.py: GONE
+2. thuis/downloader_yt.py: GONE
+3. thuis/config.py: GONE
+4. tests/test_downloader_yt.py: GONE
+5. src/thuis/main.py.backup: GONE
+6. __init__.py: GONE
+7. thuis/__init__.py (should remain): EXISTS
+
+Method: git rm (tracked files), rm (untracked src/thuis/main.py.backup)
+Status: ALL PASS
+=== Done ===
