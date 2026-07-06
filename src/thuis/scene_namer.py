@@ -185,3 +185,31 @@ def build_special_filename(
     show = normalize_show_name(show_name)
     tags = _tags_suffix(resolution, audio_codec, video_codec)
     return f"{show}.Special.WEB-DL{tags}.mp4"
+
+
+def build_dated_tv_filename(
+    show_name: str,
+    date_str: str,
+    resolution: Optional[str] = None,
+    audio_codec: Optional[str] = None,
+    video_codec: Optional[str] = None,
+) -> str:
+    """Build a scene-style filename for date-based episodes (e.g. news, weather).
+
+    Format (with all tags present)::
+
+        Show.Name.D20260706.WEB-DL.1080p.AAC.x264.mp4
+
+    Args:
+        show_name: Show title (will be normalised).
+        date_str: Date string in YYYYMMDD format. Prepended with ``D``.
+        resolution: Video height in pixels.
+        audio_codec: Raw audio codec string.
+        video_codec: Raw video codec string.
+
+    Returns:
+        Scene-style filename string.
+    """
+    show = normalize_show_name(show_name)
+    tags = _tags_suffix(resolution, audio_codec, video_codec)
+    return f"{show}.D{date_str}.WEB-DL{tags}.mp4"

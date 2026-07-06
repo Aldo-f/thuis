@@ -32,3 +32,6 @@ legacy/
 .omo/boulder.json
 .omo/run-continuation/
 .omo/notepads/
+
+# Log files
+logs/

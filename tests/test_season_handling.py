@@ -18,28 +18,31 @@ def test_is_season_url():
 @patch('src.thuis.main._get_list_id')
 @patch('src.thuis.main._execute_graphql_query')
 def test_fetch_season_episodes_graphql_success(mock_execute, mock_get_list_id):
-    # Mock the GraphQL responses
+    # Mock the GraphQL responses with the new cursor-based format
     mock_get_list_id.return_value = "listid123"
     mock_execute.side_effect = [
         # First page
         {
             'data': {
-                'paginatedTileList': {
-                    'items': [
-                        {'slug': 'episode-1', 'id': 'id1'},
-                        {'slug': 'episode-2', 'id': 'id2'}
-                    ]
+                'list': {
+                    'paginatedItems': {
+                        'edges': [
+                            {'node': {
+                                '__typename': 'EpisodeTile',
+                                'title': 'Episode 1',
+                                'action': {'__typename': 'LinkAction', 'link': '/vrtmax/a-z/fc-de-kampioenen/2/episode-1/'}
+                            }},
+                            {'node': {
+                                '__typename': 'EpisodeTile',
+                                'title': 'Episode 2',
+                                'action': {'__typename': 'LinkAction', 'link': '/vrtmax/a-z/fc-de-kampioenen/2/episode-2/'}
+                            }},
+                        ],
+                        'pageInfo': {'endCursor': 'cursor1', 'hasNextPage': False}
+                    }
                 }
             }
         },
-        # Second page (empty)
-        {
-            'data': {
-                'paginatedTileList': {
-                    'items': []
-                }
-            }
-        }
     ]
     episodes = fetch_season_episodes("https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/")
     assert episodes == [
@@ -122,22 +125,26 @@ def test_get_list_id_failure():
 
 
 def test_get_list_id_by_title():
-    """_get_list_id matches sections by title (e.g. 'Seizoen 2'), not position."""
+    """_get_list_id matches tiles by title containing season number."""
     with patch('src.thuis.main._execute_graphql_query') as mock_exec:
         mock_exec.return_value = {
             'data': {
                 'page': {
-                    'sections': [
-                        {'id': 'trailer-id', 'title': 'Trailer'},
-                        {'id': 's1-id', 'title': 'Seizoen 1'},
-                        {'id': 's2-id', 'title': 'Seizoen 2'},
+                    'components': [
+                        {'__typename': 'ContainerNavigation', 'items': [
+                            {'components': [
+                                {'__typename': 'PaginatedTileList', 'listId': 'trailer-id', 'title': 'Trailer'},
+                                {'__typename': 'PaginatedTileList', 'listId': 's1-id', 'title': 'Seizoen 1'},
+                                {'__typename': 'PaginatedTileList', 'listId': 'seizoen2-id', 'title': 'Seizoen 2 (30 afleveringen)'},
+                            ]}
+                        ]}
                     ]
                 }
             }
         }
         # Season 2 should match by title, not by position
         result = _get_list_id("some-show", 2)
-        assert result == 's2-id'
+        assert result == 'seizoen2-id'
         # Season 1 should also work
         result = _get_list_id("some-show", 1)
         assert result == 's1-id'

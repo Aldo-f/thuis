@@ -18,35 +18,59 @@ import re
 from urllib.parse import urlparse
 import urllib.request
 
-# GraphQL query for paginated tile list
+# GraphQL query for paginated tile list (cursor-based pagination)
 _LIST_QUERY = """
-query PaginatedTileListPage($listId: String!, $page: Int!, $pageSize: Int!) {
-  paginatedTileList(listId: $listId, page: $page, pageSize: $pageSize) {
-    items {
-      id
-      slug
+query PaginatedTileListPage($listId: ID!, $after: ID) {
+  list(listId: $listId) {
+    ... on PaginatedTileList {
+      paginatedItems(first: 50, after: $after) {
+        edges {
+          node {
+            __typename
+            ... on EpisodeTile {
+              title
+              action {
+                ... on LinkAction { link }
+              }
+            }
+          }
+        }
+        pageInfo { endCursor hasNextPage }
+      }
+    }
+    ... on StaticTileList {
+      items {
+        __typename
+        ... on EpisodeTile {
+          title
+          action {
+            ... on LinkAction { link }
+          }
+        }
+      }
     }
   }
 }
 """
 
-def _execute_graphql_query(query: str, variables: dict) -> dict | None:
-    """
-    Execute a GraphQL query against the VRT MAX API and return the JSON response.
-    Returns None on failure.
-    """
-    # Form the request data
-    data = {"query": query, "variables": variables}
+def _execute_graphql_query(query: str, variables: dict | None = None) -> dict | None:
+    """Execute a GraphQL query against the VRT MAX API and return the JSON response.
+    Returns None on failure."""
+    data = {"query": query}
+    if variables:
+        data["variables"] = variables
     data_bytes = json.dumps(data).encode('utf-8')
-    url = "https://www.vrt.be/vrtnu-api/graphql/public/v1"
-    req = urllib.request.Request(url, data=data_bytes, headers={'Content-Type': 'application/json'})
+    url = "https://www.vrt.be/vrtnu-api/graphql/v1"
+    req = urllib.request.Request(url, data=data_bytes, headers={
+        'Content-Type': 'application/json',
+        'x-vrt-client-name': 'WEB',
+    })
 
     try:
         with urllib.request.urlopen(req) as response:
             if response.status != 200:
                 return None
-            response_data = json.loads(response.read().decode())
-            return response_data
+            return json.loads(response.read().decode())
     except Exception:
         return None
 # Ensure project root and src/thuis are on sys.path for absolute imports
@@ -57,6 +81,7 @@ import shutil
 import subprocess
 import tempfile
 import platform
+import logging
 from pathlib import Path
 
 try:
@@ -153,40 +178,62 @@ def _guess_episode_urls(show_slug: str, season: int, max_episodes: int | None = 
 
 
 def _get_list_id(show_slug: str, season: int) -> str | None:
-    """
-    Query the SeasonListIds GraphQL endpoint to get the listId for the specified season.
-    Returns the listId string if found, otherwise None.
-    """
-    # Form the pageId
-    page_id = f"/vrtmax/a-z/{show_slug}"
-
-    # GraphQL query
+    """Query the VRT MAX GraphQL page to find a listId tile whose title
+    contains the target season number.  Returns the first matching listId,
+    or the first listId found as fallback."""
     query = """
-    query SeasonListIds($pageId: String!) {
-        page(pageId: $pageId) {
-            sections {
-                id
-                title
+    query($pageId: ID!) {
+      page(id: $pageId) {
+        ... on IPage {
+          components {
+            __typename
+            ... on PaginatedTileList { listId title }
+            ... on StaticTileList { listId title }
+            ... on ContainerNavigation {
+              items {
+                components {
+                  __typename
+                  ... on PaginatedTileList { listId title }
+                  ... on StaticTileList { listId title }
+                }
+              }
             }
+          }
         }
+      }
     }
     """
-    variables = {"pageId": page_id}
-
-    # Use the shared GraphQL helper
+    variables = {"pageId": f"/vrtmax/a-z/{show_slug}"}
     response_data = _execute_graphql_query(query, variables)
     if not response_data:
         return None
 
-    sections = response_data.get('data', {}).get('page', {}).get('sections', [])
-    # Match section by title (e.g. "Seizoen 2") to avoid positional-index fragility
-    target = f"Seizoen {season}"
-    for section in sections:
-        if section.get('title') == target:
-            return section.get('id')
-    # Fallback: positional index if title matching fails
-    if len(sections) >= season:
-        return sections[season - 1].get('id')
+    def _collect_list_ids(components: list) -> list[tuple[str, str]]:
+        results = []
+        for comp in components or []:
+            t = comp.get("__typename")
+            if t in ("PaginatedTileList", "StaticTileList") and comp.get("listId"):
+                results.append((comp.get("title") or "", comp["listId"]))
+            elif t == "ContainerNavigation":
+                for item in comp.get("items") or []:
+                    for sub in item.get("components") or []:
+                        st = sub.get("__typename")
+                        if st in ("PaginatedTileList", "StaticTileList") and sub.get("listId"):
+                            results.append((sub.get("title") or "", sub["listId"]))
+        return results
+
+    components = response_data.get("data", {}).get("page", {}).get("components", [])
+    candidates = _collect_list_ids(components)
+
+    # Match by title containing season number
+    season_str = str(season)
+    for title, lid in candidates:
+        if season_str in title:
+            return lid
+
+    # Fallback: return first listId found
+    if candidates:
+        return candidates[0][1]
     return None
 
 
@@ -264,26 +311,7 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path("media"), output_temp
     return args
 
 
-def fetch_playlist_urls(url: str) -> list:
-    """Return a list of episode URLs for a VRT MAX season/playlist URL.
-    Uses ``yt-dlp -J --flat-playlist`` which returns a JSON object with an
-    ``entries`` list where each entry contains a ``url`` field.
-    If the command fails or returns no entries, an empty list is returned.
-    """
-    try:
-        result = subprocess.run(
-            [*get_yt_dlp_cmd(), '-J', '--flat-playlist', url],
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            return []
-        data = json.loads(result.stdout)
-        return [entry.get('url') for entry in data.get('entries', []) if entry.get('url')]
-    except Exception:
-        return []
+
 
 def is_season_url(url: str) -> bool:
     """Detect if *url* points to a season page rather than a single episode.
@@ -304,23 +332,19 @@ def is_season_url(url: str) -> bool:
     return False
 
 def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str]:
-    """
-    Extract show slug and season number from URL, then use GraphQL API to get all episode URLs for that season.
-    Returns list of episode URLs.
-    """
+    """Extract show slug and season number from URL, then query the VRT MAX
+    GraphQL API to collect episode URLs for that season.
+    Falls back to HEAD-guessing when the API yields no results."""
     from urllib.parse import urlparse, parse_qs
 
-    # Parse URL to extract slug and season
     try:
         parsed = urlparse(url)
         path = parsed.path.rstrip('/')
         query = parsed.query
 
-        # Initialize variables
         slug = None
         season = None
 
-        # Check for query parameter 'seizoen=seizoen-<num>'
         if 'seizoen=' in query:
             query_params = parse_qs(query)
             season_vals = query_params.get('seizoen')
@@ -331,15 +355,11 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
                         season = int(season_val.split('-')[1])
                     except ValueError:
                         pass
-            # Extract slug from path: last non-empty segment
             path_segments = [seg for seg in path.split('/') if seg]
             if path_segments:
                 slug = path_segments[-1]
         else:
-            # No query parameter, try to get from path
-            # Expected path: /vrtmax/a-z/<slug>/<season>/
             path_segments = [seg for seg in path.split('/') if seg]
-            # We expect at least: ['vrtmax', 'a-z', '<slug>', '<season>']
             if len(path_segments) >= 4 and path_segments[0] == 'vrtmax' and path_segments[1] == 'a-z':
                 slug = path_segments[2]
                 try:
@@ -350,60 +370,98 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
         if not slug or season is None:
             return []
 
-        # Slug from URL path is already in VRT MAX canonical form — use directly
-        # Get listId for the season
         list_id = _get_list_id(slug, season)
         if not list_id:
             return _guess_episode_urls(slug, season, max_episodes)
 
-        # GraphQL query for paginated tile list
-        variables = {
-            "listId": list_id,
-            "page": 1,
-            "pageSize": 20  # reasonable page size
-        }
-
+        # Cursor-based pagination through episodes
         episodes = []
-        page = 1
+        after: str | None = None
+
         while True:
-            variables["page"] = page
+            variables = {"listId": list_id}
+            if after:
+                variables["after"] = after
+
             response = _execute_graphql_query(_LIST_QUERY, variables)
             if not response or 'data' not in response:
                 break
 
-            data = response.get('data', {})
-            paginated = data.get('paginatedTileList', {})
-            items = paginated.get('items', [])
-            if not items:
+            list_data = response['data'].get('list', {})
+            if not list_data:
                 break
 
-            for item in items:
-                # Prefer slug, fallback to id
-                identifier = item.get('slug') or item.get('id')
-                if not identifier:
-                    continue
-                # Construct episode URL in the format url_parser expects
-                episode_url = f"https://www.vrt.be/vrtmax/a-z/{slug}/{season}/{identifier}/"
-                episodes.append(episode_url)
-                if max_episodes is not None and len(episodes) >= max_episodes:
-                    break
+            # Handle both StaticTileList and PaginatedTileList
+            items = []
+            page_info = None
+
+            if 'paginatedItems' in list_data:
+                paginated = list_data['paginatedItems']
+                edges = paginated.get('edges', [])
+                for e in edges:
+                    node = e.get('node', {})
+                    items.append(node)
+                page_info = paginated.get('pageInfo', {})
+            elif 'items' in list_data:
+                items = list_data['items']
+
+            for node in items:
+                action = node.get('action', {})
+                link = action.get('link') if action else None
+                if link:
+                    full_url = f"https://www.vrt.be{link}"
+                    episodes.append(full_url)
+                    if max_episodes is not None and len(episodes) >= max_episodes:
+                        break
 
             if max_episodes is not None and len(episodes) >= max_episodes:
                 break
 
-            # If we got fewer items than page size, we've reached the end
-            if len(items) < 20:
+            # Check pagination
+            if page_info:
+                has_next = page_info.get('hasNextPage', False)
+                if has_next:
+                    after = page_info.get('endCursor')
+                else:
+                    break
+            else:
+                # StaticTileList — no more pages
                 break
 
-            page += 1
-
-        # If GraphQL returned no episodes, fallback to guessing
         if not episodes:
             return _guess_episode_urls(slug, season, max_episodes)
 
         return episodes
     except Exception:
         return []
+
+
+def setup_logging(level: str | None = None) -> logging.Logger:
+    """Configure logging: always write to file, optionally to console.
+    
+    Args:
+        level: If set, enables console logging at the given level.
+               Values: "DEBUG", "INFO", "WARNING", "ERROR"
+    """
+    logger = logging.getLogger('thuis')
+    logger.setLevel(logging.DEBUG)  # Allow all levels through; handlers filter
+    
+    # File handler — always on
+    log_dir = Path("logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    fh = logging.FileHandler(log_dir / "thuis.log")
+    fh.setLevel(logging.INFO)
+    fh.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s'))
+    logger.addHandler(fh)
+    
+    # Console handler — optional, controlled by --log-level
+    if level:
+        ch = logging.StreamHandler()
+        ch.setLevel(getattr(logging, level.upper()))
+        ch.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s'))
+        logger.addHandler(ch)
+    
+    return logger
 
 
 def main():
@@ -414,7 +472,10 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Simulate download without downloading")
     parser.add_argument("-S", "--output-dir", type=Path, default=Path("media"), help="Directory to save downloaded files (default: media)")
     parser.add_argument("--max-episodes", type=int, default=None, help="Maximum number of episodes to process per season URL")
+    parser.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")
     args = parser.parse_args()
+
+    logger = setup_logging(args.log_level)
 
     # Collect URLs
     urls = list(args.urls)
@@ -459,7 +520,7 @@ def main():
     try:
         patch_ytdlp_if_needed()
     except Exception as e:
-        print(f"Warning: could not apply patch: {e}", flush=True)
+        logger.warning("Could not apply patch: %s", e)
 
 # Process each URL individually with scene naming pipeline
     results = []
@@ -490,15 +551,26 @@ def main():
                         resolution = resolution[:-1]  # Remove 'p' if present
                     audio_codec = metadata.get('acodec_raw')
                     video_codec = metadata.get('vcodec_raw')
-                    
-                    scene_template = scene_namer.build_tv_filename(
-                        show_name=show_name or "Unknown Show",
-                        season=season_num or 0,
-                        episode=episode_num or 0,
-                        resolution=resolution,
-                        audio_codec=audio_codec,
-                        video_codec=video_codec
-                    )
+
+                    # Detect date-based episode slugs (e.g. het-weer-d20260706)
+                    date_match = re.search(r'-d(\d{8})/?$', str(vrt_info.path)) if isinstance(vrt_info.path, str) else None
+                    if date_match:
+                        scene_template = scene_namer.build_dated_tv_filename(
+                            show_name=show_name or "Unknown Show",
+                            date_str=date_match.group(1),
+                            resolution=resolution,
+                            audio_codec=audio_codec,
+                            video_codec=video_codec,
+                        )
+                    else:
+                        scene_template = scene_namer.build_tv_filename(
+                            show_name=show_name or "Unknown Show",
+                            season=season_num or 0,
+                            episode=episode_num or 0,
+                            resolution=resolution,
+                            audio_codec=audio_codec,
+                            video_codec=video_codec
+                        )
                 elif content_type == classifier.ContentType.MOVIE:
                     # Get metadata for movie
                     title = metadata.get('title') or vrt_info.show_slug.replace('-', ' ').title()
@@ -534,14 +606,30 @@ def main():
                         video_codec=video_codec
                     )
                 else:  # UNKNOWN
-                    # Fall back to default template
-                    scene_template = "%(title)s.%(ext)s"
+                    # Try date-based slug before falling back to bare template
+                    date_match = re.search(r'-d(\d{8})/?$', str(vrt_info.path)) if isinstance(vrt_info.path, str) else None
+                    if date_match:
+                        show_name = vrt_info.show_slug.replace('-', ' ').title()
+                        scene_template = scene_namer.build_dated_tv_filename(
+                            show_name=show_name, date_str=date_match.group(1))
+                    else:
+                        scene_template = "%(title)s.%(ext)s"
                     fallback_used = True
                     
             except Exception as e:
-                # If any step fails, fall back to default template
-                print(f"Warning: Failed to process {url}: {e}", flush=True)
-                scene_template = "%(title)s.%(ext)s"
+                # If any step fails, fall back — try URL-based naming first
+                logger.warning("Failed to process %s: %s (%s)", url, e, type(e).__name__)
+                # Detect date-based slugs directly from URL (no parse needed)
+                date_match = re.search(r'/[\w-]+-d(\d{8})/?$', url)
+                if date_match:
+                    # Extract show name from the path segment before the date slug
+                    show_slug_match = re.search(r'/a-z/([\w-]+)/\d+/', url)
+                    show_name = (show_slug_match.group(1).replace('-', ' ').title()
+                                 if show_slug_match else "Unknown")
+                    scene_template = scene_namer.build_dated_tv_filename(
+                        show_name=show_name, date_str=date_match.group(1))
+                else:
+                    scene_template = "%(title)s.%(ext)s"
                 fallback_used = True
             
             # Build yt-dlp arguments for this URL
