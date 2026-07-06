@@ -1,0 +1,116 @@
+src/thuis/main.py
+  s_248949cb8b8c42::t_307c3abbdf984c 385-386
+  s_248949cb8b8c42::t_f0a33bb1bcb55e 353,355,357
+  s_248949cb8b8c42::t_b72bcb8813c635 10
+  s_248949cb8b8c42::t_b6e5a804a83fba 155-175,179,191-192
+  s_248949cb8b8c42::t_019c7e4ea04f5c 306-352,354,356,358-384,387-401,403-408
+  s_248949cb8b8c42::t_253ed43201a947 416
+  s_248949cb8b8c42::t_7295f2def4bb76 84-98
+  s_248949cb8b8c42::t_fd06ec232aab74 20-51
+  s_248949cb8b8c42::t_d9ddc87fc5674e 292,294,297-303
+  s_248949cb8b8c42::t_b98eac124ed329 99-107
+  s_248949cb8b8c42::t_212cf711dc13ce 108,112-124,127-130,132-133,135-139,141-142,144-154
+  s_248949cb8b8c42::t_be7a66375288f1 176-178,180-190
+  s_248949cb8b8c42::t_badbdb9fef10d8 402
+  s_248949cb8b8c42::t_ceb28e0ca58e55 17
+  s_248949cb8b8c42::t_74238d3b75aa3d 19
+  s_248949cb8b8c42::t_603f3e0e1a9d03 109-111,125-126,131,134,140,143
+  s_248949cb8b8c42::t_ef96d238a285a9 444
+README.md
+  s_248949cb8b8c42::t_b379baefa1c3cc 118,124-128
+  s_248949cb8b8c42::t_5129bd4c71550c 129-130
+.omo/evidence/task-4-pycache-cleared.txt
+  s_c8e4e852c89c5f::t_b74fcaf8b464bd 1-8
+src/thuis/__init__.py
+  s_3ae8f0f4150e72::t_1b3add3f273b56 1
+tests/test_season_expand.py
+  s_248949cb8b8c42::t_af5f1db3d62802 12-13
+  s_248949cb8b8c42::t_4996abeeeddb9d 1-2,46-47,51-54
+.omo/plans/cleanup-en-logging.md
+  s_280015c1070e12::t_08c4aa8381dbe4 116
+  s_280015c1070e12::t_3c88b61ee438f4 155-343
+  s_280015c1070e12::t_5ed0fccef87ea9 1-115,117-154
+  s_280015c1070e12::t_db11a6e9c81828 344-581
+  s_280015c1070e12::t_b6cedb5ef952f9 582-744
+thuis/__init__.py
+  s_72e8a6e568ee67::t_bae0a6b0cb4342 1
+.omo/evidence/wave1-task2-done.txt
+  s_72e8a6e568ee67::t_f438cd6407063a 1-10
+.omo/plans/season-download-plan.md
+  s_248949cb8b8c42::t_0688f1582297ab 1-11,22-23
+  s_248949cb8b8c42::t_b240beb867c5b7 14
+  s_248949cb8b8c42::t_bb5b0da504f8fe 20-21
+  s_248949cb8b8c42::t_82c2daf16921ea 16
+  s_248949cb8b8c42::t_4d74eea59732cf 12
+  s_248949cb8b8c42::t_e820feb58b02c7 18-19
+  s_248949cb8b8c42::t_e9f6b21a9b26b7 17
+  s_248949cb8b8c42::t_fcb1cf8aa3c1ef 15
+  s_248949cb8b8c42::t_766795a460ea47 13
+tests/test_season_handling.py
+  s_248949cb8b8c42::t_60235c22c04fad 58
+  s_248949cb8b8c42::t_7bee2048964ab9 123-161
+  s_248949cb8b8c42::t_a96a56f1d6b666 1,3-45,48-57,59-64,68,72,78-83,86-90,93,120-122,162-163
+  s_248949cb8b8c42::t_820e463843c120 76
+  s_248949cb8b8c42::t_5841a2c861c320 84-85,91-92,94-119
+  s_248949cb8b8c42::t_dcbfa11c617d95 65-67,69-71,73-75,77
+  s_248949cb8b8c42::t_3be61fb8c1e55a 2
+  s_248949cb8b8c42::t_d8b45b83b1393f 46-47
+.omo/evidence/wave1-task3-done.txt
+  s_1bb2dfc46a91fd::t_883bcc04648ece 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5891ae398f243f87629fc4385c9c4a5841c58512",
+  "prompts": {},
+  "sessions": {
+    "s_1bb2dfc46a91fd": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d4e2c5c8-f447-42c5-9421-4a907e2c480f",
+        "model": "gpt-4.1"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_248949cb8b8c42": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0d8063935ffe51OOrjra0lJ5M1",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_280015c1070e12": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0cc17be48ffeBj1tb0LznaymmO",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_3ae8f0f4150e72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c7d3ee8effeK6dllkXH8mEj6U",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_72e8a6e568ee67": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c7d3ee15ffedEIO131PBJZVVB",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_c8e4e852c89c5f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c72ee1d6ffeAc6Ui4paHPiUOs",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
