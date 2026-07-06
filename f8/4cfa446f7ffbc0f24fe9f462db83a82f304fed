@@ -1,0 +1,59 @@
+.gitignore
+  s_9ab854bda69c7b::t_0caf59d629c71e 35-37
+tests/test_season_handling.py
+  s_248949cb8b8c42::t_63badce34c5d0d 128,133-140,147
+  s_248949cb8b8c42::t_916ca79426b164 21,27-42
+src/thuis/main.py
+  s_248949cb8b8c42::t_8da55cbf85e173 622-631
+  s_248949cb8b8c42::t_a17f02e235965c 335-337,377,379-380,382-385,390-391,394-415,420-428
+  s_499c4917efe1d4::t_433fd5e840d74c 475
+  s_499c4917efe1d4::t_61a6f17df3eb76 523
+  s_248949cb8b8c42::t_a6c7cdb8464619 554-555,557-573
+  s_248949cb8b8c42::t_e6a752059da9a8 314
+  s_499c4917efe1d4::t_6acdb9a73c1e0d 478-479
+  s_248949cb8b8c42::t_49baad1d11d518 21,23-50
+  s_248949cb8b8c42::t_4f79b6e68233a0 56-61,63-67,73
+  s_248949cb8b8c42::t_099d12f523e8f2 621
+  s_248949cb8b8c42::t_849bc977c034a6 185
+  s_248949cb8b8c42::t_2e7f3849ead3cd 609,611-616
+  s_248949cb8b8c42::t_bb455b50b3a378 556
+  s_499c4917efe1d4::t_37e95501037e2d 439-466
+  s_499c4917efe1d4::t_401c034f0ac53a 84
+  s_248949cb8b8c42::t_ccea0ff2e8e1ec 181-183,186-199,201,203,206,211-236
+  s_248949cb8b8c42::t_44b1c1806eeae3 620,632
+  s_248949cb8b8c42::t_b9b7245766d4ca 610
+src/thuis/scene_namer.py
+  s_248949cb8b8c42::t_2b8d93ad808ef3 188-215
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f84cfa446f7ffbc0f24fe9f462db83a82f304fed",
+  "prompts": {},
+  "sessions": {
+    "s_248949cb8b8c42": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0d8063935ffe51OOrjra0lJ5M1",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_499c4917efe1d4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c725c5e7ffePUFeMr4Nbyj92z",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_9ab854bda69c7b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c725c5a5ffe43TBgx84zNyfyK",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
