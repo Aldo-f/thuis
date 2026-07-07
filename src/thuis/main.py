@@ -15,6 +15,7 @@ import sys
 import os
 import json
 import re
+from datetime import datetime
 from urllib.parse import urlparse
 import urllib.request
 
@@ -446,10 +447,11 @@ def setup_logging(level: str | None = None) -> logging.Logger:
     logger = logging.getLogger('thuis')
     logger.setLevel(logging.DEBUG)  # Allow all levels through; handlers filter
     
-    # File handler — always on
+    # File handler — always on, date-based filename (e.g. logs/2026-07-07.log)
     log_dir = Path("logs")
     log_dir.mkdir(parents=True, exist_ok=True)
-    fh = logging.FileHandler(log_dir / "thuis.log")
+    today = datetime.now().strftime("%Y-%m-%d")
+    fh = logging.FileHandler(log_dir / f"{today}.log")
     fh.setLevel(logging.INFO)
     fh.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s'))
     logger.addHandler(fh)
