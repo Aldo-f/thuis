@@ -1,0 +1,20 @@
+README.md
+  s_98cd27bf169337::t_a0e54d47b029dc 155-156
+  s_98cd27bf169337::t_90dda8b81e5f7c 165
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "68af54cd35d6c203f17a67477e90f4ccbe5b01e0",
+  "prompts": {},
+  "sessions": {
+    "s_98cd27bf169337": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c46bc7c2ffe13QRtwCWEyx1lZ",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
