@@ -1,0 +1,21 @@
+README.md
+  s_8e1ebc450cabc0::t_4d0e2e1f69199c 155-163
+website/docs/development.md
+  s_8e1ebc450cabc0::t_6989da378c42eb 23-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "441cc9e87914fcb29c5681e7cbdba3184e4e5d46",
+  "prompts": {},
+  "sessions": {
+    "s_8e1ebc450cabc0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c404faffffeoys2OyNHDOOgKC",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
