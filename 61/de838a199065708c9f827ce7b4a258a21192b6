@@ -1,0 +1,158 @@
+.omo/drafts/clean-keyboard-interrupt.md
+  s_2ca837f414f92f::t_99811a2e695ae4 1-21
+.omo/drafts/ctrl-c-handler.md
+  s_73dfbcfa5affe8::t_e3158d7e139757 5
+  s_79c76b4ea9bcbb::t_69d94b2f38a279 1-2,16,20-21,26-27
+  s_73dfbcfa5affe8::t_4b0a14eef7aba4 9
+  s_7cd73bce559d89::t_df43f96bb60635 3-4,6-8,10-14,17-19,22-25,28-29
+  s_73dfbcfa5affe8::t_524d72b3882186 15
+.omo/plans/cleanup-en-logging.md
+  s_280015c1070e12::t_382e2244036837 345
+  s_280015c1070e12::t_504a39389ef45c 583
+  s_280015c1070e12::t_c672cf04d1a915 286
+  s_280015c1070e12::t_7ace98c921fca2 156
+  s_280015c1070e12::t_f7163e3ed4aaa3 428
+  s_280015c1070e12::t_070aaa06df63bc 685,696
+  s_280015c1070e12::t_3263e66b3f7d1a 385
+  s_280015c1070e12::t_655c491d1970cc 530
+  s_280015c1070e12::t_a343e447d12e44 689
+  s_280015c1070e12::t_3087782cb8b411 219,638
+  s_280015c1070e12::t_dd129c34461fd3 735-744
+.omo/boulder.json
+  s_280015c1070e12::t_de1aa8183bab46 42-45,48-51,53-59,74
+  s_280015c1070e12::t_56166515a264bd 38,52,60-73
+  s_280015c1070e12::t_4838c5e8cebaaf 93-114,116-117,119-123,125
+  s_280015c1070e12::t_e44f6597526110 75-77
+  s_280015c1070e12::t_c06e190892dc15 90-92
+.omo/plans/ctrl-c-handler.md
+  s_73dfbcfa5affe8::t_cabee1ea7dc4c0 1-27,32,66-81
+  s_73dfbcfa5affe8::t_f3b4ef5c608226 28-31,33-65
+.omo/evidence/cleanup-placeholders.txt
+  s_c89fe768c27d98::t_bcc9c13fb4b0af 1-13
+.omo/evidence/final-qa/qa_scenarios.log
+  s_d5e24b45f3c36b::t_bb4ef7bad62e1c 1-35
+.omo/evidence/final-qa/test_suite.log
+  s_fa1464a3f4527f::t_40a455b42641cd 1-30
+.omo/evidence/task-5-gitignore-logs.txt
+  s_9ab854bda69c7b::t_c62554906a5579 1-8
+.omo/evidence/task-8-readme-done.txt
+  s_98cd27bf169337::t_57790d5282715e 1-11
+.omo/evidence/task-9-dev-docs-done.txt
+  s_c15ee2e8dede33::t_4c72e3fe9247ca 1-7
+.omo/evidence/wave1-commit-done.txt
+  s_a4c8fc38b9f847::t_1465aea8e69013 1-32
+.omo/evidence/wave2-complete.txt
+  s_ec3d0d64412886::t_fa98a54b7813ca 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "61de838a199065708c9f827ce7b4a258a21192b6",
+  "prompts": {},
+  "sessions": {
+    "s_280015c1070e12": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0cc17be48ffeBj1tb0LznaymmO",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_2ca837f414f92f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c2bc8a01ffe97xAeuWbUjgi4s",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_73dfbcfa5affe8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c2bc9b47ffeS0YXo2GS8uzaPV",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_79c76b4ea9bcbb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c2afff3cffecHX9cbYkWOMuD8",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_7cd73bce559d89": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c2a057abffe32lUMLmiaGTw1Z",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_98cd27bf169337": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c46bc7c2ffe13QRtwCWEyx1lZ",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_9ab854bda69c7b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c725c5a5ffe43TBgx84zNyfyK",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_a4c8fc38b9f847": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c72a74edffeVvJCqArFFm6Wty",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_c15ee2e8dede33": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c46bc789ffeGS07Ky3vY4Iaru",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_c89fe768c27d98": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c4101a13ffeNnPvZMg22dY2mt",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_d5e24b45f3c36b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c41c347affeTBhkcu6DN1JWrg",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_ec3d0d64412886": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c46d7957ffewXIXCIwXzipUh2",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_fa1464a3f4527f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c41c34c4ffe317uTOtIqYsq5x",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
