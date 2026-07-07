@@ -74,21 +74,21 @@ def test_guess_episode_urls(mock_urlopen):
             resp.__enter__.return_value = resp
             return resp
         
-        if '-e1' in url or '/1/' in url:
+        if '-s1a1' in url or '/1a1' in url:
             return _make_resp(200)
-        elif '-e2' in url or '/2/' in url:
+        elif '-s1a2' in url or '/1a2' in url:
             return _make_resp(200)
         else:
-            # Simulate HTTP 404
+            # Simulate HTTP 404 after episode 2
             raise HTTPError(url, 404, "Not Found", {}, None)
     mock_urlopen.side_effect = side_effect
 
     episodes = _guess_episode_urls("test-show", 1, None)
-    # With max_episodes=None and break-on-first-match, only the -e{n} pattern
+    # With max_episodes=None and break-on-first-match, only the -s{season}a{episode} pattern
     # (checked first) is returned per episode
     assert episodes == [
-        "https://www.vrt.be/vrtmax/a/video/test-show-e1/",
-        "https://www.vrt.be/vrtmax/a/video/test-show-e2/",
+        "https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s1a1/",
+        "https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s1a2/",
     ]
 
 def test_guess_episode_urls_max_episodes():
@@ -100,11 +100,11 @@ def test_guess_episode_urls_max_episodes():
             resp = MagicMock()
             resp.status = 200
             resp.__enter__.return_value = resp
-            if '-e1' in url or '/1/' in url:
+            if '-s1a1' in url:
                 return resp
-            elif '-e2' in url or '/2/' in url:
+            elif '-s1a2' in url:
                 return resp
-            elif '-e3' in url or '/3/' in url:
+            elif '-s1a3' in url:
                 return resp
             else:
                 raise HTTPError(url, 404, "Not Found", {}, None)
@@ -113,8 +113,8 @@ def test_guess_episode_urls_max_episodes():
         episodes = _guess_episode_urls("test-show", 1, max_episodes=2)
         assert len(episodes) == 2
         assert episodes == [
-            "https://www.vrt.be/vrtmax/a/video/test-show-e1/",
-            "https://www.vrt.be/vrtmax/a/video/test-show-e2/",
+            "https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s1a1/",
+            "https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s1a2/",
         ]
 
 def test_get_list_id_failure():

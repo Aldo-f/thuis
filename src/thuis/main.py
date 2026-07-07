@@ -163,9 +163,12 @@ def _guess_episode_urls(show_slug: str, season: int, max_episodes: int | None = 
             break
             
         found_any = False
+        # Try VRT MAX's actual URL patterns:
+        # Pattern 1: /a-z/<show>/<season>/<show>-s<season>a<episode>/
+        # Pattern 2: /a-z/<show>/<season>/<show>/e<episode>/
         patterns = [
-            f"https://www.vrt.be/vrtmax/a/video/{show_slug}-e{episode}/",
-            f"https://www.vrt.be/vrtmax/a/video/{show_slug}/{episode}/"
+            f"https://www.vrt.be/vrtmax/a-z/{show_slug}/{season}/{show_slug}-s{season}a{episode}/",
+            f"https://www.vrt.be/vrtmax/a-z/{show_slug}/{season}/{show_slug}/e{episode}/"
         ]
         
         for url in patterns:
@@ -214,12 +217,26 @@ def _get_list_id(show_slug: str, season: int) -> str | None:
             __typename
             ... on PaginatedTileList { listId title }
             ... on StaticTileList { listId title }
+            ... on LazyTileList { listId title }
             ... on ContainerNavigation {
               items {
+                title
                 components {
                   __typename
                   ... on PaginatedTileList { listId title }
                   ... on StaticTileList { listId title }
+                  ... on LazyTileList { listId title }
+                  ... on ContainerNavigation {
+                    items {
+                      title
+                      components {
+                        __typename
+                        ... on PaginatedTileList { listId title }
+                        ... on StaticTileList { listId title }
+                        ... on LazyTileList { listId title }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -235,18 +252,21 @@ def _get_list_id(show_slug: str, season: int) -> str | None:
         print(f"[DEBUG] No graphql response for _get_list_id", flush=True)
         return None
 
-    def _collect_list_ids(components: list) -> list[tuple[str, str]]:
+    def _collect_list_ids(node, parent_title=''):
         results = []
-        for comp in components or []:
-            t = comp.get("__typename")
-            if t in ("PaginatedTileList", "StaticTileList") and comp.get("listId"):
-                results.append((comp.get("title") or "", comp["listId"]))
-            elif t == "ContainerNavigation":
-                for item in comp.get("items") or []:
-                    for sub in item.get("components") or []:
-                        st = sub.get("__typename")
-                        if st in ("PaginatedTileList", "StaticTileList") and sub.get("listId"):
-                            results.append((sub.get("title") or "", sub["listId"]))
+        if isinstance(node, list):
+            for item in node:
+                results.extend(_collect_list_ids(item, parent_title))
+        elif isinstance(node, dict):
+            typename = node.get('__typename')
+            title = node.get('title') or parent_title
+            
+            if typename in ('PaginatedTileList', 'StaticTileList', 'LazyTileList') and node.get('listId'):
+                results.append((title, node['listId']))
+            
+            for k in ['components', 'items']:
+                if k in node:
+                    results.extend(_collect_list_ids(node[k], title))
         return results
 
     components = response_data.get("data", {}).get("page", {}).get("components", [])
@@ -254,17 +274,57 @@ def _get_list_id(show_slug: str, season: int) -> str | None:
 
     print(f"[DEBUG] Found {len(candidates)} list_id candidate(s): {[(t[:30], lid[:20]) for t, lid in candidates]}", flush=True)
 
+    # Filter out non-episode lists (social media, podcasts, bloopers, etc.)
+    # Keep only lists that contain "seizoen" or have a numeric title (likely seasons)
+    def _is_season_list(title: str) -> bool:
+        if not title:
+            return False
+        title_lower = title.lower()
+        if "meest recente" in title_lower or "meest recent" in title_lower:
+            return False
+        if "podcast" in title_lower:
+            return False
+        if "social" in title_lower or "volg ons" in title_lower:
+            return False
+        if "throwback" in title_lower:
+            return False
+        if "bloopers" in title_lower:
+            return False
+        if "achter de schermen" in title_lower:
+            return False
+        if "extra-s" in title_lower or "extra's" in title_lower:
+            return False
+        # Include lists with season keyword or numeric titles
+        if "seizoen" in title_lower or "season" in title_lower:
+            return True
+        # Assume numeric title means season
+        try:
+            int(title.strip())
+            return True
+        except ValueError:
+            pass
+        return True
+
+    filtered = [(t, lid) for t, lid in candidates if _is_season_list(t)]
+
+    print(f"[DEBUG] After filtering: {len(filtered)} of {len(candidates)} candidates remain", flush=True)
+
     # Match by title containing season number
     season_str = str(season)
-    for title, lid in candidates:
-        if season_str in title:
+    for title, lid in filtered:
+        title_norm = title.lower().replace('(', ' ').replace(')', ' ')
+        words = title_norm.split()
+        if season_str in words or f"seizoen-{season_str}" in title_norm:
             print(f"[DEBUG] Matched list_id {lid!r} by season title {title!r}", flush=True)
             return lid
 
     # Fallback: return first listId found
-    if candidates:
-        print(f"[DEBUG] No season match, using first list_id: {candidates[0][1]!r}", flush=True)
-        return candidates[0][1]
+    # Use filtered list if non-empty, otherwise fall back to original candidates
+    # (handles shows where all lists have empty titles, e.g. FC De Kampioenen)
+    fallback = filtered if filtered else candidates
+    if fallback:
+        print(f"[DEBUG] No season match, using first list_id: {fallback[0][1]!r}", flush=True)
+        return fallback[0][1]
     print(f"[DEBUG] No list_id found at all", flush=True)
     return None
 
