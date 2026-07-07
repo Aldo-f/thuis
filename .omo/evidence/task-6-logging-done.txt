@@ -1,0 +1,21 @@
+Task 6: Add logging setup + --log-level to main.py
+=====================================================
+
+Changes made to src/thuis/main.py:
+
+1. Added `import logging` after `import platform` (line 60)
+2. Added `setup_logging()` function before `main()` (lines 410-435)
+   - Creates "thuis" logger with DEBUG level
+   - File handler always on (logs/thuis.log, INFO+)
+   - Console handler optional (controlled by --log-level)
+3. Added `--log-level` argparse argument (line 446)
+   - choices: DEBUG, INFO, WARNING, ERROR
+4. Called `setup_logging(args.log_level)` after arg parse (line 449)
+5. Replaced two warning prints with logger.warning() calls (lines 494, 575)
+
+QA Results:
+1. --log-level in help: PASS
+2. Log file created: PASS (logs/thuis.log with content)
+3. No console logs without flag: PASS (0 lines when level=None)
+4. Console logs WITH --log-level DEBUG: PASS (DEBUG lines appear)
+5. DRY-RUN prints still visible: PASS (lines 585, 587 preserved)

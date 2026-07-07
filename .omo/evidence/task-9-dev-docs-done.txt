@@ -1,0 +1,7 @@
+Task: Remove poc.py from website/docs/development.md
+Date: 2026-07-07
+Status: Done
+
+Verification:
+- grep -c "poc.py" website/docs/development.md → 0 (PASS)
+- The poc.py line has been removed from the project structure section.

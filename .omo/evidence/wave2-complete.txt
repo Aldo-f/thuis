@@ -1,0 +1,37 @@
+Wave 2 Complete — Logging Verification + Commits
+================================================
+Date: 2026-07-07
+
+Part A: Logging Verification
+----------------------------
+- Log file cleaned: OK
+- Logging test (setup_logging): PASSED
+- Log format: 2026-07-07 09:55:23,996 [LEVEL] thuis: message  ✓
+- Debug messages suppressed (not in file): YES
+- --log-level in --help: PRESENT
+
+Part B: Commit 2 (.gitignore)
+------------------------------
+File: .gitignore
+Change: Added logs/ entry
+Status: Already committed in f84cfa4
+
+Part C: Commit 3 (logging)
+------------------------------
+File: src/thuis/main.py
+Changes:
+  - setup_logging() function at line 439
+  - File handler with INFO level
+  - Console handler with configurable --log-level
+  - argparse --log-level argument at line 475
+Status: Already committed in f84cfa4
+
+Part D: Final Check
+-------------------
+git status: Clean (only untracked .omo/evidence files)
+git log --oneline -3:
+  f84cfa4 feat: implement season URL expansion with GraphQL API and HEAD-guess fallback
+  5891ae3 chore: remove dead files (poc.py, downloader_yt, config, backup, root __init__)
+  3095d1d feat: add season URL expansion for VRT MAX
+
+Result: WAVE 2 COMPLETE ✅

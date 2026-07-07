@@ -1,0 +1,8 @@
+Task 5: Add logs/ to .gitignore
+=================================
+Status: COMPLETED
+
+.gitignore updated: Added `# Log files` and `logs/` at end of file.
+Directory created:  `mkdir -p logs` → logs/ exists.
+Git ignore check:   `git check-ignore logs/thuis.log` → "logs/thuis.log" ✓
+Directory check:    `test -d logs && echo "EXISTS"` → "EXISTS" ✓

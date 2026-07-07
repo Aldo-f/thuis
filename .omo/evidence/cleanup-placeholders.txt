@@ -1,0 +1,13 @@
+Cleanup: Remove placeholder debug files from main.py
+====================================================
+
+Changes made:
+1. Removed placeholder.touch() logic from try/except blocks in src/thuis/main.py
+2. Deleted existing media/placeholder_*.txt files
+
+QA Verification:
+- ls media/placeholder_*.txt → "No such file or directory" ✓
+- grep -c "placeholder" src/thuis/main.py → 0 ✓
+- python -m pytest tests/ -v --ignore=tests/test_downloader_yt.py --ignore=tests/test_real_download.py -x → 112 passed ✓
+
+Commit: e63bef7 - fix: remove placeholder debug files from main.py

@@ -1,0 +1,67 @@
+=== FINAL VERIFICATION 2026-07-07T09:21:53+00:00 ===
+
+=== 1. Full test suite ===
+tests/test_season_handling.py::test_is_season_url PASSED                 [ 84%]
+tests/test_season_handling.py::test_fetch_season_episodes_graphql_success PASSED [ 85%]
+tests/test_season_handling.py::test_fetch_season_episodes_graphql_fallback PASSED [ 86%]
+tests/test_season_handling.py::test_guess_episode_urls PASSED            [ 87%]
+tests/test_season_handling.py::test_guess_episode_urls_max_episodes PASSED [ 88%]
+tests/test_season_handling.py::test_get_list_id_failure PASSED           [ 89%]
+tests/test_season_handling.py::test_get_list_id_by_title PASSED          [ 90%]
+tests/test_season_handling.py::test_is_not_found_http_error PASSED       [ 91%]
+tests/test_season_handling.py::test_is_not_found_soft_stop PASSED        [ 91%]
+tests/url_parser_test.py::test_parse_standard_tv PASSED                  [ 92%]
+tests/url_parser_test.py::test_parse_special PASSED                      [ 93%]
+tests/url_parser_test.py::test_parse_trailer PASSED                      [ 94%]
+tests/url_parser_test.py::test_normalize_slug PASSED                     [ 95%]
+tests/url_parser_test.py::test_invalid_url PASSED                        [ 96%]
+tests/url_parser_test.py::test_no_season_episode_pattern PASSED          [ 97%]
+tests/url_parser_test.py::test_double_slash_normalization PASSED         [ 98%]
+tests/url_parser_test.py::test_url_does_not_require_trailing_slash PASSED [ 99%]
+tests/url_parser_test.py::test_vrt_info_dataclass_fields PASSED          [100%]
+
+============================= 112 passed in 0.32s ==============================
+
+=== 2. Entry points work ===
+               [--log-level {DEBUG,INFO,WARNING,ERROR}]
+  --log-level {DEBUG,INFO,WARNING,ERROR}
+PASS: --log-level in help
+               [--log-level {DEBUG,INFO,WARNING,ERROR}]
+  --log-level {DEBUG,INFO,WARNING,ERROR}
+PASS: python -m thuis.main works
+
+=== 3. Logging works ===
+[generic] Extracting URL: https://www.vrt.be/vrtmax/a-z/test/1/
+[generic] 1: Downloading webpage
+[generic] 1: Extracting information
+[DRY-RUN] (fallback) %(title)s.%(ext)s ← https://www.vrt.be/vrtmax/a-z/test/1/
+Running: /usr/bin/python -m yt_dlp -f bestvideo+bestaudio --merge-output-format mp4 --no-warnings --no-color --simulate -o media/%(title)s.%(ext)s --username kuxelu@ipdeer.com --password Els123456 https://www.vrt.be/vrtmax/a-z/test/1/
+PASS: log file created
+
+=== 4. Dead files gone ===
+PASS: poc.py removed
+PASS: downloader_yt.py removed
+
+=== 5. No DEBUG print ===
+PASS: no DEBUG print
+
+=== 6. git status ===
+On branch v4/main
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.omo/evidence/final-verification.txt
+	.omo/evidence/task-5-gitignore-logs.txt
+	.omo/evidence/task-6-logging-done.txt
+	.omo/evidence/task-8-readme-done.txt
+	.omo/evidence/task-9-dev-docs-done.txt
+	.omo/evidence/wave1-commit-done.txt
+	.omo/evidence/wave2-complete.txt
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+=== 7. Recent commits ===
+68af54c docs: update README and development docs for cleanup + logging
+f84cfa4 feat: implement season URL expansion with GraphQL API and HEAD-guess fallback
+5891ae3 chore: remove dead files (poc.py, downloader_yt, config, backup, root __init__)
+3095d1d feat: add season URL expansion for VRT MAX
+f27513c fix: use python -m yt_dlp in venv for patched yt-dlp (sys.prefix check)

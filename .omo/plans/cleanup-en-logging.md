@@ -153,7 +153,7 @@ Max Concurrent: 4 (Wave 1)
 
 ## TODOs
 
-- [ ] 1. Delete dead files
+- [x] 1. Delete dead files
 
   **What to do**:
   - Delete files (use `git rm` for tracked files, `rm` for untracked):
@@ -216,7 +216,7 @@ Max Concurrent: 4 (Wave 1)
   - Files: All deleted files
   - Pre-commit: `python -m pytest tests/ -v --ignore=tests/test_downloader_yt.py -x`
 
-- [ ] 2. Simplify `thuis/__init__.py`
+- [x] 2. Simplify `thuis/__init__.py`
 
   **What to do**:
   - Current content:
@@ -283,7 +283,7 @@ Max Concurrent: 4 (Wave 1)
   **Commit**: NO (groups with Task 1)
   - Files: `thuis/__init__.py`
 
-- [ ] 3. Clean `src/thuis/__init__.py`
+- [x] 3. Clean `src/thuis/__init__.py`
 
   **What to do**:
   - Current content:
@@ -342,7 +342,7 @@ Max Concurrent: 4 (Wave 1)
   **Commit**: NO (groups with Task 1)
   - Files: `src/thuis/__init__.py`
 
-- [ ] 4. Clear stale `__pycache__` directories
+- [x] 4. Clear stale `__pycache__` directories
 
   **What to do**:
   - Remove all `__pycache__` directories and `.pyc` files that may reference deleted modules
@@ -382,7 +382,7 @@ Max Concurrent: 4 (Wave 1)
   **Commit**: NO (groups with Task 1)
   - Files: N/A (cache files, gitignored)
 
-- [ ] 5. Add `logs/` to `.gitignore`
+- [x] 5. Add `logs/` to `.gitignore`
 
   **What to do**:
   - Add `logs/` entry to `.gitignore` with a comment `# Log files`
@@ -425,7 +425,7 @@ Max Concurrent: 4 (Wave 1)
   - Message: `chore: add logs/ to .gitignore`
   - Files: `.gitignore`
 
-- [ ] 6. Add logging setup + `--log-level` to `src/thuis/main.py`
+- [x] 6. Add logging setup + `--log-level` to `src/thuis/main.py`
 
   **What to do**:
   - Add a `setup_logging(level: str | None = None)` function that:
@@ -527,7 +527,7 @@ Max Concurrent: 4 (Wave 1)
   - Files: `src/thuis/main.py`
   - Pre-commit: `python -m pytest tests/ -v --ignore=tests/test_downloader_yt.py -x`
 
-- [ ] 7. Verify logging works end-to-end
+- [x] 7. Verify logging works end-to-end
 
   **What to do**:
   - Verify the complete logging setup:
@@ -580,7 +580,7 @@ Max Concurrent: 4 (Wave 1)
 
   **Commit**: NO (verification only)
 
-- [ ] 8. Update README
+- [x] 8. Update README
 
   **What to do**:
   - Update project structure section in `README.md`:
@@ -635,7 +635,7 @@ Max Concurrent: 4 (Wave 1)
   - Message: `docs: update README and development docs for cleanup + logging`
   - Files: `README.md`, `website/docs/development.md`
 
-- [ ] 9. Update `website/docs/development.md`
+- [x] 9. Update `website/docs/development.md`
 
   **What to do**:
   - Update project structure in `website/docs/development.md`:
@@ -682,18 +682,18 @@ Max Concurrent: 4 (Wave 1)
 
 > 3 review agents run in PARALLEL. ALL must APPROVE. Present consolidated results to user and get explicit "okay" before completing.
 
-- [ ] F1. **Plan Compliance Audit** — `oracle`
+- [x] F1. **Plan Compliance Audit** — `oracle`
   Read the plan end-to-end. For each "Must Have": verify implementation exists (read file, run test, check git log). For each "Must NOT Have": search codebase for forbidden patterns — reject with file:line if found. Check evidence files exist in .omo/evidence/. Compare deliverables against plan.
   Output: `Must Have [N/N] | Must NOT Have [N/N] | Tasks [N/N] | VERDICT: APPROVE/REJECT`
 
-- [ ] F2. **Full Test Suite + QA** — `unspecified-high`
+- [x] F2. **Full Test Suite + QA** — `unspecified-high`
   Run full test suite (excluding deleted test_downloader_yt.py):
   - `python -m pytest tests/ -v --ignore=tests/test_downloader_yt.py`
   Execute ALL QA scenarios from ALL tasks — follow exact steps, capture evidence.
   Save to `.omo/evidence/final-qa/`.
   Output: `Tests [N pass/N fail] | QA Scenarios [N/N pass] | VERDICT`
 
-- [ ] F3. **Scope Fidelity Check** — `deep`
+- [x] F3. **Scope Fidelity Check** — `deep`
   For each task: read "What to do", read actual diff (git log/diff). Verify 1:1 — everything in scope was done (no missing), nothing beyond scope was done (no creep). Check "Must NOT do" compliance. Detect cross-task contamination: Task N touching Task M's files. Flag unaccounted changes.
   Output: `Tasks [N/N compliant] | Contamination [CLEAN/N issues] | Unaccounted [CLEAN/N files] | VERDICT`
 
@@ -732,13 +732,13 @@ python -c "from thuis.main import get_credentials; print('OK')" 2>&1 | grep -v "
 ```
 
 ### Final Checklist
-- [ ] All dead files removed
-- [ ] `thuis/__init__.py` simplified (no downloader_yt import)
-- [ ] `src/thuis/__init__.py` cleaned (no DEBUG print, no cross-ref)
-- [ ] `logs/` in `.gitignore`
-- [ ] Logging works: file always, console via `--log-level`
-- [ ] All `print()` statements preserved
-- [ ] README updated (no poc.py refs)
-- [ ] website/docs/development.md updated (no poc.py refs)
-- [ ] All tests pass
-- [ ] `python -m thuis.main --help` works
+- [x] All dead files removed
+- [x] `thuis/__init__.py` simplified (no downloader_yt import)
+- [x] `src/thuis/__init__.py` cleaned (no DEBUG print, no cross-ref)
+- [x] `logs/` in `.gitignore`
+- [x] Logging works: file always, console via `--log-level`
+- [x] All `print()` statements preserved
+- [x] README updated (no poc.py refs)
+- [x] website/docs/development.md updated (no poc.py refs)
+- [x] All tests pass
+- [x] `python -m thuis.main --help` works

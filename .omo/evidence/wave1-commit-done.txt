@@ -1,0 +1,32 @@
+Wave 1 — Commit Done
+=====================
+Date: 2026-07-06
+
+Commit: 5891ae398f243f87629fc4385c9c4a5841c58512
+Branch: v4/main
+
+Message:
+  chore: remove dead files (poc.py, downloader_yt, config, backup, root __init__)
+
+Files changed (18):
+  Deleted:  poc.py, __init__.py (root), thuis/downloader_yt.py, thuis/config.py,
+            tests/test_downloader_yt.py
+  Added:    tests/test_season_handling.py, .omo/evidence/*, .omo/plans/*
+  Modified: src/thuis/main.py, src/thuis/__init__.py, thuis/__init__.py,
+            tests/test_season_expand.py, .omo/boulder.json, README.md
+
+Staged files verified:
+  ✓ deleted:  poc.py
+  ✓ deleted:  thuis/downloader_yt.py
+  ✓ deleted:  thuis/config.py
+  ✓ deleted:  __init__.py (root)
+  ✓ deleted:  tests/test_downloader_yt.py
+  ✓ modified: thuis/__init__.py
+  ✓ modified: src/thuis/__init__.py
+  ✓ (other expected files present)
+
+Pre-commit test result:
+  112 passed (pytest all --ignore=test_real_download.py)
+  The 4 skipped/failed tests are in test_real_download.py (network-dependent, need live VRT MAX)
+
+Git tree: clean (only untracked .omo/evidence/wave1-commit-done.txt)

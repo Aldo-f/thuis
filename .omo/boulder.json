@@ -1,92 +1,125 @@
 {
   "schema_version": 2,
-  "active_work_id": "cleanup-en-logging-01",
   "works": {
     "update-ytdlp-dependency-3f9ff196": {
       "work_id": "update-ytdlp-dependency-3f9ff196",
       "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/update-ytdlp-dependency.md",
       "plan_name": "update-ytdlp-dependency",
       "status": "completed",
-      "started_at": "2026-06-26T13:48:55.827Z",
-      "updated_at": "2026-06-26T16:06:53.469Z",
-      "session_ids": [
-        "opencode:ses_100420f68ffetLsFuGtob13Cc9",
-        "opencode:ses_0fbb18be6ffeMBI5ZBk05iuoFc",
-        "opencode:ses_0fbb165b3ffeSCpujM4wmvk4kG",
-        "opencode:ses_0fbb1408bffeydCvhoTAWoNeQn",
-        "opencode:ses_0fbb11b85ffeNWZ06GgSGdLgdh",
-        "opencode:ses_0fbb0f11affe2wCPGsX2g5mEE1",
-        "opencode:ses_0fbacd46affe4i1gMqdX9Is9Ku"
-      ],
-      "session_origins": {
-        "opencode:ses_100420f68ffetLsFuGtob13Cc9": "direct",
-        "opencode:ses_0fbb18be6ffeMBI5ZBk05iuoFc": "appended",
-        "opencode:ses_0fbb165b3ffeSCpujM4wmvk4kG": "appended",
-        "opencode:ses_0fbb1408bffeydCvhoTAWoNeQn": "appended",
-        "opencode:ses_0fbb11b85ffeNWZ06GgSGdLgdh": "appended",
-        "opencode:ses_0fbb0f11affe2wCPGsX2g5mEE1": "appended",
-        "opencode:ses_0fbacd46affe4i1gMqdX9Is9Ku": "appended"
-      },
-      "agent": "atlas",
-      "task_sessions": {},
       "ended_at": "2026-06-26T16:06:53.469Z",
-      "elapsed_ms": 8277642
+      "elapsed_ms": 8277642,
+      "session_ids": [],
+      "session_origins": {}
     },
     "project-cleanup-release-c9997a42": {
       "work_id": "project-cleanup-release-c9997a42",
       "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/project-cleanup-release.md",
       "plan_name": "project-cleanup-release",
       "status": "completed",
-      "started_at": "2026-06-26T21:59:01.355Z",
-      "updated_at": "2026-06-27T06:30:18.542Z",
-      "session_ids": [],
-      "session_origins": {},
-      "agent": "atlas",
-      "task_sessions": {},
       "ended_at": "2026-06-27T06:30:18.542Z",
-      "elapsed_ms": 30677187
+      "elapsed_ms": 30677187,
+      "session_ids": [],
+      "session_origins": {}
     },
     "scene-naming-c0ed4c7a": {
       "work_id": "scene-naming-c0ed4c7a",
       "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/scene-naming.md",
       "plan_name": "scene-naming",
       "status": "completed",
-      "started_at": "2026-06-28T17:00:40.054Z",
-      "updated_at": "2026-06-30T18:45:10.885Z",
-      "session_ids": [],
-      "session_origins": {},
-      "agent": "atlas",
-      "task_sessions": {},
       "ended_at": "2026-06-30T18:45:10.885Z",
-      "elapsed_ms": 179070831
+      "elapsed_ms": 179070831,
+      "session_ids": [],
+      "session_origins": {}
     },
     "cleanup-en-logging-01": {
       "work_id": "cleanup-en-logging-01",
       "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/cleanup-en-logging.md",
       "plan_name": "cleanup-en-logging",
-      "status": "active",
+      "status": "completed",
       "started_at": "2026-07-06T16:02:03.697Z",
-      "updated_at": "2026-07-06T16:02:03.697Z",
+      "updated_at": "2026-07-07T09:29:18.646Z",
       "session_ids": [
-        "opencode:ses_0cc17be48ffeBj1tb0LznaymmO"
+        "opencode:ses_0cc17be48ffeBj1tb0LznaymmO",
+        "opencode:ses_0c41c34c4ffe317uTOtIqYsq5x",
+        "opencode:ses_0c41c347affeTBhkcu6DN1JWrg",
+        "opencode:ses_0c41c31e2ffefU765UIPYySF2h"
       ],
-      "session_origins": {
-        "opencode:ses_0cc17be48ffeBj1tb0LznaymmO": "direct"
-      },
       "agent": "atlas",
-      "task_sessions": {}
+      "task_sessions": {
+        "final-wave:f1": {
+          "task_key": "final-wave:f1",
+          "task_label": "F1",
+          "task_title": "**Plan Compliance Audit** — oracle",
+          "session_id": "opencode:ses_0c41c34c4ffe317uTOtIqYsq5x",
+          "agent": "oracle",
+          "started_at": "2026-07-07T09:23:45.899Z",
+          "status": "completed",
+          "updated_at": "2026-07-07T09:28:13.939Z",
+          "ended_at": "2026-07-07T09:28:13.939Z",
+          "elapsed_ms": 268040
+        },
+        "final-wave:f2": {
+          "task_key": "final-wave:f2",
+          "task_label": "F2",
+          "task_title": "**Full Test Suite + QA**",
+          "agent": "unspecified-high",
+          "status": "completed"
+        },
+        "final-wave:f3": {
+          "task_key": "final-wave:f3",
+          "task_label": "F3",
+          "task_title": "**Scope Fidelity Check**",
+          "agent": "deep",
+          "status": "completed"
+        }
+      },
+      "ended_at": "2026-07-07T09:29:18.646Z",
+      "session_origins": {},
+      "elapsed_ms": 62834949
     }
   },
-  "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/cleanup-en-logging.md",
-  "started_at": "2026-07-06T16:02:03.697Z",
-  "status": "active",
-  "updated_at": "2026-07-06T16:02:03.697Z",
   "session_ids": [
-    "opencode:ses_0cc17be48ffeBj1tb0LznaymmO"
+    "opencode:ses_0cc17be48ffeBj1tb0LznaymmO",
+    "opencode:ses_0c41c34c4ffe317uTOtIqYsq5x",
+    "opencode:ses_0c41c347affeTBhkcu6DN1JWrg",
+    "opencode:ses_0c41c31e2ffefU765UIPYySF2h"
   ],
-  "session_origins": {
-    "opencode:ses_0cc17be48ffeBj1tb0LznaymmO": "direct"
+  "session_origins": {},
+  "task_sessions": {
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "**Plan Compliance Audit** — oracle",
+      "session_id": "opencode:ses_0c41c34c4ffe317uTOtIqYsq5x",
+      "agent": "oracle",
+      "started_at": "2026-07-07T09:23:45.899Z",
+      "status": "completed",
+      "updated_at": "2026-07-07T09:28:13.939Z",
+      "ended_at": "2026-07-07T09:28:13.939Z",
+      "elapsed_ms": 268040
+    },
+    "final-wave:f2": {
+      "task_key": "final-wave:f2",
+      "task_label": "F2",
+      "task_title": "**Full Test Suite + QA**",
+      "agent": "unspecified-high",
+      "status": "completed"
+    },
+    "final-wave:f3": {
+      "task_key": "final-wave:f3",
+      "task_label": "F3",
+      "task_title": "**Scope Fidelity Check**",
+      "agent": "deep",
+      "status": "completed"
+    }
   },
+  "active_work_id": "cleanup-en-logging-01",
+  "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/cleanup-en-logging.md",
   "plan_name": "cleanup-en-logging",
+  "status": "completed",
+  "started_at": "2026-07-06T16:02:03.697Z",
+  "ended_at": "2026-07-07T09:29:18.646Z",
+  "elapsed_ms": 62834949,
+  "updated_at": "2026-07-07T09:29:18.646Z",
   "agent": "atlas"
 }
