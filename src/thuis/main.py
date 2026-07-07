@@ -67,7 +67,7 @@ def _execute_graphql_query(query: str, variables: dict | None = None) -> dict | 
     })
 
     try:
-        with urllib.request.urlopen(req) as response:
+        with urllib.request.urlopen(req, timeout=30) as response:
             if response.status != 200:
                 return None
             return json.loads(response.read().decode())
@@ -152,7 +152,7 @@ def _guess_episode_urls(show_slug: str, season: int, max_episodes: int | None = 
             try:
                 req = urllib.request.Request(url, method="HEAD")
                 try:
-                    with urllib.request.urlopen(req) as response:
+                    with urllib.request.urlopen(req, timeout=10) as response:
                         if not _is_not_found(response.status, ""):
                             episodes.append(url)
                             found_any = True
