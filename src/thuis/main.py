@@ -67,12 +67,24 @@ def _execute_graphql_query(query: str, variables: dict | None = None) -> dict | 
         'x-vrt-client-name': 'WEB',
     })
 
+    var_hint = ""
+    if variables and "pageId" in variables:
+        var_hint = f" pageId={variables['pageId']}"
+    elif variables and "listId" in variables:
+        after = variables.get("after")
+        var_hint = f" listId={variables['listId']}" + (f" after={after}" if after else "")
+
     try:
+        print(f"[DEBUG] GraphQL POST{var_hint} ...", flush=True)
         with urllib.request.urlopen(req, timeout=30) as response:
             if response.status != 200:
+                print(f"[DEBUG] GraphQL returned status {response.status}", flush=True)
                 return None
-            return json.loads(response.read().decode())
-    except Exception:
+            body = json.loads(response.read().decode())
+            print(f"[DEBUG] GraphQL response OK{var_hint}", flush=True)
+            return body
+    except Exception as e:
+        print(f"[DEBUG] GraphQL error{var_hint}: {type(e).__name__}: {e}", flush=True)
         return None
 # Ensure project root and src/thuis are on sys.path for absolute imports
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -128,6 +140,8 @@ def _is_not_found(status: int, body_preview: str) -> bool:
         return True
     if "Deze pagina lijkt verloren" in body_preview:
         return True
+    if "The specified key does not exist" in body_preview:
+        return True
     return False
 
 
@@ -139,8 +153,15 @@ def _guess_episode_urls(show_slug: str, season: int, max_episodes: int | None = 
     
     episodes = []
     episode = 1
+    max_episodes_hard = max_episodes if max_episodes is not None else 500  # Hard safety limit
+    
+    print(f"[DEBUG] HEAD probing: {show_slug} season {season}, max {max_episodes_hard} episodes", flush=True)
     
     while True:
+        if len(episodes) >= max_episodes_hard:
+            print(f"[DEBUG] Hit max episode limit ({max_episodes_hard}), stopping HEAD probing", flush=True)
+            break
+            
         found_any = False
         patterns = [
             f"https://www.vrt.be/vrtmax/a/video/{show_slug}-e{episode}/",
@@ -148,13 +169,12 @@ def _guess_episode_urls(show_slug: str, season: int, max_episodes: int | None = 
         ]
         
         for url in patterns:
-            if max_episodes is not None and len(episodes) >= max_episodes:
-                break
             try:
                 req = urllib.request.Request(url, method="HEAD")
                 try:
                     with urllib.request.urlopen(req, timeout=10) as response:
                         if not _is_not_found(response.status, ""):
+                            print(f"[DEBUG] HEAD found episode {episode}: {url} (status {response.status})", flush=True)
                             episodes.append(url)
                             found_any = True
                             break  # One URL per episode — avoid duplicates
@@ -164,13 +184,17 @@ def _guess_episode_urls(show_slug: str, season: int, max_episodes: int | None = 
                     except:
                         body_preview = ""
                     if not _is_not_found(e.code, body_preview):
+                        print(f"[DEBUG] HEAD found episode {episode} via HTTPError {e.code}: {url}", flush=True)
                         episodes.append(url)
                         found_any = True
                         break  # One URL per episode — avoid duplicates
-            except Exception:
+            except Exception as ex:
+                if episode <= 3:  # Only log early failures
+                    print(f"[DEBUG] HEAD exception for {url}: {type(ex).__name__}: {ex}", flush=True)
                 continue
                 
         if not found_any:
+            print(f"[DEBUG] No more episodes found after #{episode - 1} (total: {len(episodes)})", flush=True)
             break
             
         episode += 1
@@ -205,8 +229,10 @@ def _get_list_id(show_slug: str, season: int) -> str | None:
     }
     """
     variables = {"pageId": f"/vrtmax/a-z/{show_slug}"}
+    print(f"[DEBUG] Fetching list_id for slug={show_slug!r} season={season}", flush=True)
     response_data = _execute_graphql_query(query, variables)
     if not response_data:
+        print(f"[DEBUG] No graphql response for _get_list_id", flush=True)
         return None
 
     def _collect_list_ids(components: list) -> list[tuple[str, str]]:
@@ -226,15 +252,20 @@ def _get_list_id(show_slug: str, season: int) -> str | None:
     components = response_data.get("data", {}).get("page", {}).get("components", [])
     candidates = _collect_list_ids(components)
 
+    print(f"[DEBUG] Found {len(candidates)} list_id candidate(s): {[(t[:30], lid[:20]) for t, lid in candidates]}", flush=True)
+
     # Match by title containing season number
     season_str = str(season)
     for title, lid in candidates:
         if season_str in title:
+            print(f"[DEBUG] Matched list_id {lid!r} by season title {title!r}", flush=True)
             return lid
 
     # Fallback: return first listId found
     if candidates:
+        print(f"[DEBUG] No season match, using first list_id: {candidates[0][1]!r}", flush=True)
         return candidates[0][1]
+    print(f"[DEBUG] No list_id found at all", flush=True)
     return None
 
 
@@ -374,27 +405,39 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
                     pass
 
         if not slug or season is None:
+            print(f"[DEBUG] Could not extract slug/season from URL", flush=True)
             return []
+
+        print(f"[DEBUG] Extracted slug={slug!r} season={season}", flush=True)
 
         list_id = _get_list_id(slug, season)
         if not list_id:
+            print(f"[DEBUG] No list_id found, falling back to HEAD probing...", flush=True)
             return _guess_episode_urls(slug, season, max_episodes)
+
+        print(f"[DEBUG] Found list_id={list_id!r}, fetching episodes via GraphQL...", flush=True)
 
         # Cursor-based pagination through episodes
         episodes = []
         after: str | None = None
+        max_pages = 100
+        page_count = 0
 
-        while True:
+        while page_count < max_pages:
+            page_count += 1
             variables = {"listId": list_id}
             if after:
                 variables["after"] = after
 
+            print(f"[DEBUG] GraphQL page {page_count} (episodes so far: {len(episodes)})", flush=True)
             response = _execute_graphql_query(_LIST_QUERY, variables)
             if not response or 'data' not in response:
+                print(f"[DEBUG] GraphQL returned no data, stopping pagination", flush=True)
                 break
 
             list_data = response['data'].get('list', {})
             if not list_data:
+                print(f"[DEBUG] GraphQL list_data is empty, stopping pagination", flush=True)
                 break
 
             # Handle both StaticTileList and PaginatedTileList
@@ -410,6 +453,8 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
                 page_info = paginated.get('pageInfo', {})
             elif 'items' in list_data:
                 items = list_data['items']
+
+            print(f"[DEBUG] Page {page_count} has {len(items)} items", flush=True)
 
             for node in items:
                 action = node.get('action', {})
@@ -428,19 +473,33 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
             # Check pagination
             if page_info:
                 has_next = page_info.get('hasNextPage', False)
+                end_cursor = page_info.get('endCursor')
                 if has_next:
-                    after = page_info.get('endCursor')
+                    if end_cursor:
+                        after = end_cursor
+                        print(f"[DEBUG] Paginating: after={after!r}", flush=True)
+                    else:
+                        print(f"[DEBUG] hasNextPage=True but endCursor is missing/empty — stopping to avoid infinite loop", flush=True)
+                        break
                 else:
+                    print(f"[DEBUG] No more pages (hasNextPage=False)", flush=True)
                     break
             else:
                 # StaticTileList — no more pages
+                print(f"[DEBUG] StaticTileList (no page_info), stopping", flush=True)
                 break
 
+        if page_count >= max_pages:
+            print(f"[DEBUG] Reached max pages ({max_pages}), stopping pagination", flush=True)
+
         if not episodes:
+            print(f"[DEBUG] GraphQL returned 0 episodes, falling back to HEAD probing...", flush=True)
             return _guess_episode_urls(slug, season, max_episodes)
 
+        print(f"[DEBUG] GraphQL returned {len(episodes)} episodes total", flush=True)
         return episodes
-    except Exception:
+    except Exception as e:
+        print(f"[DEBUG] fetch_season_episodes exception: {type(e).__name__}: {e}", flush=True)
         return []
 
 
