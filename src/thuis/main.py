@@ -644,17 +644,11 @@ def main():
 # Always run yt-dlp (in dry-run mode, this will be with --simulate)
             print("Running:", " ".join(url_args_list))
             try:
-                # Run yt-dlp (mocked in tests) and create a placeholder to indicate processing
+                # Run yt-dlp
                 completed = subprocess.run(url_args_list, check=False)
-                placeholder_name = f"placeholder_{idx}.txt"
-                placeholder = args.output_dir / placeholder_name
-                placeholder.touch()
                 results.append(completed.returncode)
-            except Exception as e:
-                # On any unexpected error, create placeholder but record failure
-                placeholder_name = f"placeholder_{idx}.txt"
-                placeholder = args.output_dir / placeholder_name
-                placeholder.touch()
+            except Exception:
+                # On any unexpected error, record failure
                 results.append(1)
             except KeyboardInterrupt:
                 print("\nInterrupted")
