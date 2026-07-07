@@ -502,8 +502,10 @@ def main():
     expanded_urls = []
     for u in unique_urls:
         if is_season_url(u):
+            print(f"Expanding season URL: {u}", flush=True)
             playlist = fetch_season_episodes(u, max_episodes=args.max_episodes)
             if playlist:
+                print(f"Found {len(playlist)} episode(s)", flush=True)
                 expanded_urls.extend(playlist)
             else:
                 # If we can't expand, keep the original URL (fallback will handle it)
