@@ -1,0 +1,19 @@
+src/thuis/main.py
+  s_c89fe768c27d98::t_801ad3921d61c0 647,650-651
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e63bef72f04bd29345f74d43829552e73a0251fa",
+  "prompts": {},
+  "sessions": {
+    "s_c89fe768c27d98": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c4101a13ffeNnPvZMg22dY2mt",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
