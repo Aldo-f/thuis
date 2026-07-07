@@ -40,6 +40,13 @@ const config: Config = {
           // Remove this to remove the "edit this page" links.
           editUrl:
             'https://github.com/Aldo-f/thuis/tree/v4/main/website/',
+          versions: {
+    current: { label: 'v4.0.0' },
+    'v3.0.0': { label: 'v3.0.0' },
+    'v2.1.1': { label: 'v2.1.1' },
+    'v2.0.0': { label: 'v2.0.0' },
+    'v1.0.0': { label: 'v1.0.0' },
+  },
         },
         blog: false,
         theme: {
