@@ -152,7 +152,15 @@ The tool checks environment variables first, then the `.env` file (if python-dot
 
 Videos are saved in the `media/` directory by default. Each file is named after the video title. You can change this with `-S` or `--output-dir`.
 
-Logs are written to `logs/` by default. Use `--log-level` to control verbosity (e.g. `--log-level DEBUG` for detailed output).
+Logs are written to `logs/` in date-based files (e.g. `logs/2026-07-07.log`). Use `--log-level` to control verbosity (e.g. `--log-level DEBUG` for detailed output).
+
+To tail the current log in real-time:
+
+```bash
+./thuis.sh --follow
+# or
+./thuis.sh -f
+```
 
 ## Project structure
 
