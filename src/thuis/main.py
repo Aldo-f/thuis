@@ -428,6 +428,106 @@ def is_valid_vrt_url(url: str) -> bool:
     return '#' not in url
 
 
+def is_show_url(url: str) -> bool:
+    """Detect if *url* points to a show-level page (not a specific season or episode).
+
+    A show URL under VRT MAX has exactly the path ``/vrtmax/a-z/{show_slug}``
+    with no additional path segments and no ``?seizoen=`` query parameter.
+    Examples:
+        ``https://www.vrt.be/vrtmax/a-z/thuis`` → show URL
+        ``https://www.vrt.be/vrtmax/a-z/thuis/1/`` → season URL (not a show URL)
+    """
+    if not is_valid_vrt_url(url):
+        return False
+    if is_season_url(url):
+        return False
+    path = urlparse(url).path.rstrip("/")
+    segments = [seg for seg in path.split("/") if seg]
+    return len(segments) == 3 and segments[0] == "vrtmax" and segments[1] == "a-z"
+
+
+def _fetch_episodes_by_list_id(list_id: str, max_episodes: int | None = None) -> list[str]:
+    """Fetch episode URLs from a GraphQL ``listId`` using cursor-based pagination.
+
+    Returns a flat list of full VRT MAX episode URLs.
+    """
+    episodes: list[str] = []
+    after: str | None = None
+    max_pages = 100
+    page_count = 0
+
+    while page_count < max_pages:
+        page_count += 1
+        variables: dict = {"listId": list_id}
+        if after:
+            variables["after"] = after
+
+        print(f"[DEBUG] GraphQL page {page_count} (episodes so far: {len(episodes)})", flush=True)
+        response = _execute_graphql_query(_LIST_QUERY, variables)
+        if not response or 'data' not in response:
+            print(f"[DEBUG] GraphQL returned no data, stopping pagination", flush=True)
+            break
+
+        list_data = response['data'].get('list', {})
+        if not list_data:
+            print(f"[DEBUG] GraphQL list_data is empty, stopping pagination", flush=True)
+            break
+
+        # Handle both StaticTileList and PaginatedTileList
+        items: list[dict] = []
+        page_info: dict | None = None
+
+        if 'paginatedItems' in list_data:
+            paginated = list_data['paginatedItems']
+            edges = paginated.get('edges', [])
+            for e in edges:
+                node = e.get('node', {})
+                items.append(node)
+            page_info = paginated.get('pageInfo', {})
+        elif 'items' in list_data:
+            items = list_data['items']
+
+        print(f"[DEBUG] Page {page_count} has {len(items)} items", flush=True)
+
+        for node in items:
+            action = node.get('action', {})
+            link = action.get('link') if action else None
+            if link:
+                full_url = f"https://www.vrt.be{link}"
+                if not is_valid_vrt_url(full_url):
+                    continue
+                episodes.append(full_url)
+                if max_episodes is not None and len(episodes) >= max_episodes:
+                    break
+
+        if max_episodes is not None and len(episodes) >= max_episodes:
+            break
+
+        # Check pagination
+        if page_info:
+            has_next = page_info.get('hasNextPage', False)
+            end_cursor = page_info.get('endCursor')
+            if has_next:
+                if end_cursor:
+                    after = end_cursor
+                    print(f"[DEBUG] Paginating: after={after!r}", flush=True)
+                else:
+                    print(f"[DEBUG] hasNextPage=True but endCursor is missing/empty — stopping to avoid infinite loop", flush=True)
+                    break
+            else:
+                print(f"[DEBUG] No more pages (hasNextPage=False)", flush=True)
+                break
+        else:
+            # StaticTileList — no more pages
+            print(f"[DEBUG] StaticTileList (no page_info), stopping", flush=True)
+            break
+
+    if page_count >= max_pages:
+        print(f"[DEBUG] Reached max pages ({max_pages}), stopping pagination", flush=True)
+
+    return episodes
+
+
 def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str]:
     """Extract show slug and season number from URL, then query the VRT MAX
     GraphQL API to collect episode URLs for that season.
@@ -477,80 +577,7 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
 
         print(f"[DEBUG] Found list_id={list_id!r}, fetching episodes via GraphQL...", flush=True)
 
-        # Cursor-based pagination through episodes
-        episodes = []
-        after: str | None = None
-        max_pages = 100
-        page_count = 0
-
-        while page_count < max_pages:
-            page_count += 1
-            variables = {"listId": list_id}
-            if after:
-                variables["after"] = after
-
-            print(f"[DEBUG] GraphQL page {page_count} (episodes so far: {len(episodes)})", flush=True)
-            response = _execute_graphql_query(_LIST_QUERY, variables)
-            if not response or 'data' not in response:
-                print(f"[DEBUG] GraphQL returned no data, stopping pagination", flush=True)
-                break
-
-            list_data = response['data'].get('list', {})
-            if not list_data:
-                print(f"[DEBUG] GraphQL list_data is empty, stopping pagination", flush=True)
-                break
-
-            # Handle both StaticTileList and PaginatedTileList
-            items = []
-            page_info = None
-
-            if 'paginatedItems' in list_data:
-                paginated = list_data['paginatedItems']
-                edges = paginated.get('edges', [])
-                for e in edges:
-                    node = e.get('node', {})
-                    items.append(node)
-                page_info = paginated.get('pageInfo', {})
-            elif 'items' in list_data:
-                items = list_data['items']
-
-            print(f"[DEBUG] Page {page_count} has {len(items)} items", flush=True)
-
-            for node in items:
-                action = node.get('action', {})
-                link = action.get('link') if action else None
-                if link:
-                    full_url = f"https://www.vrt.be{link}"
-                    if not is_valid_vrt_url(full_url):
-                        continue
-                    episodes.append(full_url)
-                    if max_episodes is not None and len(episodes) >= max_episodes:
-                        break
-
-            if max_episodes is not None and len(episodes) >= max_episodes:
-                break
-
-            # Check pagination
-            if page_info:
-                has_next = page_info.get('hasNextPage', False)
-                end_cursor = page_info.get('endCursor')
-                if has_next:
-                    if end_cursor:
-                        after = end_cursor
-                        print(f"[DEBUG] Paginating: after={after!r}", flush=True)
-                    else:
-                        print(f"[DEBUG] hasNextPage=True but endCursor is missing/empty — stopping to avoid infinite loop", flush=True)
-                        break
-                else:
-                    print(f"[DEBUG] No more pages (hasNextPage=False)", flush=True)
-                    break
-            else:
-                # StaticTileList — no more pages
-                print(f"[DEBUG] StaticTileList (no page_info), stopping", flush=True)
-                break
-
-        if page_count >= max_pages:
-            print(f"[DEBUG] Reached max pages ({max_pages}), stopping pagination", flush=True)
+        episodes = _fetch_episodes_by_list_id(list_id, max_episodes)
 
         if not episodes:
             print(f"[DEBUG] GraphQL returned 0 episodes, falling back to HEAD probing...", flush=True)
@@ -561,6 +588,146 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
     except Exception as e:
         print(f"[DEBUG] fetch_season_episodes exception: {type(e).__name__}: {e}", flush=True)
         return []
+
+
+def fetch_all_seasons(url: str, max_episodes: int | None = None) -> list[str]:
+    """Given a show-level URL, discover all seasons and expand each into episode URLs.
+
+    Example::
+
+        fetch_all_seasons("https://www.vrt.be/vrtmax/a-z/thuis")
+        → ["https://www.vrt.be/vrtmax/a-z/thuis/1/…",
+           "https://www.vrt.be/vrtmax/a-z/thuis/2/…",
+           …]
+    """
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    path = parsed.path.rstrip('/')
+    segments = [seg for seg in path.split('/') if seg]
+
+    if len(segments) < 3 or segments[0] != 'vrtmax' or segments[1] != 'a-z':
+        return []
+
+    slug = segments[2]
+
+    _PAGE_QUERY = """
+    query($pageId: ID!) {
+      page(id: $pageId) {
+        ... on IPage {
+          components {
+            __typename
+            ... on PaginatedTileList { listId title }
+            ... on StaticTileList { listId title }
+            ... on LazyTileList { listId title }
+            ... on ContainerNavigation {
+              items {
+                title
+                components {
+                  __typename
+                  ... on PaginatedTileList { listId title }
+                  ... on StaticTileList { listId title }
+                  ... on LazyTileList { listId title }
+                  ... on ContainerNavigation {
+                    items {
+                      title
+                      components {
+                        __typename
+                        ... on PaginatedTileList { listId title }
+                        ... on StaticTileList { listId title }
+                        ... on LazyTileList { listId title }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+    variables = {"pageId": f"/vrtmax/a-z/{slug}"}
+    print(f"[DEBUG] Fetching all season listIds for slug={slug!r}", flush=True)
+    response_data = _execute_graphql_query(_PAGE_QUERY, variables)
+    if not response_data:
+        print(f"No GraphQL response; cannot expand show URL", flush=True)
+        return []
+
+    def _collect_list_ids(node, parent_title=''):
+        results = []
+        if isinstance(node, list):
+            for item in node:
+                results.extend(_collect_list_ids(item, parent_title))
+        elif isinstance(node, dict):
+            typename = node.get('__typename')
+            title = node.get('title') or parent_title
+            if typename in ('PaginatedTileList', 'StaticTileList', 'LazyTileList') and node.get('listId'):
+                results.append((title, node['listId']))
+            for k in ['components', 'items']:
+                if k in node:
+                    results.extend(_collect_list_ids(node[k], title))
+        return results
+
+    page_data = (response_data.get("data") or {}).get("page")
+    if not page_data:
+        print(f"No page data for slug={slug!r}; cannot expand show URL", flush=True)
+        return []
+    components = page_data.get("components", [])
+    candidates = _collect_list_ids(components)
+
+    print(f"[DEBUG] Found {len(candidates)} list_id candidate(s): {[(t[:30], lid[:20]) for t, lid in candidates]}", flush=True)
+
+    def _is_season_list(title: str) -> bool:
+        if not title:
+            return False
+        title_lower = title.lower()
+        if "meest recente" in title_lower or "meest recent" in title_lower:
+            return False
+        if "podcast" in title_lower:
+            return False
+        if "social" in title_lower or "volg ons" in title_lower:
+            return False
+        if "throwback" in title_lower:
+            return False
+        if "bloopers" in title_lower:
+            return False
+        if "achter de schermen" in title_lower:
+            return False
+        if "extra-s" in title_lower or "extra's" in title_lower:
+            return False
+        if "seizoen" in title_lower or "season" in title_lower:
+            return True
+        try:
+            int(title.strip())
+            return True
+        except ValueError:
+            pass
+        return True
+
+    season_lists = [(t, lid) for t, lid in candidates if _is_season_list(t)]
+
+    if not season_lists:
+        print(f"No season lists detected; using all {len(candidates)} candidate(s) as fallback", flush=True)
+        season_lists = candidates
+
+    print(f"Found {len(season_lists)} season(s)", flush=True)
+
+    all_episodes: list[str] = []
+    for title, list_id in season_lists:
+        season_label = title or f"list-{list_id[:12]}"
+        print(f"Expanding season: {season_label}", flush=True)
+
+        episodes = _fetch_episodes_by_list_id(list_id, max_episodes)
+
+        if not episodes:
+            print(f"No episodes found for season {season_label}, skipping", flush=True)
+            continue
+
+        print(f"Found {len(episodes)} episode(s) for season {season_label}", flush=True)
+        all_episodes.extend(episodes)
+
+    return all_episodes
 
 
 def setup_logging(level: str | None = None) -> logging.Logger:
@@ -626,7 +793,7 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    # Expand season URLs to individual episode URLs
+    # Expand season / show URLs to individual episode URLs
     expanded_urls = []
     for u in unique_urls:
         if is_season_url(u):
@@ -637,6 +804,15 @@ def main():
                 expanded_urls.extend(playlist)
             else:
                 # If we can't expand, keep the original URL (fallback will handle it)
+                expanded_urls.append(u)
+        elif is_show_url(u):
+            print(f"Expanding show URL to all seasons: {u}", flush=True)
+            playlist = fetch_all_seasons(u, max_episodes=args.max_episodes)
+            if playlist:
+                print(f"Found {len(playlist)} episode(s) across all seasons", flush=True)
+                expanded_urls.extend(playlist)
+            else:
+                print(f"No episodes found for any season, using URL as-is", flush=True)
                 expanded_urls.append(u)
         else:
             expanded_urls.append(u)

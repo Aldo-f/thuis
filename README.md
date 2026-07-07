@@ -128,6 +128,27 @@ Limit the number of episodes processed per season with `--max-episodes`:
 ./thuis.sh --max-episodes 5 https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/
 ```
 
+### Download all seasons of a show
+
+Pass a bare show URL (without a season number) to automatically discover and download every season:
+
+```bash
+./thuis.sh https://www.vrt.be/vrtmax/a-z/thuis
+```
+
+The tool queries the show page, detects all available seasons, and expands each into its episodes. Combine with `--dry-run` to preview:
+
+```bash
+./thuis.sh --dry-run https://www.vrt.be/vrtmax/a-z/thuis
+```
+
+Limit episodes per season with `--max-episodes`:
+
+```bash
+# Download at most 10 episodes per season, across all seasons
+./thuis.sh --max-episodes 10 https://www.vrt.be/vrtmax/a-z/thuis
+```
+
 ## Credentials
 
 The tool uses default credentials out of the box. You do not need to set up anything to get started.
