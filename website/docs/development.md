@@ -28,7 +28,6 @@ thuis/
 ├── thuis.sh               Linux wrapper script
 ├── thuis.bat              Windows wrapper script
 ├── requirements.txt       Python dependencies (patched yt-dlp)
-├── poc.py                 Alternative entry point
 ├── tests/                 Test suite
 ├── media/                 Downloaded videos (gitignored)
 └── website/               Docusaurus documentation site

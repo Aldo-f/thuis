@@ -152,6 +152,8 @@ The tool checks environment variables first, then the `.env` file (if python-dot
 
 Videos are saved in the `media/` directory by default. Each file is named after the video title. You can change this with `-S` or `--output-dir`.
 
+Logs are written to `logs/` by default. Use `--log-level` to control verbosity (e.g. `--log-level DEBUG` for detailed output).
+
 ## Project structure
 
 ```
@@ -160,7 +162,7 @@ thuis/
   thuis.sh              Linux wrapper
   thuis.bat             Windows wrapper
   requirements.txt      Dependencies (yt-dlp fork)
-  poc.py                Alternative entry point (same as main.py)
+  logs/                 Log files (gitignored)
   media/                Downloaded videos (gitignored)
   .venv/                Virtual environment (gitignored)
   .omo/                 Internal work tracking (gitignored runtime state)
