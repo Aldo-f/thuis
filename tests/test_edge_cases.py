@@ -28,8 +28,8 @@ from thuis.url_parser import _normalize_path, parse_vrt_url
 # Edge case: URL with special characters (&, %, #)
 # ===================================================================
 
-def test_special_chars_ampersand_causes_parse_failure(monkeypatch):
-    """URL with & in show name that can't be parsed triggers fallback template."""
+def test_special_chars_ampersand_parse_failure_skips_url(monkeypatch):
+    """URL with & that can't be parsed is skipped (not processed by subprocess)."""
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
@@ -58,18 +58,12 @@ def test_special_chars_ampersand_causes_parse_failure(monkeypatch):
         finally:
             sys.argv = original_argv
 
-        # Even with a parse failure, subprocess.run should be called
-        # with the fallback template "%(title)s.%(ext)s"
-        mock_run.assert_called_once()
-        args = mock_run.call_args[0][0]
-        idx_o = args.index("-o")
-        output_arg = args[idx_o + 1]
-        assert "%(title)s.%(ext)s" in output_arg, \
-            f"Expected fallback template in -o arg, got: {output_arg}"
+        # Parse failure should skip the URL entirely — subprocess.run NOT called
+        mock_run.assert_not_called()
 
 
-def test_special_chars_percent_in_url_triggers_fallback(monkeypatch):
-    """URL with %% in show name causes parse failure and fallback."""
+def test_special_chars_percent_parse_failure_skips_url(monkeypatch):
+    """URL with %% that can't be parsed is skipped (not processed by subprocess)."""
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
@@ -98,16 +92,12 @@ def test_special_chars_percent_in_url_triggers_fallback(monkeypatch):
         finally:
             sys.argv = original_argv
 
-        mock_run.assert_called_once()
-        args = mock_run.call_args[0][0]
-        idx_o = args.index("-o")
-        output_arg = args[idx_o + 1]
-        assert "%(title)s.%(ext)s" in output_arg, \
-            f"Expected fallback template in -o arg, got: {output_arg}"
+        # Parse failure should skip the URL entirely — subprocess.run NOT called
+        mock_run.assert_not_called()
 
 
-def test_special_chars_hash_in_url_triggers_fallback(monkeypatch):
-    """URL with # in show name causes parse failure and fallback."""
+def test_special_chars_hash_parse_failure_skips_url(monkeypatch):
+    """URL with # is filtered by pre-check before reaching loop (exit 1, no valid URLs)."""
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
@@ -132,16 +122,97 @@ def test_special_chars_hash_in_url_triggers_fallback(monkeypatch):
             try:
                 main()
             except SystemExit as e:
+                # Pre-filter rejects URLs with # → no valid URLs → exit 1
+                assert e.code == 1, \
+                    f"Expected exit 1 (pre-filter rejects # URLs), got {e.code}"
+        finally:
+            sys.argv = original_argv
+
+        # Pre-filter removes URL before the loop — subprocess.run NOT called
+        mock_run.assert_not_called()
+
+
+def test_graphql_invalid_identifier_with_hash_is_skipped(monkeypatch):
+    """Simulates GraphQL returning identifier='#broken' — the URL is filtered
+    by the pre-check (is_valid_vrt_url) before reaching the main loop.
+    The bad URL is never processed; good URLs still work."""
+    monkeypatch.setenv("VRT_EMAIL", "test@example.com")
+    monkeypatch.setenv("VRT_PASSWORD", "testpass")
+
+    # Prevent real network calls: the bad URL's path ends with a digit,
+    # which would trigger season URL expansion with real HTTP requests
+    with patch("subprocess.run") as mock_run, \
+         patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
+         patch("thuis.main.patch_ytdlp_if_needed"), \
+         patch("thuis.main.is_season_url", return_value=False), \
+         patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
+         patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
+         patch("thuis.main.classifier.classify") as mock_classify, \
+         patch("thuis.main.scene_namer.build_tv_filename") as mock_build:
+
+        mock_run.return_value = MagicMock(returncode=0)
+
+        # Simulate 3 URLs from GraphQL: two valid, one with #broken
+        good_url_1 = "https://www.vrt.be/vrtmax/a-z/show-a/1/show-a-s01e01/"
+        bad_url = "https://www.vrt.be/vrtmax/a-z/show-a/1/#broken/"
+        good_url_2 = "https://www.vrt.be/vrtmax/a-z/show-a/1/show-a-s01e02/"
+
+        # Pre-filter removes bad_url (has #), so only 2 URLs reach the loop
+        mock_parse.side_effect = [
+            MagicMock(show_slug="show-a", season=1, episode=1,
+                      path="/vrtmax/a-z/show-a/1/show-a-s01e01",
+                      url=good_url_1),
+            MagicMock(show_slug="show-a", season=1, episode=2,
+                      path="/vrtmax/a-z/show-a/1/show-a-s01e02",
+                      url=good_url_2),
+        ]
+
+        mock_fetch.side_effect = [
+            {"series": "Show A", "season": "1", "episode": "1",
+             "height": "1080p", "vcodec_raw": "avc1", "acodec_raw": "mp4a",
+             "vcodec_label": "x264", "acodec_label": "AAC", "ext": "mp4",
+             "title": "Show A S01E01"},
+            {"series": "Show A", "season": "1", "episode": "2",
+             "height": "1080p", "vcodec_raw": "avc1", "acodec_raw": "mp4a",
+             "vcodec_label": "x264", "acodec_label": "AAC", "ext": "mp4",
+             "title": "Show A S01E02"},
+        ]
+
+        mock_classify.side_effect = [
+            ContentType.TV,
+            ContentType.TV,
+        ]
+
+        mock_build.side_effect = [
+            "Show.A.S01E01.WEB-DL.1080p.AAC.x264.mp4",
+            "Show.A.S01E02.WEB-DL.1080p.AAC.x264.mp4",
+        ]
+
+        original_argv = sys.argv
+        try:
+            sys.argv = ["poc.py", good_url_1, bad_url, good_url_2]
+            try:
+                main()
+            except SystemExit as e:
                 assert e.code == 0
         finally:
             sys.argv = original_argv
 
-        mock_run.assert_called_once()
-        args = mock_run.call_args[0][0]
-        idx_o = args.index("-o")
-        output_arg = args[idx_o + 1]
-        assert "%(title)s.%(ext)s" in output_arg, \
-            f"Expected fallback template in -o arg, got: {output_arg}"
+        # Only good URLs processed (bad one filtered by pre-check)
+        assert mock_run.call_count == 2, \
+            f"Expected 2 calls (bad URL filtered), got {mock_run.call_count}"
+
+        # First call: good_url_1
+        first_args = mock_run.call_args_list[0][0][0]
+        assert good_url_1 in first_args
+        idx_o1 = first_args.index("-o")
+        assert "Show.A.S01E01" in first_args[idx_o1 + 1]
+
+        # Second call: good_url_2 (bad URL never reached the loop)
+        second_args = mock_run.call_args_list[1][0][0]
+        assert good_url_2 in second_args
+        idx_o2 = second_args.index("-o")
+        assert "Show.A.S01E02" in second_args[idx_o2 + 1]
 
 
 # ===================================================================
@@ -537,9 +608,8 @@ def test_classifier_unknown_triggers_fallback(monkeypatch):
 def test_error_isolation_mixed_good_and_bad_urls(monkeypatch):
     """One bad URL should not prevent other URLs from processing.
     Mix of 3 URLs: good, bad (parse failure), good.
-    - All 3 should be passed to subprocess.run
-    - Good URLs should use scene template
-    - Bad URL should use fallback template
+    - Bad URL should be SKIPPED entirely, not passed to subprocess.run
+    - Good URLs should still be processed with scene template
     """
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
@@ -569,7 +639,7 @@ def test_error_isolation_mixed_good_and_bad_urls(monkeypatch):
                       url=good_url_2),
         ]
 
-        # fetch_metadata: first succeeds, second is never called (parse fails early),
+        # fetch_metadata: first succeeds, second is never called (parse fails early → skipped),
         # third succeeds
         mock_fetch.side_effect = [
             {
@@ -578,9 +648,6 @@ def test_error_isolation_mixed_good_and_bad_urls(monkeypatch):
                 "vcodec_label": "x264", "acodec_label": "AAC", "ext": "mp4",
                 "title": "Good Episode"
             },
-            # Second call never happens because parse raises first
-            # But pytest needs 3 side effects, so add dummy entries
-            {},
             {
                 "series": "Another Show", "season": "2", "episode": "3",
                 "height": "720p", "vcodec_raw": "avc1", "acodec_raw": "mp4a",
@@ -589,10 +656,9 @@ def test_error_isolation_mixed_good_and_bad_urls(monkeypatch):
             },
         ]
 
-        # Classify: first TV, second is never called, third TV
+        # Classify: first TV, third TV (second is never called — skipped)
         mock_classify.side_effect = [
             ContentType.TV,
-            ContentType.TV,  # Won't actually be called but needed for side_effect length
             ContentType.TV,
         ]
 
@@ -612,9 +678,9 @@ def test_error_isolation_mixed_good_and_bad_urls(monkeypatch):
         finally:
             sys.argv = original_argv
 
-        # Should have been called 3 times (once per URL)
-        assert mock_run.call_count == 3, \
-            f"Expected 3 subprocess.run calls, got {mock_run.call_count}"
+        # Should have been called 2 times (bad URL skipped via continue)
+        assert mock_run.call_count == 2, \
+            f"Expected 2 subprocess.run calls (bad URL skipped), got {mock_run.call_count}"
 
         # First call: good_url_1 should have scene template
         first_args = mock_run.call_args_list[0][0][0]
@@ -624,30 +690,21 @@ def test_error_isolation_mixed_good_and_bad_urls(monkeypatch):
             f"Expected scene template for good URL 1, got: {first_output}"
         assert good_url_1 in first_args
 
-        # Second call: bad_url should have fallback template
+        # Second call: good_url_2 should have scene template (bad URL was skipped)
         second_args = mock_run.call_args_list[1][0][0]
         idx_o2 = second_args.index("-o")
         second_output = second_args[idx_o2 + 1]
-        assert "%(title)s.%(ext)s" in second_output, \
-            f"Expected fallback template for bad URL, got: {second_output}"
-        assert bad_url in second_args
-
-        # Third call: good_url_2 should have scene template
-        third_args = mock_run.call_args_list[2][0][0]
-        idx_o3 = third_args.index("-o")
-        third_output = third_args[idx_o3 + 1]
-        assert "Another.Show.S02E03" in third_output, \
-            f"Expected scene template for good URL 2, got: {third_output}"
-        assert good_url_2 in third_args
+        assert "Another.Show.S02E03" in second_output, \
+            f"Expected scene template for good URL 2, got: {second_output}"
+        assert good_url_2 in second_args
 
 
 # ===================================================================
 # Fallback to "%(title)s.%(ext)s" works correctly
 # ===================================================================
 
-def test_fallback_template_after_parse_failure(monkeypatch):
-    """When URL parsing fails, the fallback template must be exactly
-    '%(title)s.%(ext)s' (the default yt-dlp template)."""
+def test_parse_failure_skips_url_no_subprocess(monkeypatch):
+    """When URL parsing fails, the URL is skipped entirely — subprocess.run not called."""
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
@@ -676,14 +733,8 @@ def test_fallback_template_after_parse_failure(monkeypatch):
         finally:
             sys.argv = original_argv
 
-        mock_run.assert_called_once()
-        args = mock_run.call_args[0][0]
-        idx_o = args.index("-o")
-        output_arg = args[idx_o + 1]
-        # The output arg should be Path("media") / "%(title)s.%(ext)s"
-        # which on Linux is "media/%(title)s.%(ext)s"
-        assert output_arg.endswith("%(title)s.%(ext)s"), \
-            f"Expected fallback template 'media/%(__title__)s.%(__ext__)s', got: {output_arg}"
+        # Parse failure should skip — no subprocess.run call
+        mock_run.assert_not_called()
 
 
 def test_fallback_template_after_unknown_classification(monkeypatch):
@@ -732,8 +783,8 @@ def test_fallback_template_after_unknown_classification(monkeypatch):
 # Dry-run mode with edge cases
 # ===================================================================
 
-def test_dry_run_with_bad_url_shows_fallback(monkeypatch, capsys):
-    """--dry-run with a bad URL should print fallback notice and use --simulate."""
+def test_dry_run_with_bad_url_skips_silently(monkeypatch, capsys):
+    """--dry-run with a bad URL should skip it entirely — no subprocess.run call."""
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
@@ -762,22 +813,8 @@ def test_dry_run_with_bad_url_shows_fallback(monkeypatch, capsys):
         finally:
             sys.argv = original_argv
 
-        # In dry-run mode, --simulate should be in the args
-        mock_run.assert_called_once()
-        args = mock_run.call_args[0][0]
-        assert "--simulate" in args, \
-            "--simulate should be present in dry-run mode"
-
-        # Fallback template should be used
-        idx_o = args.index("-o")
-        output_arg = args[idx_o + 1]
-        assert "%(title)s.%(ext)s" in output_arg, \
-            f"Expected fallback template in dry-run, got: {output_arg}"
-
-        # Warning message should be printed
-        captured = capsys.readouterr()
-        assert "Warning" in captured.out or "DRY-RUN" in captured.out, \
-            "Expected warning message in output"
+        # Parse failure should skip — no subprocess.run at all
+        mock_run.assert_not_called()
 
 
 def test_dry_run_with_good_url_shows_scene_name(monkeypatch, capsys):
@@ -836,8 +873,8 @@ def test_dry_run_with_good_url_shows_scene_name(monkeypatch, capsys):
 
 
 def test_dry_run_with_mixed_urls(monkeypatch, capsys):
-    """--dry-run with mixed good and bad URLs: both should be processed,
-    good ones get scene names, bad ones get fallback."""
+    """--dry-run with mixed good and bad URLs: bad one is skipped,
+    good one gets scene name."""
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
@@ -868,12 +905,10 @@ def test_dry_run_with_mixed_urls(monkeypatch, capsys):
                 "vcodec_label": "x264", "acodec_label": "AAC", "ext": "mp4",
                 "title": "Good Episode"
             },
-            {},
         ]
 
         mock_classify.side_effect = [
             ContentType.TV,
-            ContentType.UNKNOWN,
         ]
 
         mock_build.side_effect = [
@@ -890,20 +925,15 @@ def test_dry_run_with_mixed_urls(monkeypatch, capsys):
         finally:
             sys.argv = original_argv
 
-        assert mock_run.call_count == 2, \
-            f"Expected 2 subprocess.run calls in dry-run, got {mock_run.call_count}"
+        # Only good URL should be processed (bad URL skipped via continue)
+        assert mock_run.call_count == 1, \
+            f"Expected 1 subprocess.run call (bad URL skipped), got {mock_run.call_count}"
 
-        # First call: good URL with scene template and --simulate
+        # Only call: good URL with scene template and --simulate
         first_args = mock_run.call_args_list[0][0][0]
         assert "--simulate" in first_args
         idx_o1 = first_args.index("-o")
         assert "Good.Show.S01E01" in first_args[idx_o1 + 1]
-
-        # Second call: bad URL with fallback template and --simulate
-        second_args = mock_run.call_args_list[1][0][0]
-        assert "--simulate" in second_args
-        idx_o2 = second_args.index("-o")
-        assert "%(title)s.%(ext)s" in second_args[idx_o2 + 1]
 
 
 # ===================================================================

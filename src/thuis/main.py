@@ -332,6 +332,11 @@ def is_season_url(url: str) -> bool:
             return int(last_segment) > 0
     return False
 
+def is_valid_vrt_url(url: str) -> bool:
+    """Check if URL has no # fragment (fragments cause processing errors)."""
+    return '#' not in url
+
+
 def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str]:
     """Extract show slug and season number from URL, then query the VRT MAX
     GraphQL API to collect episode URLs for that season.
@@ -411,6 +416,8 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
                 link = action.get('link') if action else None
                 if link:
                     full_url = f"https://www.vrt.be{link}"
+                    if not is_valid_vrt_url(full_url):
+                        continue
                     episodes.append(full_url)
                     if max_episodes is not None and len(episodes) >= max_episodes:
                         break
@@ -517,6 +524,12 @@ def main():
     # Use the expanded list for further processing
     unique_urls = expanded_urls
 
+    # Filter invalid URLs before processing
+    unique_urls = [u for u in unique_urls if is_valid_vrt_url(u)]
+    if not unique_urls:
+        logger.error("No valid URLs to process")
+        sys.exit(1)
+
     # Get credentials once
     email, password = get_credentials()
 
@@ -621,20 +634,9 @@ def main():
                     fallback_used = True
                     
             except Exception as e:
-                # If any step fails, fall back — try URL-based naming first
+                # If any step fails, log and skip — don't run yt-dlp on a known-bad URL
                 logger.warning("Failed to process %s: %s (%s)", url, e, type(e).__name__)
-                # Detect date-based slugs directly from URL (no parse needed)
-                date_match = re.search(r'/[\w-]+-d(\d{8})/?$', url)
-                if date_match:
-                    # Extract show name from the path segment before the date slug
-                    show_slug_match = re.search(r'/a-z/([\w-]+)/\d+/', url)
-                    show_name = (show_slug_match.group(1).replace('-', ' ').title()
-                                 if show_slug_match else "Unknown")
-                    scene_template = scene_namer.build_dated_tv_filename(
-                        show_name=show_name, date_str=date_match.group(1))
-                else:
-                    scene_template = "%(title)s.%(ext)s"
-                fallback_used = True
+                continue
             
             # Build yt-dlp arguments for this URL
             url_args_list = build_yt_dlp_args([url], dry_run=args.dry_run, output_dir=args.output_dir, output_template=scene_template, email=email, password=password)
