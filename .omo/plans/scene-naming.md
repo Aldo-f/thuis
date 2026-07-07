@@ -59,7 +59,7 @@ Gebruiker wil scene naming conventions (torrent/scene standaard) toepassen op ge
 ## Work Objectives
 
 ### Core Objective
-Replace the current `%(title)s.%(ext)s` output template with scene-compliant filenames for all VRT MAX downloads, while preserving all existing features (`--file`, `--dry-run`, `-S`, multi-URL, credentials).
+Replace the current `%(title)s.%(ext)s` output template with scene-compliant filenames for all VRT MAX downloads, while preserving all existing features (`--file`, `--dry-run`, `--output-dir`, multi-URL, credentials).
 
 ### Concrete Deliverables
 - Scene-compliant filenames for TV: `Show.Name.SxxExxx.WEB-DL.Resolution.Audio.Encoding.mp4`
@@ -86,7 +86,7 @@ Replace the current `%(title)s.%(ext)s` output template with scene-compliant fil
 - Unit tests voor alle nieuwe modules
 - Alle bestaande tests blijven slagen (na template update)
 - `--dry-run` toont scene filename (doet metadata fetch)
-- `--output-dir` ($-S) blijft werken
+- `--output-dir` blijft werken
 
 ### Must NOT Have (Guardrails)
 - GEEN `--scene-names` flag (always-on)
@@ -586,7 +586,7 @@ Wave FINAL (After ALL tasks — 4 parallel reviews):
   - Als een stap faalt: fallback naar `%(title)s.%(ext)s` voor die specifieke URL
   - Per-URL error isolation: try/except per URL in de loop, niet de hele batch
   - **Architectuur keuze**: yt-dlp ondersteunt maar 1 `-o` template per call. Dus elke URL krijgt z'n eigen subprocess call (N calls ipv 1). yt-dlp heeft eenmalige auth overhead, daarna is het snel.
-  - Houd alle bestaande features: `--dry-run`, `--file`, `-S`, credentials
+  - Houd alle bestaande features: `--dry-run`, `--file`, `--output-dir`, credentials
 
   **Must NOT do**:
   - GEEN credentials/email/password wijzigen in de flow
@@ -616,7 +616,7 @@ Wave FINAL (After ALL tasks — 4 parallel reviews):
   **Acceptance Criteria**:
   - [ ] `python -m thuis.main --dry-run https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6108/` toont scene filename (geen %(title)s)
   - [ ] `python -m thuis.main --dry-run https://www.vrt.be/vrtmax/a-z/thuis/extra-s/thuis-.../` toont special format
-  - [ ] Alle bestaande CLI args werken nog: `--dry-run`, `--file`, `-S`
+  - [ ] Alle bestaande CLI args werken nog: `--dry-run`, `--file`, `--output-dir`
   - [ ] python -m pytest tests/test_poc.py -v → PASS (na update T7)
 
   **QA Scenarios**:
@@ -951,7 +951,7 @@ echo "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6108/" > /tmp/test_urls.t
 python -m thuis.main --dry-run --file /tmp/test_urls.txt
 
 # -S output dir still works
-python -m thuis.main --dry-run -S /tmp/test_output "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6108/"
+python -m thuis.main --dry-run --output-dir /tmp/test_output "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6108/"
 
 # Bad URL doesn't crash
 python -m thuis.main --dry-run "not-a-url" "https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6108/"

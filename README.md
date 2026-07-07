@@ -100,7 +100,7 @@ Then run:
 ### Custom output directory
 
 ```bash
-./thuis.sh -S ~/Videos https://www.vrt.be/vrtmax/a/show/...
+./thuis.sh --output-dir ~/Videos https://www.vrt.be/vrtmax/a/show/...
 ```
 
 ### Download a full season
@@ -171,7 +171,7 @@ The tool checks environment variables first, then the `.env` file (if python-dot
 
 ## Output
 
-Videos are saved in the `media/` directory by default. Each file is named after the video title. You can change this with `-S` or `--output-dir`.
+Videos are saved in the `media/` directory by default. Each file is named after the video title. You can change this with `--output-dir`.
 
 Logs are written to `logs/` in date-based files (e.g. `logs/2026-07-07.log`). Use `--log-level` to control verbosity (e.g. `--log-level DEBUG` for detailed output).
 

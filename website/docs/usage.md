@@ -57,7 +57,7 @@ Then run:
 ### Custom output directory
 
 ```bash
-./thuis.sh -S ~/Videos https://www.vrt.be/vrtmax/a/show/...
+./thuis.sh --output-dir ~/Videos https://www.vrt.be/vrtmax/a/show/...
 ```
 
 ### Download a full season

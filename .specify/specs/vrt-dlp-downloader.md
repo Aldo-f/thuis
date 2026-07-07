@@ -11,7 +11,7 @@
 - `urls` (positional, one or more strings): VRT MAX URL(s) to download. Accepts multiple URLs separated by spaces.
 - `--file FILE` (file path): Path to a file containing URLs, one per line. Blank lines and lines starting with `#` are ignored.
 - `--dry-run` (flag): Simulate the download process without actually downloading any files. Prints what would be downloaded.
-- `-S, --output-dir OUTPUT_DIR` (directory path): Directory where downloaded files will be saved (default: `media`).
+- `--output-dir OUTPUT_DIR` (directory path): Directory where downloaded files will be saved (default: `media`).
 
 ## Outputs
 
@@ -47,7 +47,7 @@ python src/thuis/main.py --file my-list.txt
 python src/thuis/main.py --dry-run https://www.vrt.be/vrtmax/a/show/...
 
 # Custom output directory
-python src/thuis/main.py -S ~/Videos https://www.vrt.be/vrtmax/a/show/...
+python src/thuis/main.py --output-dir ~/Videos https://www.vrt.be/vrtmax/a/show/...
 
 # Using wrapper scripts (recommended)
 ./thuis.sh https://www.vrt.be/vrtmax/a/show/...

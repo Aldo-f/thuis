@@ -765,7 +765,7 @@ def main():
     parser.add_argument("urls", nargs="*", help="VRT MAX URL(s) to download")
     parser.add_argument("--file", type=Path, help="Path to a file containing URLs (one per line)")
     parser.add_argument("--dry-run", action="store_true", help="Simulate download without downloading")
-    parser.add_argument("-S", "--output-dir", type=Path, default=Path("media"), help="Directory to save downloaded files (default: media)")
+    parser.add_argument("--output-dir", type=Path, default=Path("media"), help="Directory to save downloaded files (default: media)")
     parser.add_argument("--max-episodes", type=int, default=None, help="Maximum number of episodes to process per season URL")
     parser.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")
     args = parser.parse_args()
