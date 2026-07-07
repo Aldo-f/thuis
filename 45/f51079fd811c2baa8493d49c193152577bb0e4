@@ -1,0 +1,27 @@
+src/thuis/main.py
+  s_280015c1070e12::t_423f8c269e2902 440-441
+  s_280015c1070e12::t_5a4a9b691f736d 796,808-815
+  s_280015c1070e12::t_ad665308717738 449-530,580,593-671,677-730
+  s_280015c1070e12::t_6f400273d62283 431-439,442-448
+  s_280015c1070e12::t_3697326c225dd5 672-676
+  s_280015c1070e12::t_5e5a957b675610 731-732
+  s_280015c1070e12::t_d593e62bb4d03b 816
+README.md
+  s_280015c1070e12::t_806a0f1a2092bf 131-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "45f51079fd811c2baa8493d49c193152577bb0e4",
+  "prompts": {},
+  "sessions": {
+    "s_280015c1070e12": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0cc17be48ffeBj1tb0LznaymmO",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
