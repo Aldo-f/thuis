@@ -1,0 +1,19 @@
+website/docs/usage.md
+  s_694d1c11d23eab::t_778bfcb1bcaba5 63-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "66aeb5e57e4743fbdd2946e7759b67351043e5cb",
+  "prompts": {},
+  "sessions": {
+    "s_694d1c11d23eab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c2e85be6ffemfaD3ZFRTmtLkH",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
