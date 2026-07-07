@@ -1,0 +1,44 @@
+tests/test_edge_cases.py
+  s_428e8e682eef2b::t_917e73c86603fd 786-787,816-817
+  s_428e8e682eef2b::t_d458999b358231 142-143,147
+  s_428e8e682eef2b::t_db8a5dd45d07d3 99,132
+  s_428e8e682eef2b::t_8398358b606eea 611-612,642,659,681-683,693,697-699
+  s_428e8e682eef2b::t_48bdaf2499f643 65-66,95-96
+  s_428e8e682eef2b::t_13f08ec0a26ffa 135,139-141,144-146,148-159,161-193,202,204-210,212-215
+  s_428e8e682eef2b::t_aa630c6bdd84d1 31-32,61-62
+  s_428e8e682eef2b::t_9206f2f6710f58 876-877,928-930,932
+  s_428e8e682eef2b::t_45d79ec859a345 136-138,160,201,203,211
+  s_428e8e682eef2b::t_da72937945bdce 100,122-131
+  s_428e8e682eef2b::t_4650e4925da09d 706-707,736-737
+  s_428e8e682eef2b::t_d9e2f3e34632ae 133-134
+src/thuis/main.py
+  s_428e8e682eef2b::t_14d33db0ca0c61 637,639
+  s_275ba811326198::t_fdcd582d4abcef 527-532
+  s_275ba811326198::t_306fe80bc0f690 336-337
+  s_275ba811326198::t_d15116e24c7b86 335,338-339
+  s_275ba811326198::t_75e588a7faf9a0 419-420
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "93ec75ce56b91075e817716ec10383b4c76edfa1",
+  "prompts": {},
+  "sessions": {
+    "s_275ba811326198": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c3c564eaffegAoWHuUZQVjYRR",
+        "model": "unknown"
+      },
+      "human_author": null
+    },
+    "s_428e8e682eef2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c3c68307ffedZfzkWL8ld3GgV",
+        "model": "unknown"
+      },
+      "human_author": null
+    }
+  }
+}
