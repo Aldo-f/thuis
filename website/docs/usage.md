@@ -60,6 +60,56 @@ Then run:
 ./thuis.sh -S ~/Videos https://www.vrt.be/vrtmax/a/show/...
 ```
 
+### Download a full season
+
+Pass a season URL to download every episode in that season:
+
+```bash
+# By season number in path
+./thuis.sh https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/
+
+# By query parameter
+./thuis.sh 'https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/?seizoen=seizoen-2'
+```
+
+### Download all seasons of a show
+
+Pass a bare show URL (without a season number) to automatically discover and download every season:
+
+```bash
+./thuis.sh https://www.vrt.be/vrtmax/a-z/thuis
+```
+
+The tool queries the show page, detects all available seasons via the VRT MAX GraphQL API, and expands each into its episodes.
+
+### Limit episodes
+
+Use `--max-episodes` to limit the number of episodes processed per season:
+
+```bash
+# Download at most 5 episodes per season
+./thuis.sh --max-episodes 5 https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/
+
+# Limit across all seasons (show-level URL)
+./thuis.sh --max-episodes 10 https://www.vrt.be/vrtmax/a-z/thuis
+```
+
+### Enable console logging
+
+By default, logs are written to `logs/` directory only. Use `--log-level` to see them in the console:
+
+```bash
+./thuis.sh --log-level DEBUG https://www.vrt.be/vrtmax/a/show/...
+```
+
+### Follow log output
+
+To tail the latest log file in real-time:
+
+```bash
+./thuis.sh --follow
+```
+
 ## Example output
 
 ```
