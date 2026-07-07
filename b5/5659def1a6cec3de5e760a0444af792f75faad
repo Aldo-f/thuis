@@ -1,0 +1,19 @@
+tests/test_timeout.py
+  s_8e1ebc450cabc0::t_25cc15db3df088 1-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b55659def1a6cec3de5e760a0444af792f75faad",
+  "prompts": {},
+  "sessions": {
+    "s_8e1ebc450cabc0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c404faffffeoys2OyNHDOOgKC",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
