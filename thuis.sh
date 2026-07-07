@@ -13,4 +13,19 @@ else
     exit 1
 fi
 
+# Intercept --follow / -f to tail the current log file
+for arg in "$@"; do
+    case "$arg" in
+        --follow|-f)
+            LOG_FILE=$(find "$SCRIPT_DIR/logs" -name "*.log" -type f -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1)
+            if [ -n "$LOG_FILE" ]; then
+                exec tail -F "$LOG_FILE"
+            else
+                echo "No log file found. Run the script first to create logs."
+                exit 1
+            fi
+            ;;
+    esac
+done
+
 exec "$PYTHON" "$SCRIPT_DIR/src/thuis/main.py" "$@"
