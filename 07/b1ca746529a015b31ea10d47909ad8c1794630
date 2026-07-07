@@ -1,0 +1,20 @@
+src/thuis/main.py
+  s_8e1ebc450cabc0::t_550e47a8828233 18
+  s_8e1ebc450cabc0::t_b73c0f419a1837 450,453-454
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "07b1ca746529a015b31ea10d47909ad8c1794630",
+  "prompts": {},
+  "sessions": {
+    "s_8e1ebc450cabc0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c404faffffeoys2OyNHDOOgKC",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
