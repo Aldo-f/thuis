@@ -1,0 +1,33 @@
+src/thuis/main.py
+  s_248949cb8b8c42::t_617df604aa64cb 317
+  s_248949cb8b8c42::t_cd03cfe6c938b6 220,223,228-239,255,257-269,277-311,314-316
+  s_5a51f23eaf9b52::t_2486440ef858ab 322-327
+  s_248949cb8b8c42::t_a53375d7749e45 166-168,170-171
+tests/test_season_handling.py
+  s_248949cb8b8c42::t_f0639dbc13043f 87,90-91,103,105,107,116-117
+  s_248949cb8b8c42::t_6801a11063d3ab 77,79,82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "09d92e953bed09e1bff9715f7e840663254f14f1",
+  "prompts": {},
+  "sessions": {
+    "s_248949cb8b8c42": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0d8063935ffe51OOrjra0lJ5M1",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_5a51f23eaf9b52": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c3a74614ffeKI5vM4mTehem3p",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
