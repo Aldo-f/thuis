@@ -2,124 +2,114 @@
 sidebar_position: 3
 ---
 
-# Usage
+# Usage (v1.0.0)
 
-You can run thuis in two ways: using the wrapper script or by calling the Python module directly.
+## How to Use
 
-## Wrapper script (easiest)
+Version 1.0.0 of thuis is designed to be simple and direct. It provides two ways to run the tool:
 
-```bash
-./thuis.sh https://www.vrt.be/vrtmax/a/show/...
+### Method 1: PowerShell Script (Recommended)
+
+The primary way to use thuis v1.0.0 is via the PowerShell script:
+
+```powershell
+.\thuis.ps1 <arguments>
 ```
 
-## Direct Python
+### Method 2: Batch File (Windows CMD)
 
-```bash
-python -m thuis.main https://www.vrt.be/vrtmax/a/show/...
+For Windows Command Prompt users:
+
+```cmd
+thuis.bat <arguments>
 ```
+
+## Basic Usage
+
+The tool accepts .mpd (Media Presentation Description) links as input:
+
+```powershell
+.\thuis.ps1 https://example.com/video.mpd
+```
+
+### Multiple URLs
+
+You can process multiple URLs in sequence:
+
+```powershell
+.\thuis.ps1 https://example.com/video1.mpd https://example.com/video2.mpd
+```
+
+### Help Information
+
+To see all available options:
+
+```powershell
+.\thuis.ps1 --help
+```
+
+## Command Line Options
+
+The following flags are available in v1.0.0:
+
+| Option | Description |
+| --- | Description |
+|--------------|-------------|
+| `--help` | Show help message and exit |
+| `--dry-run` | Show what would be downloaded without actually downloading |
+| `--verbose` | Enable verbose output |
+| `--no-color` | Disable colored output |
 
 ## Examples
 
-### Download a single video
+### Single Video Download
 
-```bash
-./thuis.sh https://www.vrt.be/vrtmax/a/show/...
+```powershell
+.\thuis.ps1 https://example.com/video.mpd
 ```
 
-### Download multiple videos at once
+### Batch Download from File
 
-```bash
-./thuis.sh https://www.vrt.be/vrtmax/a/show/1/ https://www.vrt.be/vrtmax/a/show/2/ https://www.vrt.be/vrtmax/a/show/3/
-```
-
-### Download videos from a URL file
-
-Create a text file with one URL per line (blank lines and lines starting with `#` are ignored):
+Create a text file `urls.txt` with one URL per line:
 
 ```
-# my-list.txt
-https://www.vrt.be/vrtmax/a/show/1/
-https://www.vrt.be/vrtmax/a/show/2/
+https://example.com/video1.mpd
+https://example.com/video2.mpd
+https://example.com/video3.mpd
 ```
 
 Then run:
 
-```bash
-./thuis.sh --file my-list.txt
+```powershell
+Get-Content urls.txt | ForEach-Object { .\thuis.ps1 $_ }
 ```
 
-### Dry run (see what would be downloaded)
+### Dry Run Mode
 
-```bash
-./thuis.sh --dry-run https://www.vrt.be/vrtmax/a/show/...
+Preview downloads without actually downloading anything:
+
+```powershell
+.\thuis.ps1 --dry-run https://example.com/video.mpd
 ```
 
-### Custom output directory
+### Verbose Output
 
-```bash
-./thuis.sh --output-dir ~/Videos https://www.vrt.be/vrtmax/a/show/...
+Get detailed information about the download process:
+
+```powershell
+.\thuis.ps1 --verbose https://example.com/video.mpd
 ```
 
-### Download a full season
+## Output Files
 
-Pass a season URL to download every episode in that season:
+By default, downloaded files are saved in the current directory with their original filenames from the .mpd manifest.
 
-```bash
-# By season number in path
-./thuis.sh https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/
+## Error Handling
 
-# By query parameter
-./thuis.sh 'https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/?seizoen=seizoen-2'
-```
+If an invalid .mpd link is provided, the tool will display an error message and exit with a non-zero status code.
 
-### Download all seasons of a show
+## Notes
 
-Pass a bare show URL (without a season number) to automatically discover and download every season:
-
-```bash
-./thuis.sh https://www.vrt.be/vrtmax/a-z/thuis
-```
-
-The tool queries the show page, detects all available seasons via the VRT MAX GraphQL API, and expands each into its episodes.
-
-### Limit episodes
-
-Use `--max-episodes` to limit the number of episodes processed per season:
-
-```bash
-# Download at most 5 episodes per season
-./thuis.sh --max-episodes 5 https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/
-
-# Limit across all seasons (show-level URL)
-./thuis.sh --max-episodes 10 https://www.vrt.be/vrtmax/a-z/thuis
-```
-
-### Enable console logging
-
-By default, logs are written to `logs/` directory only. Use `--log-level` to see them in the console:
-
-```bash
-./thuis.sh --log-level DEBUG https://www.vrt.be/vrtmax/a/show/...
-```
-
-### Follow log output
-
-To tail the latest log file in real-time:
-
-```bash
-./thuis.sh --follow
-```
-
-## Example output
-
-```
-$ ./thuis.sh --dry-run https://www.vrt.be/vrtmax/a/show/some-episode
-[thuis] Using default credentials (kuxelu@ipdeer.com)
-[thuis] Running: .venv/bin/yt-dlp --username o-auth2 --password '***' \
-  --format 'bestvideo[height<=?1080]+bestaudio/best[height<=?1080]' \
-  --merge-output-format mp4 \
-  --print filename \
-  --dry-run \
-  'https://www.vrt.be/vrtmax/a/show/some-episode'
-[thuis] Output: Some Episode (2025-04-07) [some-episode].mp4
-```
+- This version does not include VRT MAX integration - it works with direct .mpd links only
+- No account and password are not required or used
+- For help with specific .mpd links, consult the documentation of the content provider

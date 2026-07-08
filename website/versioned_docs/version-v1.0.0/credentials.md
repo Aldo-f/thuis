@@ -2,43 +2,40 @@
 sidebar_position: 4
 ---
 
-# Credentials
+# Credentials (v1.0.0)
 
-thuis comes with built-in default credentials so you can start downloading immediately. You can also override them with your own VRT MAX account.
+## No Authentication Required
 
-## Default credentials
+**Version 1.0.0 of thuis does not require any credentials or authentication.**
 
-Out of the box, thuis uses these demo credentials:
+This version was designed as a simple utility for processing .mpd (Media Presentation Description) links directly, without integration with any streaming service or login system.
 
-- **Email:** `kuxelu@ipdeer.com`
-- **Password:** `Els123456`
+## Why No Credentials?
 
-These shared credentials work for basic testing but may have rate limits or access restrictions.
+In v1.0.0:
+- The tool accepts .mpd links as direct input
+- No communication with VRT MAX or any other streaming platform occurs
+- All processing is done locally using the provided .mpd manifest
+- No user accounts, API keys, or authentication tokens are involved
 
-## Using your own account
+## Comparison with Later Versions
 
-### Environment variables
+Starting with v2.0.0, thuis added VRT MAX integration which requires credentials. However, in v1.0.0:
+- ✅ No email or password required
+- ✅ No environment variables needed
+- ✅ No .env file usage
+- ✅ No login flow handling
+- ✅ Works with any publicly accessible .mpd link
 
-Set `VRT_EMAIL` and `VRT_PASSWORD` in your shell:
+## Usage Without Credentials
 
+Simply provide an .mpd link to the tool:
 ```bash
-export VRT_EMAIL="your-email@example.com"
-export VRT_PASSWORD="your-password"
+.\thuis.ps1 "https://example.com/content.mpd"
 ```
 
-### .env file
+The tool will process the manifest and initiate the download based on the information contained within the .mpd file itself.
 
-Create a `.env` file in the project root:
+## Security Note
 
-```
-VRT_EMAIL=your-email@example.com
-VRT_PASSWORD=your-password
-```
-
-## Priority order
-
-The tool checks credentials in this order:
-
-1. **Environment variables** — `VRT_EMAIL` and `VRT_PASSWORD` take highest priority
-2. **.env file** — loaded via python-dotenv if the package is installed
-3. **Built-in defaults** — fallback if nothing else is set
+Since no credentials are used or stored, there are no credential-related security concerns with this version. The tool only processes the URLs and manifests you provide to it.

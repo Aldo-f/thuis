@@ -2,43 +2,46 @@
 sidebar_position: 2
 ---
 
-# Installation
+# Installation (v1.0.0)
 
-## Requirements
+## Getting Started
 
-- Python 3.8 or newer
-- git
-- A VRT MAX account (free or paid)
+Version 1.0.0 of thuis is distributed as a simple package containing:
 
-## Steps
+- `thuis.ps1` - PowerShell script for Linux/macOS/Windows PowerShell
+- `thuis.bat` - Batch file for Windows Command Prompt
+- `README.md` - This documentation
 
-Open a terminal and run:
+## System Requirements
 
+- **Windows**: PowerShell 5.1+ or Command Prompt
+- **Linux/macOS**: PowerShell Core 6+ (for the .ps1 script)
+- **No additional dependencies** - the script is self-contained
+
+## Installation Steps
+
+1. **Download the release** - Get the v1.0.0 source code from the [releases page](https://github.com/Aldo-f/thuis/releases/tag/v1.0.0)
+2 **Extract the files** - Unzip the downloaded archive to your desired location
+3. **Ensure execute permissions** (Linux/macOS): 
+   ```bash
+   chmod +x thuis.ps1
+   ```
+4. **Verify PowerShell is available**:
+   ```bash
+   pwsh --version  # PowerShell Core
+   # OR
+   powershell --version  # Windows PowerShell
+   ```
+
+## Verification
+
+To verify your installation works, run:
 ```bash
-# Clone the repository
-git clone https://github.com/Aldo-f/thuis.git
-cd thuis
-
-# Create a virtual environment (recommended)
-python3 -m venv .venv
-
-# Activate the virtual environment
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
+./thuis.ps1 --help
 ```
-
-This installs a [patched version of yt-dlp](https://github.com/Aldo-f/yt-dlp) (tag `v2026.06.09-patch1`) that can handle VRT MAX's login flow.
-
-## Verify the installation
-
+or
 ```bash
-.venv/bin/yt-dlp --version
+.\thuis.bat --help
 ```
 
-You should see:
-
-```
-2026.06.09
-```
+You should see usage information for the tool.

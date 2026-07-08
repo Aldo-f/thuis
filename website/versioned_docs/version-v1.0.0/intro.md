@@ -2,22 +2,25 @@
 sidebar_position: 1
 ---
 
-# What is thuis?
+# What is thuis? (v1.0.0)
 
-**thuis** is a proof-of-concept tool for downloading videos from [VRT MAX](https://www.vrt.be/vrtmax/), the Flemish public broadcaster's streaming platform.
+**thuis version 1.0.0** is the initial release of a simple tool for downloading videos by providing an .mpd (Media Presentation Description) link directly.
 
-It wraps [yt-dlp](https://github.com/yt-dlp/yt-dlp) — a powerful video downloader — with the correct settings and VRT MAX credentials so you can start downloading with minimal setup. Behind the scenes, thuis uses a [patched version of yt-dlp](https://github.com/Aldo-f/yt-dlp) that handles VRT MAX's login flow properly.
+Unlike later versions that integrate with VRT MAX, this version focuses on basic .mpd link handling.
 
-## Key features
+## Core Concept
 
-- **Single command** — download a video with one command, no configuration needed
-- **Batch downloads** — pass multiple URLs or a file full of them
-- **Dry-run mode** — preview what would be downloaded without actually fetching anything
-- **Custom output** — choose where your videos are saved
-- **Built-in credentials** — works out of the box with default demo credentials
+The tool accepts .mpd links and processes them for download. It was designed as a simple utility for cases where you have a direct .mpd link and need to initiate a download.
+
+## Key Features
+
+- **Direct .mpd link processing** - Provide an .mpd link to start a download
+- **Batch processing capability** - Handle multiple .mpd links in sequence  
+- **Simple CLI interface** - Easy to use from command line or batch files
+- **Cross-platform support** - Works via PowerShell script on Windows
 
 ## Limitations
 
-This is a proof of concept. It works for basic use cases but comes with no guarantees. VRT MAX may change their website or login flow at any time, which could break the tool.
+This is an early version with limited functionality. Later versions added VRT MAX integration, improved error handling, and additional features.
 
-Respect VRT's terms of service when using this tool.
+See the [usage guide](usage.md) for examples of how to use this version.
