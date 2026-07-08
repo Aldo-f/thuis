@@ -2,22 +2,38 @@
 sidebar_position: 1
 ---
 
-# What is thuis?
+# What is thuis? (v2.1.1)
 
-**thuis** is a proof-of-concept tool for downloading videos from [VRT MAX](https://www.vrt.be/vrtmax/), the Flemish public broadcaster's streaming platform.
+**thuis version 2.1.1** is a maintenance release focused on bug fixes, security improvements, and minor enhancements over v2.1.0. This version does not introduce major new features but addresses specific issues reported by users and improves overall stability.
 
-It wraps [yt-dlp](https://github.com/yt-dlp/yt-dlp) — a powerful video downloader — with the correct settings and VRT MAX credentials so you can start downloading with minimal setup. Behind the scenes, thuis uses a [patched version of yt-dlp](https://github.com/Aldo-f/yt-dlp) that handles VRT MAX's login flow properly.
+## Key Improvements Over v2.1.0
 
-## Key features
+- **Security updates** - Updated dependencies to address known vulnerabilities
+- **Bug fixes** - Resolved issues with subtitle downloading for certain content types
+- **Network reliability** - Improved handling of intermittent network connections
+- **Metadata parsing** - Fixed edge cases in JSON response handling from VRT API
+- **Performance enhancements** - Reduced memory usage during long download sessions
+- **Compatibility fixes** - Addressed issues with specific DRM-protected content
 
-- **Single command** — download a video with one command, no configuration needed
-- **Batch downloads** — pass multiple URLs or a file full of them
-- **Dry-run mode** — preview what would be downloaded without actually fetching anything
-- **Custom output** — choose where your videos are saved
-- **Built-in credentials** — works out of the box with default demo credentials
+## Core Features (Unchanged from v2.1.0)
 
-## Limitations
+v2.1.1 maintains all the core functionality of v2.1.0:
 
-This is a proof of concept. It works for basic use cases but comes with no guarantees. VRT MAX may change their website or login flow at any time, which could break the tool.
+- Full VRT MAX API v2.1 compatibility
+- Secure authentication with credential management
+- Comprehensive format selection and video quality options
+- Subtitle download and embedding capabilities
+- Metadata extraction and saving (description, thumbnails, etc.)
+- Flexible output directory and file naming options
+- Resume capability for interrupted downloads
+- Detailed logging and progress reporting
 
-Respect VRT's terms of service when using this tool.
+## Who Should Use This Version
+
+v2.1.1 is recommended for:
+- Users experiencing issues with v2.1.0
+- Anyone wanting the most stable version in the 2.1.x series
+- Environments where security updates are important
+- Users who prioritize reliability over accessing the very latest features
+
+For access to newer features beyond the v2.1.x series, consider upgrading to v3.0.0 or later when available.

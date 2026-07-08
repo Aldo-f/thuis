@@ -2,22 +2,32 @@
 sidebar_position: 1
 ---
 
-# What is thuis?
+# What is thuis? (v2.0.0)
 
-**thuis** is a proof-of-concept tool for downloading videos from [VRT MAX](https://www.vrt.be/vrtmax/), the Flemish public broadcaster's streaming platform.
+**thuis version 2.0.0** represents a major refactor that introduced the Python-based implementation, replacing the original PowerShell-only version.
 
-It wraps [yt-dlp](https://github.com/yt-dlp/yt-dlp) — a powerful video downloader — with the correct settings and VRT MAX credentials so you can start downloading with minimal setup. Behind the scenes, thuis uses a [patched version of yt-dlp](https://github.com/Aldo-f/yt-dlp) that handles VRT MAX's login flow properly.
+This version laid the foundation for the modern thuis architecture with proper Python packaging, dependency management, and initial VRT MAX integration capabilities.
 
-## Key features
+## Core Advancements in v2.0.0
 
-- **Single command** — download a video with one command, no configuration needed
-- **Batch downloads** — pass multiple URLs or a file full of them
-- **Dry-run mode** — preview what would be downloaded without actually fetching anything
-- **Custom output** — choose where your videos are saved
-- **Built-in credentials** — works out of the box with default demo credentials
+- **Python-based implementation** - Moved from PowerShell/Batch to Python 3.8+
+- **Proper package structure** - Introduced `src/thuis/` module organization
+- **Dependency management** - Added `requirements.txt` for managed dependencies
+- **Initial VERT MAX integration** - Basic framework for VRT MM authentication
+- **Basic test suite** - Initial automated tests for core functionality
+- **Cross-platform support** - Works on Windows, Linux, and macOS
+
+## Key Features
+
+- **Modular Python architecture** - Clean separation of concerns
+- **Virtual environment support** - Isolated dependencies via venv
+- **Pip-installable** - Can be installed via `pip install -r requirements.txt`
+- **Basic CLI interface** - `python -m thuis.main <URL>` syntax
+- **Logging system** - Basic logging to files and console
+- **Test foundation** - Initial pytest test suite structure
 
 ## Limitations
 
-This is a proof of concept. It works for basic use cases but comes with no guarantees. VRT MAX may change their website or login flow at any time, which could break the tool.
+This is an early version of the Python rewrite. While it established the foundation, many advanced features like comprehensive error handling, advanced logging, and full VRT MAX integration were still in development.
 
-Respect VRT's terms of service when using this tool.
+See the [usage guide](usage.md) for examples of how to use this version.

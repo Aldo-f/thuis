@@ -183,21 +183,13 @@ To tail the current log in real-time:
 ./thuis.sh -f
 ```
 
-## Project structure
+## Interrupt handling
 
-```
-thuis/
-  src/thuis/main.py     Main script
-  thuis.sh              Linux wrapper
-  thuis.bat             Windows wrapper
-  requirements.txt      Dependencies (yt-dlp fork)
-  logs/                 Log files (gitignored)
-  media/                Downloaded videos (gitignored)
-  .venv/                Virtual environment (gitignored)
-  .omo/                 Internal work tracking (gitignored runtime state)
-  .specify/             Specification files (project docs)
-  tests/                Test files
-```
+- Pressing Ctrl + C now exits cleanly with "Interrupted by user" and no traceback.
+
+[Contributing Guidelines](CONTRIBUTING.md)
+
+Website documentation: `website/docs/`
 
 ## How it works
 

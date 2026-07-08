@@ -76,50 +76,155 @@
       "ended_at": "2026-07-07T09:29:18.646Z",
       "session_origins": {},
       "elapsed_ms": 62834949
+    },
+    "ctrl-c-handler-6b8ea763": {
+      "work_id": "ctrl-c-handler-6b8ea763",
+      "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/ctrl-c-handler.md",
+      "plan_name": "ctrl-c-handler",
+      "status": "active",
+      "started_at": "2026-07-07T17:55:09.160Z",
+      "updated_at": "2026-07-07T17:55:09.160Z",
+      "session_ids": [
+        "opencode:ses_0c2bc9b47ffeS0YXo2GS8uzaPV"
+      ],
+      "session_origins": {
+        "opencode:ses_0c2bc9b47ffeS0YXo2GS8uzaPV": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {}
+    },
+    "ctrl-c-handler-27771597": {
+      "work_id": "ctrl-c-handler-27771597",
+      "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/ctrl-c-handler.md",
+      "plan_name": "ctrl-c-handler",
+      "status": "completed",
+      "started_at": "2026-07-07T17:55:11.395Z",
+      "updated_at": "2026-07-07T18:43:26.897Z",
+      "session_ids": [
+        "opencode:ses_0c2bc9b47ffeS0YXo2GS8uzaPV"
+      ],
+      "session_origins": {
+        "opencode:ses_0c2bc9b47ffeS0YXo2GS8uzaPV": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {
+        "todo:2": {
+          "task_key": "todo:2",
+          "task_label": "2",
+          "task_title": "**Register SIGINT handler**: Add `signal.signal(signal.SIGINT, lambda sig, frame: sys.exit(\"\\nInterrupted by user\"))` as the first statement inside `main()`.",
+          "session_id": "opencode:ses_0c2356f0bffecX0Ix1NpsQ2z6a",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-07-07T18:16:51.933Z",
+          "started_at": "2026-07-07T18:15:50.368Z",
+          "status": "completed",
+          "ended_at": "2026-07-07T18:16:51.933Z",
+          "elapsed_ms": 61565
+        },
+        "todo:3": {
+          "task_key": "todo:3",
+          "task_label": "3",
+          "task_title": "**Create SIGINT test**: Add `tests/test_ctrl_c_handler.py` that launches the script, sends SIGINT, and asserts clean output.",
+          "session_id": "opencode:ses_0c232f66dffeBHctMWGQZsniHN",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-07-07T18:41:07.265Z",
+          "started_at": "2026-07-07T18:40:11.842Z",
+          "status": "completed",
+          "ended_at": "2026-07-07T18:41:07.265Z",
+          "elapsed_ms": 55423
+        },
+        "todo:4": {
+          "task_key": "todo:4",
+          "task_label": "4",
+          "task_title": "**Update CI workflow**: Ensure the CI runs `pytest` so the new test is executed.",
+          "session_id": "opencode:ses_0c21d8bc1ffeYD46xBp36GRHNF",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-07-07T18:42:02.728Z",
+          "started_at": "2026-07-07T18:41:29.921Z",
+          "status": "completed",
+          "ended_at": "2026-07-07T18:42:02.728Z",
+          "elapsed_ms": 32807
+        }
+      },
+      "ended_at": "2026-07-07T18:43:26.897Z",
+      "elapsed_ms": 2895502
+    },
+    "docusaurus-versioning-8747c3de": {
+      "work_id": "docusaurus-versioning-8747c3de",
+      "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/docusaurus-versioning.md",
+      "plan_name": "docusaurus-versioning",
+      "status": "completed",
+      "started_at": "2026-07-08T10:41:41.073Z",
+      "updated_at": "2026-07-08T14:24:48.262Z",
+      "session_ids": [
+        "opencode:ses_0c1f6e77bffe3rh1O5mAl3Z1Wu"
+      ],
+      "session_origins": {
+        "opencode:ses_0c1f6e77bffe3rh1O5mAl3Z1Wu": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "Delete old `release/*` branches",
+          "session_id": "opencode:ses_0bdeabe70ffeggIGAhAVzb6ke8",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "started_at": "2026-07-08T11:17:20.894Z",
+          "status": "completed",
+          "updated_at": "2026-07-08T14:17:20.159Z",
+          "ended_at": "2026-07-08T14:17:20.159Z",
+          "elapsed_ms": 10799265
+        },
+        "final-wave:f1": {
+          "task_key": "final-wave:f1",
+          "task_label": "F1",
+          "task_title": "Plan compliance audit (oracle)",
+          "session_id": "opencode:ses_0bde7d8b6ffeTqdF71lcXlUQH6",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "started_at": "2026-07-08T14:18:03.387Z",
+          "status": "completed",
+          "updated_at": "2026-07-08T14:24:06.674Z",
+          "ended_at": "2026-07-08T14:24:06.674Z",
+          "elapsed_ms": 363287
+        }
+      },
+      "ended_at": "2026-07-08T14:24:48.262Z",
+      "elapsed_ms": 13387189
+    },
+    "docusaurus-theme-948ff517": {
+      "work_id": "docusaurus-theme-948ff517",
+      "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/docusaurus-theme.md",
+      "plan_name": "docusaurus-theme",
+      "status": "active",
+      "started_at": "2026-07-08T17:59:34.544Z",
+      "updated_at": "2026-07-08T17:59:34.544Z",
+      "session_ids": [
+        "opencode:ses_0c29e61eeffeUIErSUp8Ya65EH"
+      ],
+      "session_origins": {
+        "opencode:ses_0c29e61eeffeUIErSUp8Ya65EH": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {}
     }
   },
   "session_ids": [
-    "opencode:ses_0cc17be48ffeBj1tb0LznaymmO",
-    "opencode:ses_0c41c34c4ffe317uTOtIqYsq5x",
-    "opencode:ses_0c41c347affeTBhkcu6DN1JWrg",
-    "opencode:ses_0c41c31e2ffefU765UIPYySF2h"
+    "opencode:ses_0c29e61eeffeUIErSUp8Ya65EH"
   ],
-  "session_origins": {},
-  "task_sessions": {
-    "final-wave:f1": {
-      "task_key": "final-wave:f1",
-      "task_label": "F1",
-      "task_title": "**Plan Compliance Audit** — oracle",
-      "session_id": "opencode:ses_0c41c34c4ffe317uTOtIqYsq5x",
-      "agent": "oracle",
-      "started_at": "2026-07-07T09:23:45.899Z",
-      "status": "completed",
-      "updated_at": "2026-07-07T09:28:13.939Z",
-      "ended_at": "2026-07-07T09:28:13.939Z",
-      "elapsed_ms": 268040
-    },
-    "final-wave:f2": {
-      "task_key": "final-wave:f2",
-      "task_label": "F2",
-      "task_title": "**Full Test Suite + QA**",
-      "agent": "unspecified-high",
-      "status": "completed"
-    },
-    "final-wave:f3": {
-      "task_key": "final-wave:f3",
-      "task_label": "F3",
-      "task_title": "**Scope Fidelity Check**",
-      "agent": "deep",
-      "status": "completed"
-    }
+  "session_origins": {
+    "opencode:ses_0c29e61eeffeUIErSUp8Ya65EH": "direct"
   },
-  "active_work_id": "cleanup-en-logging-01",
-  "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/cleanup-en-logging.md",
-  "plan_name": "cleanup-en-logging",
-  "status": "completed",
-  "started_at": "2026-07-06T16:02:03.697Z",
-  "ended_at": "2026-07-07T09:29:18.646Z",
-  "elapsed_ms": 62834949,
-  "updated_at": "2026-07-07T09:29:18.646Z",
+  "task_sessions": {},
+  "active_work_id": "docusaurus-theme-948ff517",
+  "active_plan": "/home/aldo/docker-stack/06-apps/_pocs/thuis/.omo/plans/docusaurus-theme.md",
+  "plan_name": "docusaurus-theme",
+  "status": "active",
+  "started_at": "2026-07-08T17:59:34.544Z",
+  "updated_at": "2026-07-08T17:59:34.544Z",
   "agent": "atlas"
 }

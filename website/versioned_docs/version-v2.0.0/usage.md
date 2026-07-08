@@ -2,124 +2,179 @@
 sidebar_position: 3
 ---
 
-# Usage
+# Usage (v2.0.0)
 
-You can run thuis in two ways: using the wrapper script or by calling the Python module directly.
+## How to Run
 
-## Wrapper script (easiest)
+Version 2.0.0 of thuis is designed to be run as a Python module. It provides two equivalent ways to execute the program:
+
+### Method 1: Python Module (Recommended)
 
 ```bash
-./thuis.sh https://www.vrt.be/vrtmax/a/show/...
+python -m thuis.main [OPTIONS] <URL>
 ```
 
-## Direct Python
+### Method 2: Wrapper Script
+
+For convenience, a wrapper script is also provided:
+
+```bash
+./thuis.sh [OPTIONS] <URL>
+```
+
+Both approaches are functionally identical - the wrapper script simply calls `python -m thuis.main` internally.
+
+## Basic Usage
+
+The primary way to use thuis is to provide a VRT MAX content URL:
 
 ```bash
 python -m thuis.main https://www.vrt.be/vrtmax/a/show/...
 ```
 
-## Examples
+## Command Line Options
 
-### Download a single video
+Version 2.0.0 introduced a comprehensive set of command-line options:
+
+| Option | Description |
+|--------|-------------|
+| `--help` | Show help message and exit |
+| `--version` | Show program version and exit |
+| `--no-cache` | Disable filesystem cache |
+| `--ignore-errors` | Continue on download errors |
+| `--max-downloads INTEGER` | Maximum number of files to download |
+| `--skip-unavailable-files` | Skip unavailable files |
+| `--no-abort-on-error` | Continue with next URL on error |
+| `--output DIRECTORY` | Output directory for downloads |
+| `--output-template TEMPLATE` | Output filename template |
+| `--restrict-filenames` | Restrict filenames to ASCII characters |
+| `--no-overwrites` | Do not overwrite existing files |
+| `--continue` | Resume partially downloaded files |
+| `--no-part` | Do not use .part files |
+| `--no-mtime` | Do not use Last-modified header |
+| `--write-description` | Write video description to .description file |
+| `--write-info-json` | Write video metadata to .info.json file |
+| `--write-annotations` | Write annotations to .annotations.xml file |
+| `--write-sub` | Write subtitle file |
+| `--write-auto-sub` | Write automatic subtitle file |
+| `--list-subs` | List available subtitles |
+| `--sub-format FORMAT` | Subtitle format (srt, ass, vtt, etc.) |
+| `--sub-lang LANGS` | Subtitle languages (comma-separated) |
+| `--skip-unavailable-subs` | Skip unavailable subtitles |
+| `--auth-stdin` | Read credentials from stdin |
+| `--network-timeout SECONDS` | Network timeout in seconds |
+| `--socket-timeout SECONDS` | Socket timeout in seconds |
+| `--batch-file FILE` | File containing URLs to process |
+| `--include-ads` | Include advertisements in download |
+| `--include-pretrailers` | Include pretrailers in download |
+
+## Common Use Cases
+
+### Download with Custom Output Directory
 
 ```bash
-./thuis.sh https://www.vrt.be/vrtmax/a/show/...
+python -m thuis.main --output ./Downloads https://www.vrt.be/vrtmax/a/show/...
 ```
 
-### Download multiple videos at once
+### Download Best Quality Available
 
 ```bash
-./thuis.sh https://www.vrt.be/vrtmax/a/show/1/ https://www.vrt.be/vrtmax/a/show/2/ https://www.vrt.be/vrtmax/a/show/3/
+python -m thuis.main --format best https://www.vrt.be/vrtmax/a/show/...
 ```
 
-### Download videos from a URL file
+### Download Audio Only
 
-Create a text file with one URL per line (blank lines and lines starting with `#` are ignored):
+```bash
+python -m thuis.main --format "bestaudio" https://www.vrt.be/vrtmax/a/show/...
+```
+
+### Download with Specific Video Quality
+
+```bash
+python -m thuis.main --format "best[height<=720]" https://www.vrt.be/vrtmax/a/show/...
+```
+
+### Download Subtitles
+
+```bash
+python -m thuis.main --write-sub --sub-lang nl,en https://www.vrt.be/vrtmax/a/show/...
+```
+
+### Download with Metadata
+
+```bash
+python -m thuis.main --write-info-json --write-description https://www.vrt.be/vrtmax/a/show/...
+```
+
+### Batch Processing from File
+
+Create a file `urls.txt` with one URL per line:
 
 ```
-# my-list.txt
 https://www.vrt.be/vrtmax/a/show/1/
 https://www.vrt.be/vrtmax/a/show/2/
+https://www.vrt.be/vrtmax/a/show/3/
 ```
 
 Then run:
 
 ```bash
-./thuis.sh --file my-list.txt
+python -m thuis.main --batch-file urls.txt
 ```
 
-### Dry run (see what would be downloaded)
+### Resume Interrupted Downloads
 
 ```bash
-./thuis.sh --dry-run https://www.vrt.be/vrtmax/a/show/...
+python -m thuis.main --continue https://www.vrt.be/vrtmax/a/show/...
 ```
 
-### Custom output directory
+### Disable Certificate Verification (for testing only)
 
 ```bash
-./thuis.sh --output-dir ~/Videos https://www.vrt.be/vrtmax/a/show/...
+python -m thuis.main --no-check-certificate https://www.vrt.be/vrtmax/a/show/...
 ```
 
-### Download a full season
+## Credentials Handling
 
-Pass a season URL to download every episode in that season:
+Version 2.0.0 introduced secure credentials handling:
+
+### Environment Variables (Recommended)
 
 ```bash
-# By season number in path
-./thuis.sh https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/
-
-# By query parameter
-./thuis.sh 'https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/?seizoen=seizoen-2'
+export VRT_EMAIL="your-email@example.com"
+export VRT_PASSWORD="your-password"
 ```
 
-### Download all seasons of a show
+### .env File
 
-Pass a bare show URL (without a season number) to automatically discover and download every season:
+Create a `.env` file in the project root:
+
+```
+VRT_EMAIL=your-email@example.com
+VRT_PASSWORD=your-password
+```
+
+### Prompt Input
+
+If credentials aren't provided via environment variables or .env file, the program will prompt for them securely.
+
+## Output Files
+
+By default, downloaded files are saved with descriptive names based on the content title. The output directory can be customized with the `--output` option.
+
+## Logging
+
+Logs are written to the `logs/` directory by default. To see logs in the console, use:
 
 ```bash
-./thuis.sh https://www.vrt.be/vrtmax/a-z/thuis
+python -m thuis.main --log-level DEBUG https://www.vrt.be/vrtmax/a/show/...
 ```
 
-The tool queries the show page, detects all available seasons via the VRT MAX GraphQL API, and expands each into its episodes.
+Valid log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
-### Limit episodes
+## Important Notes
 
-Use `--max-episodes` to limit the number of episodes processed per season:
-
-```bash
-# Download at most 5 episodes per season
-./thuis.sh --max-episodes 5 https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/
-
-# Limit across all seasons (show-level URL)
-./thuis.sh --max-episodes 10 https://www.vrt.be/vrtmax/a-z/thuis
-```
-
-### Enable console logging
-
-By default, logs are written to `logs/` directory only. Use `--log-level` to see them in the console:
-
-```bash
-./thuis.sh --log-level DEBUG https://www.vrt.be/vrtmax/a/show/...
-```
-
-### Follow log output
-
-To tail the latest log file in real-time:
-
-```bash
-./thuis.sh --follow
-```
-
-## Example output
-
-```
-$ ./thuis.sh --dry-run https://www.vrt.be/vrtmax/a/show/some-episode
-[thuis] Using default credentials (kuxelu@ipdeer.com)
-[thuis] Running: .venv/bin/yt-dlp --username o-auth2 --password '***' \
-  --format 'bestvideo[height<=?1080]+bestaudio/best[height<=?1080]' \
-  --merge-output-format mp4 \
-  --print filename \
-  --dry-run \
-  'https://www.vrt.be/vrtmax/a/show/some-episode'
-[thuis] Output: Some Episode (2025-04-07) [some-episode].mp4
-```
+- This version requires a valid VRT MAX account to access content
+- The program will automatically handle token refresh and session management
+- Downloaded files are saved as MP4 containers with appropriate video/audio codecs
+- Temporary `.part` files are used during downloads and renamed on completion

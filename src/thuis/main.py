@@ -18,6 +18,7 @@ import re
 from datetime import datetime
 from urllib.parse import urlparse
 import urllib.request
+import signal
 
 # GraphQL query for paginated tile list (cursor-based pagination)
 _LIST_QUERY = """
@@ -760,6 +761,7 @@ def setup_logging(level: str | None = None) -> logging.Logger:
 
 
 def main():
+    signal.signal(signal.SIGINT, lambda sig, frame: sys.exit("\nInterrupted by user"))
     import argparse
     parser = argparse.ArgumentParser(description="Download VRT MAX videos using yt-dlp (POC)")
     parser.add_argument("urls", nargs="*", help="VRT MAX URL(s) to download")
@@ -771,6 +773,16 @@ def main():
     args = parser.parse_args()
 
     logger = setup_logging(args.log_level)
+
+    # Verify output directory permission before proceeding
+    if not args.output_dir.exists():
+        try:
+            args.output_dir.mkdir(parents=True, exist_ok=True)
+        except PermissionError as e:
+            sys.exit(f"Error: cannot create output directory {args.output_dir}: {e}")
+    else:
+        if not os.access(args.output_dir, os.W_OK):
+            sys.exit(f"Error: no write permission for output directory {args.output_dir}")
 
     # Collect URLs
     urls = list(args.urls)

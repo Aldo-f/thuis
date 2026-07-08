@@ -219,10 +219,10 @@ Wave FINAL – Post‑Build Validation
 ## Final Verification Wave
 ---
 
-- [ ] F1. Plan compliance audit (oracle)
-- [ ] F2. Code quality review (unspecified‑high)
-- [ ] F3. Real manual QA (unspecified‑high)
-- [ ] F4. Scope fidelity check (deep)
+- [x] F1. Plan compliance audit (oracle)
+- [x] F2. Code quality review (unspecified‑high)
+- [x] F3. Real manual QA (unspecified‑high)
+- [x] F4. Scope fidelity check (deep)
 
 ---
 
