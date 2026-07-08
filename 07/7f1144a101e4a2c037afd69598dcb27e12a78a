@@ -1,0 +1,22 @@
+website/docusaurus.config.ts
+  s_95dc2786f09825::t_1181bf8c51cade 52
+  s_95dc2786f09825::t_88e2dccc508a58 43,45-50
+website/versions.json
+  s_95dc2786f09825::t_479b3b735729e2 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "077f1144a101e4a2c037afd69598dcb27e12a78a",
+  "prompts": {},
+  "sessions": {
+    "s_95dc2786f09825": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0bdd78251ffeXsK2qrevLlasQs",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
