@@ -1,0 +1,21 @@
+tests/test_timeout.py
+  s_3de3fed6d9540b::t_f91537bb289473 34-35,37-38,41,43,45-46,48
+.github/workflows/deploy-docs.yml
+  s_3de3fed6d9540b::t_ebfe6e55fa203c 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9a356db665bc733ac27306f3d2c92230e2eea3f1",
+  "prompts": {},
+  "sessions": {
+    "s_3de3fed6d9540b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0c1f6e77bffe3rh1O5mAl3Z1Wu",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
