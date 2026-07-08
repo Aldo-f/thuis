@@ -20,7 +20,7 @@ const config: Config = {
   organizationName: 'Aldo-f', // Usually your GitHub org/user name.
   projectName: 'thuis', // Usually your repo name.
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -40,13 +40,33 @@ const config: Config = {
           // Remove this to remove the "edit this page" links.
           editUrl:
             'https://github.com/Aldo-f/thuis/tree/v4/main/website/',
+          lastVersion: 'current',
           versions: {
-    current: { label: 'v4.0.0' },
-    'v3.0.0': { label: 'v3.0.0' },
-    'v2.1.1': { label: 'v2.1.1' },
-    'v2.0.0': { label: 'v2.0.0' },
-    'v1.0.0': { label: 'v1.0.0' },
-  },
+            current: {
+              label: 'v4.0.0 (current)',
+              path: 'next',
+            },
+            'v3.0.0': {
+              label: 'v3.0.0',
+              path: 'v3.0.0',
+            },
+            'v2.1.1': {
+              label: 'v2.1.1',
+              path: 'v2.1.1',
+            },
+            'v2.1.0': {
+              label: 'v2.1.0',
+              path: 'v2.1.0',
+            },
+            'v2.0.0': {
+              label: 'v2.0.0',
+              path: 'v2.0.0',
+            },
+            'v1.0.0': {
+              label: 'v1.0.0',
+              path: 'v1.0.0',
+            },
+          },
         },
         blog: false,
         theme: {
