@@ -1,0 +1,25 @@
+src/thuis/metadata_fetcher.py
+  s_f98762b26aacf9::t_0ef21e4ce565e8 144-187
+tests/thuis/test_resolution_and_retry.py
+  s_f98762b26aacf9::t_faefec8a83be87 324
+  s_f98762b26aacf9::t_565b83b6da763d 251
+  s_f98762b26aacf9::t_bc309a661b6c62 292
+tests/metadata_fetcher_test.py
+  s_f98762b26aacf9::t_3766c8f888fc7d 203-264
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fe5155a389650b290917b4826322ac61980c07dc",
+  "prompts": {},
+  "sessions": {
+    "s_f98762b26aacf9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0beb54258ffeG9iWrcgJ9t75yh",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
