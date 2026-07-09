@@ -141,6 +141,50 @@ def fetch_metadata(
     }
 
 
+def fetch_preview_height(
+    url: str, credentials: tuple[str, str] | None = None
+) -> int | None:
+    """Fetch only the video height from *url* via a lightweight yt-dlp call.
+
+    Much cheaper than :func:`fetch_metadata` because it requests a
+    single field instead of eight.
+
+    Parameters
+    ----------
+    url:
+        A yt-dlp-compatible video URL.
+    credentials:
+        Optional ``(email, password)`` tuple for authenticated sources.
+
+    Returns
+    -------
+    int or None
+        The video height as an integer (e.g. ``1080``), or ``None`` if
+        unavailable or the call fails.
+    """
+    cmd = ["yt-dlp", "--print", "%(height)s", url]
+    if credentials:
+        email, password = credentials
+        cmd.extend(["--username", email, "--password", password])
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    except Exception:
+        return None
+
+    if result.returncode != 0:
+        return None
+
+    raw = result.stdout.strip()
+    if not raw or raw == "NA":
+        return None
+
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
 if __name__ == "__main__":
     url = sys.argv[1] if len(sys.argv) > 1 else input("URL: ")
     meta = fetch_metadata(url)

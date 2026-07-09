@@ -200,5 +200,67 @@ def test_codec_map_entries() -> None:
     assert CODEC_MAP["opus"] == "Opus"
 
 
+# ---------------------------------------------------------------------------
+# fetch_preview_height
+# ---------------------------------------------------------------------------
+
+
+def test_fetch_preview_height_returns_int() -> None:
+    """fetch_preview_height returns the parsed height as int."""
+    from thuis.metadata_fetcher import fetch_preview_height
+
+    with patch("thuis.metadata_fetcher.subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0, stdout="1080\n", stderr="")
+
+        result = fetch_preview_height("https://example.com/video")
+
+        assert result == 1080
+        mock_run.assert_called_once()
+
+
+def test_fetch_preview_height_na_returns_none() -> None:
+    """When yt-dlp returns 'NA' for height, returns None."""
+    from thuis.metadata_fetcher import fetch_preview_height
+
+    with patch("thuis.metadata_fetcher.subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0, stdout="NA\n", stderr="")
+
+        result = fetch_preview_height("https://example.com/video")
+
+        assert result is None
+
+
+def test_fetch_preview_height_failure_returns_none() -> None:
+    """When subprocess fails, returns None."""
+    from thuis.metadata_fetcher import fetch_preview_height
+
+    with patch("thuis.metadata_fetcher.subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="error")
+
+        result = fetch_preview_height("https://example.com/video")
+
+        assert result is None
+
+
+def test_fetch_preview_height_passes_credentials() -> None:
+    """When credentials provided, --username and --password are passed."""
+    from thuis.metadata_fetcher import fetch_preview_height
+
+    with patch("thuis.metadata_fetcher.subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0, stdout="720\n", stderr="")
+
+        result = fetch_preview_height(
+            "https://example.com/video",
+            credentials=("user@test.com", "secret"),
+        )
+
+        assert result == 720
+        args_list = mock_run.call_args[0][0]
+        assert "--username" in args_list
+        assert "user@test.com" in args_list
+        assert "--password" in args_list
+        assert "secret" in args_list
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -248,6 +248,7 @@ class TestRetrySkip:
              patch("thuis.main.patch_ytdlp_if_needed"), \
              patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
              patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
+             patch("thuis.main.metadata_fetcher.fetch_preview_height", return_value=None), \
              patch("thuis.main.classifier.classify") as mock_classify, \
              patch("thuis.main.scene_namer.build_tv_filename") as mock_build, \
              patch("thuis.main.os.access", return_value=True), \
@@ -288,6 +289,7 @@ class TestRetrySkip:
              patch("thuis.main.patch_ytdlp_if_needed"), \
              patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
              patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
+             patch("thuis.main.metadata_fetcher.fetch_preview_height", return_value=None), \
              patch("thuis.main.classifier.classify") as mock_classify, \
              patch("thuis.main.scene_namer.build_tv_filename") as mock_build, \
              patch("thuis.main.os.access", return_value=True), \
@@ -319,6 +321,7 @@ class TestRetrySkip:
              patch("thuis.main.patch_ytdlp_if_needed"), \
              patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
              patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
+             patch("thuis.main.metadata_fetcher.fetch_preview_height", return_value=None), \
              patch("thuis.main.classifier.classify") as mock_classify, \
              patch("thuis.main.scene_namer.build_tv_filename") as mock_build, \
              patch("thuis.main.os.access", return_value=True), \
