@@ -119,6 +119,25 @@ except ImportError:
 DEFAULT_EMAIL = "kuxelu@ipdeer.com"
 DEFAULT_PASSWORD = "Els123456"
 
+# Valid video resolutions for --profile validation
+VALIDATIONS = [720, 1080, 1440, 2160]
+
+
+def normalize_resolution(res: int | str) -> str:
+    """Normalize a resolution value to a string ending with 'p'.
+
+    Accepts int (1080), str int ("1080"), or str with 'p' ("1080p")
+    and returns the canonical form (e.g. ``"1080p"``).
+
+    Args:
+        res: Resolution value as int or str.
+
+    Returns:
+        Canonical resolution string ending with 'p'.
+    """
+    res_str = str(res).lower().rstrip("p")
+    return f"{res_str}p"
+
 
 def canonical_slug(title: str) -> str:
     """Convert a show title to the VRT MAX canonical slug.
@@ -376,13 +395,34 @@ def patch_ytdlp_if_needed():
     pass
 
 
-def build_yt_dlp_args(urls, dry_run=False, output_dir=Path("media"), output_template=None, email=None, password=None):
-    """Build yt-dlp argument list."""
+def build_yt_dlp_args(urls, dry_run=False, output_dir=Path("media"), output_template=None, email=None, password=None, resolution=None):
+    """Build yt-dlp argument list.
+
+    Args:
+        urls: List of URLs to download.
+        dry_run: If True, add --simulate flag.
+        output_dir: Directory to save files.
+        output_template: Output filename template.
+        email: VRT MAX email.
+        password: VRT MAX password.
+        resolution: Optional video height (e.g. ``"1080p"``). When set,
+            format string becomes ``bestvideo[height<=N]+bestaudio``,
+            otherwise defaults to ``bestvideo+bestaudio``.
+    """
     args = []
     args.extend(get_yt_dlp_cmd())
     # Common options: best video+audio, merge to mp4, no warnings, no color
+    if resolution:
+        height_match = re.search(r"\d+", str(resolution))
+        height = int(height_match.group()) if height_match else None
+        if height:
+            fmt = f"bestvideo[height<={height}]+bestaudio"
+        else:
+            fmt = "bestvideo+bestaudio"
+    else:
+        fmt = "bestvideo+bestaudio"
     args += [
-        "-f", "bestvideo+bestaudio",
+        "-f", fmt,
         "--merge-output-format", "mp4",
         "--no-warnings",
         "--no-color",
@@ -767,12 +807,26 @@ def main():
     parser.add_argument("urls", nargs="*", help="VRT MAX URL(s) to download")
     parser.add_argument("--file", type=Path, help="Path to a file containing URLs (one per line)")
     parser.add_argument("--dry-run", action="store_true", help="Simulate download without downloading")
+
+    parser.add_argument("--profile", "-p", type=int, help="Specify desired video resolution (e.g., 1080).")
+    parser.add_argument("--retry", action="store_true", help="If set, skip download when output file already exists.")
     parser.add_argument("--output-dir", type=Path, default=Path("media"), help="Directory to save downloaded files (default: media)")
     parser.add_argument("--max-episodes", type=int, default=None, help="Maximum number of episodes to process per season URL")
     parser.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")
     args = parser.parse_args()
 
     logger = setup_logging(args.log_level)
+
+    # Validate and normalise resolution profile
+    if args.profile is not None:
+        if args.profile not in VALIDATIONS:
+            logger.warning(
+                "Resolution %d not in standard resolutions %s; proceeding anyway",
+                args.profile, VALIDATIONS,
+            )
+        args.profile_str = normalize_resolution(args.profile)
+    else:
+        args.profile_str = None
 
     # Verify output directory permission before proceeding
     if not args.output_dir.exists():
@@ -945,8 +999,19 @@ def main():
                 logger.warning("Failed to process %s: %s (%s)", url, e, type(e).__name__)
                 continue
             
+            # Retry check: skip if output file already exists
+            if args.retry:
+                output_file = Path(args.output_dir) / scene_template
+                if output_file.exists():
+                    logger.info("Skipping %s: output file already exists", url)
+                    continue
+
             # Build yt-dlp arguments for this URL
-            url_args_list = build_yt_dlp_args([url], dry_run=args.dry_run, output_dir=args.output_dir, output_template=scene_template, email=email, password=password)
+            url_args_list = build_yt_dlp_args(
+                [url], dry_run=args.dry_run, output_dir=args.output_dir,
+                output_template=scene_template, email=email, password=password,
+                resolution=args.profile_str,
+            )
             
             # Print status message
             if args.dry_run:
