@@ -1064,7 +1064,7 @@ def main():
             # even when the scene template is "%(title)s.%(ext)s".
             if content_type == classifier.ContentType.TV:
                 show_norm = scene_namer.normalize_show_name(show_name)
-                res_part = f".{resolution}p" if resolution else ".*"
+                res_part = f".{resolution}p" if resolution else ""
                 search = f"{show_norm}.S{season_num:02d}E{episode_num:02d}{res_part}*.mp4"
                 print(f"[DEBUG] Glob: {search}", flush=True)
                 matches = list(args.output_dir.glob(search))
