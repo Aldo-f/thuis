@@ -1,0 +1,263 @@
+src/thuis/main.py
+  s_72502a43a3ca25::t_ecd3c8aa78b500 847
+  s_1de568f9273b2e::t_363bc880933d10 962
+  s_1de568f9273b2e::t_2f28d96b6ac740 1037,1055
+  s_872f9df0273ebb::t_7596d28f717026 1039-1053,1069
+  s_72502a43a3ca25::t_f61396f54766c1 850,853
+  s_1dcf5f1586cfec::t_56e31613d6186a 1067-1068
+  s_f98762b26aacf9::t_c5fe706052226d 803-822,824-833
+  s_f98762b26aacf9::t_155eff1e156aa2 848-849,851
+  s_a6589db9fa3c6e::t_18565d55186812 944,946
+  s_b2d52caef96724::t_469ac89703bfac 823
+  s_1de568f9273b2e::t_f39e2f39646064 1038,1054
+  s_72502a43a3ca25::t_5152709a1ce747 852
+  s_34c5754fb32672::t_6b0c298e0ad61b 1061-1066,1070-1076,1078
+tests/thuis/test_codec_detector.py
+  s_00aff545b6964d::t_8b9f85cfd22fd7 1-188
+tests/test_season_expand.py
+  s_fd2bd1cef2b714::t_8c4fca0c106ef8 75
+  s_fd2bd1cef2b714::t_e221c56cea2cd9 76
+src/thuis/show_resolver.py
+  s_f98762b26aacf9::t_b58f20700b583c 100-108,110-113
+  s_d43a63051a03f5::t_f5b61f8c8040de 1-16,20,23-99,109,114-157
+  s_f98762b26aacf9::t_f57ffc17a50343 17-19,21-22
+tests/test_edge_cases.py
+  s_8f40bc97f0033d::t_1afe1e3c6e0a23 668
+  s_8f40bc97f0033d::t_cebff170d5b662 187-188,259,277,433,534,667,846,915
+pyproject.toml
+  s_d08985f18142ff::t_3a51edc936e3b3 7
+tests/test_integration.py
+  s_8f40bc97f0033d::t_9113b330adcc22 66,89,139,159,326-327,348,356,399,426
+  s_8f40bc97f0033d::t_79d759ce96f811 201,221
+thuis.sh
+  s_f05ec7ef6d23bb::t_74321419bee065 33
+  s_f05ec7ef6d23bb::t_079052bef5c650 4-5
+tests/test_ctrl_c_handler.py
+  s_1898d92ff4b344::t_623213d18a2a50 32
+tests/test_poc.py
+  s_8f40bc97f0033d::t_e2f220d5b17c60 30,58,73,101,123,143,152,178,197,242,260,301,319
+  s_b2d52caef96724::t_00646f1df2e7fb 71
+tests/thuis/test_normalize.py
+  s_00aff545b6964d::t_2254a65166b9fd 1-477
+src/thuis/codec_detector.py
+  s_61844be2bcb60c::t_eee6a817fb881c 1-64
+tests/scene_namer_test.py
+  s_8f40bc97f0033d::t_c668e50723be47 86,93,107,119,137,142,147,163
+  s_8f40bc97f0033d::t_5a844543be971f 100,126
+src/thuis/scene_namer.py
+  s_fd2bd1cef2b714::t_ae15d5ac5ea2d6 210
+  s_fd2bd1cef2b714::t_19de89e9d5233f 135-137
+  s_fd2bd1cef2b714::t_8a184e836f0cd8 4
+  s_bc8396163652eb::t_f41e5d2fa74952 21-29
+  s_fd2bd1cef2b714::t_7592fc7df268df 121
+  s_fd2bd1cef2b714::t_83964634966e54 93,97,99
+  s_fd2bd1cef2b714::t_2b3932bdf5469d 223-225
+  s_fd2bd1cef2b714::t_154e1a0e583588 182
+  s_fd2bd1cef2b714::t_b170e882ec3935 194-196
+  s_fd2bd1cef2b714::t_d4224b69578c6d 166-167,169
+  s_fd2bd1cef2b714::t_b9e925b73889e7 151
+tests/thuis/test_resolution_and_retry.py
+  s_1898d92ff4b344::t_99dcd3313bc349 257,264-265,277
+  s_1898d92ff4b344::t_47cd5d2eef9355 17
+src/thuis/metadata_fetcher.py
+  s_872f9df0273ebb::t_830efb113cd5c8 98,165
+website/docs/usage.md
+  s_1c5d376a13c11c::t_031c2b4b7a8c5b 113-155
+src/thuis/filename_parser.py
+  s_6dedbeadf6e8ba::t_7ab772161a6322 1-46,48-192
+  s_6dedbeadf6e8ba::t_a6d464bd4f9b57 47
+tests/thuis/test_filename_parser.py
+  s_00aff545b6964d::t_7f7496c56b3cca 117,121,123-124,128-129
+  s_00aff545b6964d::t_599f685b42ee15 201-205,207-208,210
+  s_00aff545b6964d::t_a6408323a4105b 1-116,122,130-200,206,209,211-296
+  s_00aff545b6964d::t_e3f7fef3edbcd6 118-120,125-127
+README.md
+  s_a0322e40435426::t_8fc99496bc333d 106-143
+src/thuis/normalizer.py
+  s_db73035befab3b::t_4da418906e3e12 1-65,67-216
+  s_6ceec8daec88f7::t_e5925c377fd098 66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "5f3886499b7bb65693a88a78a14e1f345723e56e",
+  "prompts": {},
+  "sessions": {
+    "s_00aff545b6964d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0b41e4200ffe4PxXF1NFJRo3vm",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_1898d92ff4b344": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0aaf24f87ffeC9n6eKLX7ojE70",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_1c5d376a13c11c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0aaf24f57ffeRr6lhuP8KVXa87",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_1dcf5f1586cfec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0afad2c4cffeXCP7GRJXo7mutp",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_1de568f9273b2e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0b448235bffeoU0Gc1qOe43zz7",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_34c5754fb32672": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0affc08ebffeKz0QKxv98kZ4Br",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_61844be2bcb60c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0b422cbe6ffeK8Bn1xaRUk7wo6",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_6ceec8daec88f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ad961acaffe4rEPMW0VOwCQIr",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_6dedbeadf6e8ba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0b4304831ffecxi07lX4LuMD7E",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_72502a43a3ca25": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0b427138fffeZazeom185FiIF7",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_872f9df0273ebb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0af6c416fffesI190DYho59gAu",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_8f40bc97f0033d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0b450b051ffeXXHyyecA5XYx4c",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_a0322e40435426": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0aaf24f03ffeUiCs8IpWx0qJC5",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_a6589db9fa3c6e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0af775b8fffe4itXYv1Dp2CJpi",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_b2d52caef96724": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0ab10a3dfffesZnQRaYh4QBl05",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_bc8396163652eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0b3ce85f2ffeInfmUIwcwz5oFD",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_d08985f18142ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0aadea3dbffe6rr8xCOtD7AoBL",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_d43a63051a03f5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0b42998cbffejtE0MQlNKMWd39",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_db73035befab3b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0b421e68cffesr2pFFSuMQqaNL",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_f05ec7ef6d23bb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0b0455742ffeblmyV36Q9jBEfp",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_f98762b26aacf9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0beb54258ffeG9iWrcgJ9t75yh",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    },
+    "s_fd2bd1cef2b714": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_0b4540826ffeo6iugOsvu1fzrS",
+        "model": "unknown"
+      },
+      "human_author": "Aldo <aldo.fieuw@gmail.com>"
+    }
+  }
+}
