@@ -83,28 +83,28 @@ class TestBuildTvFilename:
         result = build_tv_filename(
             "Thuis", 31, 6108, "1080", "mp4a", "avc1"
         )
-        assert result == "Thuis.S31E6108.WEB-DL.1080p.AAC.x264.mp4"
+        assert result == "Thuis.S31E6108.1080p.WEB-DL.AAC.x264.mp4"
 
     def test_high_episode_no_zeropad(self):
         """Episode > 99 uses variable width (no zero-padding)."""
         result = build_tv_filename(
             "Thuis", 1, 6108, "1080", "mp4a", "avc1"
         )
-        assert result == "Thuis.S01E6108.WEB-DL.1080p.AAC.x264.mp4"
+        assert result == "Thuis.S01E6108.1080p.WEB-DL.AAC.x264.mp4"
 
     def test_two_digit_episode(self):
         """Episode 01-99 uses zero-padded 2-digit format."""
         result = build_tv_filename(
             "Thuis", 1, 12, "720", "mp4a", "avc1"
         )
-        assert result == "Thuis.S01E12.WEB-DL.720p.AAC.x264.mp4"
+        assert result == "Thuis.S01E12.720p.WEB-DL.AAC.x264.mp4"
 
     def test_episode_zero(self):
         """Episode 0 becomes E00."""
         result = build_tv_filename(
             "Thuis", 1, 0, "1080", "mp4a", "avc1"
         )
-        assert result == "Thuis.S01E00.WEB-DL.1080p.AAC.x264.mp4"
+        assert result == "Thuis.S01E00.1080p.WEB-DL.AAC.x264.mp4"
 
     def test_no_codecs(self):
         """None codec tags are skipped entirely."""
@@ -116,14 +116,14 @@ class TestBuildTvFilename:
         result = build_tv_filename(
             "Thuis", 2, 3, resolution="1080", audio_codec="mp4a"
         )
-        assert result == "Thuis.S02E03.WEB-DL.1080p.AAC.mp4"
+        assert result == "Thuis.S02E03.1080p.WEB-DL.AAC.mp4"
 
     def test_long_show_name_gets_normalized(self):
         """Show name goes through normalize_show_name."""
         result = build_tv_filename(
             "Law & Order: Special Victims Unit", 1, 1, "720"
         )
-        assert result == "Law.And.Order.Special.Victims.Unit.S01E01.WEB-DL.720p.mp4"
+        assert result == "Law.And.Order.Special.Victims.Unit.S01E01.720p.WEB-DL.mp4"
 
 
 # ---------------------------------------------------------------------------
@@ -134,17 +134,17 @@ class TestBuildMovieFilename:
     def test_standard_movie(self):
         """Movie filename with all tags including year."""
         result = build_movie_filename("The Matrix", 1999, "1080", "mp4a", "avc1")
-        assert result == "The.Matrix.1999.WEB-DL.1080p.AAC.x264.mp4"
+        assert result == "The.Matrix.1999.1080p.WEB-DL.AAC.x264.mp4"
 
     def test_movie_without_year(self):
         """Movie filename omits year tag when year is None."""
         result = build_movie_filename("The Matrix", None, "1080")
-        assert result == "The.Matrix.WEB-DL.1080p.mp4"
+        assert result == "The.Matrix.1080p.WEB-DL.mp4"
 
     def test_movie_with_year_zero(self):
         """Movie filename omits year tag when year is 0."""
         result = build_movie_filename("Unknown", 0, "1080")
-        assert result == "Unknown.WEB-DL.1080p.mp4"
+        assert result == "Unknown.1080p.WEB-DL.mp4"
 
     def test_movie_no_tags(self):
         """Movie filename with no optional tags at all."""
@@ -160,7 +160,7 @@ class TestBuildSpecialFilename:
     def test_standard_special(self):
         """Special filename with all tags."""
         result = build_special_filename("Thuis", "1080", "mp4a", "avc1")
-        assert result == "Thuis.Special.WEB-DL.1080p.AAC.x264.mp4"
+        assert result == "Thuis.Special.1080p.WEB-DL.AAC.x264.mp4"
 
     def test_special_no_tags(self):
         """Special filename without any optional tags."""

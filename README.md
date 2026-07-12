@@ -103,6 +103,44 @@ Then run:
 ./thuis.sh --output-dir ~/Videos https://www.vrt.be/vrtmax/a/show/...
 ```
 
+### Video resolution profile
+
+```bash
+./thuis.sh --profile 720 https://www.vrt.be/vrtmax/a/show/...
+```
+
+Limits the video resolution to a specific value (e.g. 720, 1080). The tool selects the best available stream at or below that resolution.
+
+```bash
+./thuis.sh -p 1080 https://www.vrt.be/vrtmax/a/show/...
+```
+
+The short form `-p` works the same way.
+
+### Retry mode
+
+```bash
+./thuis.sh --retry https://www.vrt.be/vrtmax/a/show/...
+```
+
+Skips URLs whose output file already exists. Useful for resuming an interrupted batch without re-downloading files that already finished.
+
+### Normalize video filenames
+
+Renames downloaded video files to a scene-compatible format and optionally cleans up leftover files.
+
+```bash
+python -m thuis.main normalize /path/to/media --dry-run
+python -m thuis.main normalize /path/to/media --cleanup
+```
+
+Options:
+
+- `--dry-run` -- Show what would be renamed without making changes.
+- `--cleanup` -- Remove duplicate files (with `_1` suffixes) and stale `.part` files.
+
+The `normalize` subcommand runs separately from downloads. Point it at a directory of already-downloaded files.
+
 ### Download a full season
 
 Pass a season URL to download every episode in that season:

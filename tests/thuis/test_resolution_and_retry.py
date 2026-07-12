@@ -14,6 +14,7 @@ from unittest.mock import patch, MagicMock
 from pathlib import Path
 
 import pytest
+from thuis import classifier
 from thuis.main import normalize_resolution, VALIDATIONS, build_yt_dlp_args
 
 
@@ -253,14 +254,15 @@ class TestRetrySkip:
              patch("thuis.main.scene_namer.build_tv_filename") as mock_build, \
              patch("thuis.main.os.access", return_value=True), \
              patch("thuis.main.Path.exists", return_value=True) as mock_exists, \
+             patch("thuis.main.Path.glob", return_value=[Path("Thuisow.S01E01.mp4")]) as mock_glob, \
              patch("subprocess.run") as mock_run:
 
             mock_parse.return_value = MagicMock(
                 show_slug="thuisow", season="1", episode="1",
                 path="/vrt/thuisow/1/thuisow-s01e01/",
             )
-            mock_fetch.return_value = {}
-            mock_classify.return_value = None
+            mock_fetch.return_value = {"series": "Test Show"}
+            mock_classify.return_value = classifier.ContentType.TV
             mock_build.return_value = "Thuisow.S01E01.mp4"
             mock_run.return_value = MagicMock(returncode=0)
 
@@ -272,7 +274,7 @@ class TestRetrySkip:
 
             # Verify the skip log message
             skip_messages = [
-                r.message for r in caplog.records if "output file already exists" in r.message
+                r.message for r in caplog.records if "bestaat al als" in r.message
             ]
             assert any(test_url in m for m in skip_messages), (
                 f"Expected skip log for {test_url}, got: {skip_messages}"

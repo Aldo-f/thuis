@@ -29,7 +29,7 @@ def test_ctrl_c_handler():
     )
 
     # Give the script time to start and install signal handler
-    time.sleep(1)
+    time.sleep(2)
 
     # Send SIGINT (Ctrl+C) immediately without waiting
     proc.send_signal(signal.SIGINT)

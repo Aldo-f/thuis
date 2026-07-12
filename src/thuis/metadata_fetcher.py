@@ -95,7 +95,7 @@ def fetch_metadata(
         If the subprocess fails for any reason an **empty dict** is
         returned (no exception is raised).
     """
-    cmd = ["yt-dlp", "--print", _PRINT_FMT, url]
+    cmd = [sys.executable, "-m", "yt_dlp", "--print", _PRINT_FMT, url]
 
     if credentials:
         email, password = credentials
@@ -162,7 +162,7 @@ def fetch_preview_height(
         The video height as an integer (e.g. ``1080``), or ``None`` if
         unavailable or the call fails.
     """
-    cmd = ["yt-dlp", "--print", "%(height)s", url]
+    cmd = [sys.executable, "-m", "yt_dlp", "--print", "%(height)s", url]
     if credentials:
         email, password = credentials
         cmd.extend(["--username", email, "--password", password])

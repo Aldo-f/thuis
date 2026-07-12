@@ -72,5 +72,5 @@ def test_season_expand_dry_run(capsys):
             sys.argv = original_argv
 
     captured = capsys.readouterr()
-    assert 'Fc.De.Kampioenen.S01E01.WEB-DL' in captured.out
-    assert 'Fc.De.Kampioenen.S01E02.WEB-DL' in captured.out
+    assert 'Fc.De.Kampioenen.S01E01.1080p.WEB-DL' in captured.out
+    assert 'Fc.De.Kampioenen.S01E02.1080p.WEB-DL' in captured.out

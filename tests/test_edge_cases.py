@@ -184,8 +184,8 @@ def test_graphql_invalid_identifier_with_hash_is_skipped(monkeypatch):
         ]
 
         mock_build.side_effect = [
-            "Show.A.S01E01.WEB-DL.1080p.AAC.x264.mp4",
-            "Show.A.S01E02.WEB-DL.1080p.AAC.x264.mp4",
+            "Show.A.S01E01.1080p.WEB-DL.AAC.x264.mp4",
+            "Show.A.S01E02.1080p.WEB-DL.AAC.x264.mp4",
         ]
 
         original_argv = sys.argv
@@ -256,7 +256,7 @@ def test_double_slashes_still_process_successfully(monkeypatch):
             "title": "Test Episode"
         }
         mock_classify.return_value = ContentType.TV
-        mock_build.return_value = "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build.return_value = "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
 
         test_url = "https://www.vrt.be//vrtmax//a-z//test-show//1//test-show-s01e01//"
         original_argv = sys.argv
@@ -274,7 +274,7 @@ def test_double_slashes_still_process_successfully(monkeypatch):
         idx_o = args.index("-o")
         output_arg = args[idx_o + 1]
         # Scene template should be in output, NOT fallback
-        assert "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4" in output_arg, \
+        assert "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4" in output_arg, \
             f"Expected scene template in -o arg, got: {output_arg}"
         assert "%(title)s.%(ext)s" not in output_arg, \
             "Fallback template should NOT be used when parsing succeeds"
@@ -430,7 +430,7 @@ def test_high_episode_number_in_pipeline(monkeypatch):
             "title": "Episode 1000"
         }
         mock_classify.return_value = ContentType.TV
-        mock_build.return_value = "Long.Running.Show.S01E1000.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build.return_value = "Long.Running.Show.S01E1000.1080p.WEB-DL.AAC.x264.mp4"
 
         test_url = "https://www.vrt.be/vrtmax/a-z/long-running-show/1/long-running-show-s01e1000/"
         original_argv = sys.argv
@@ -531,7 +531,7 @@ def test_ytdlp_subprocess_nonzero_exit(monkeypatch, capsys):
             "title": "Test Episode"
         }
         mock_classify.return_value = ContentType.TV
-        mock_build.return_value = "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build.return_value = "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
 
         test_url = "https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s01e01/"
         original_argv = sys.argv
@@ -664,8 +664,8 @@ def test_error_isolation_mixed_good_and_bad_urls(monkeypatch):
 
         # Both good URLs get scene names
         mock_build.side_effect = [
-            "Good.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4",
-            "Another.Show.S02E03.WEB-DL.720p.AAC.x264.mp4",
+            "Good.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4",
+            "Another.Show.S02E03.720p.WEB-DL.AAC.x264.mp4",
         ]
 
         original_argv = sys.argv
@@ -843,7 +843,7 @@ def test_dry_run_with_good_url_shows_scene_name(monkeypatch, capsys):
             "title": "Good Episode"
         }
         mock_classify.return_value = ContentType.TV
-        mock_build.return_value = "Good.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build.return_value = "Good.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
 
         test_url = "https://www.vrt.be/vrtmax/a-z/good-show/1/good-show-s01e01/"
         original_argv = sys.argv
@@ -912,7 +912,7 @@ def test_dry_run_with_mixed_urls(monkeypatch, capsys):
         ]
 
         mock_build.side_effect = [
-            "Good.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4",
+            "Good.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4",
         ]
 
         original_argv = sys.argv

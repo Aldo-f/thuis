@@ -800,6 +800,37 @@ def setup_logging(level: str | None = None) -> logging.Logger:
     return logger
 
 
+_NORMALIZE_HELP = """\
+usage: thuis normalize [-h] [--dry-run] [--cleanup] directory
+
+Normaliseer videobestanden naar scene-formaat.
+
+positional arguments:
+  directory   Directory met videobestanden
+
+options:
+  -h, --help  Toon deze hulp en sluit af
+  --dry-run   Toon wat er zou gebeuren zonder wijzigingen
+  --cleanup   Verwijder duplicates (_1) en stale .part files
+"""
+
+
+def _run_normalize_from_argv(argv: list[str]) -> None:
+    """Parse normalize arguments from *argv* and execute."""
+    if not argv or argv[0] in ("-h", "--help"):
+        print(_NORMALIZE_HELP)
+        return
+    from thuis.normalizer import run_normalize
+    from pathlib import Path
+    directory = Path(argv[0])
+    if not directory.is_dir():
+        print(f"Fout: directory bestaat niet: {directory}")
+        sys.exit(1)
+    dry_run = "--dry-run" in argv
+    cleanup = "--cleanup" in argv
+    run_normalize(directory, dry_run=dry_run, cleanup=cleanup)
+
+
 def main():
     signal.signal(signal.SIGINT, lambda sig, frame: sys.exit("\nInterrupted by user"))
     import argparse
@@ -813,6 +844,13 @@ def main():
     parser.add_argument("--output-dir", type=Path, default=Path("media"), help="Directory to save downloaded files (default: media)")
     parser.add_argument("--max-episodes", type=int, default=None, help="Maximum number of episodes to process per season URL")
     parser.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")
+
+    # Handle normalize subcommand — argparse nargs="*" on urls conflicts
+    # with subparsers, so we intercept argv manually.
+    if len(sys.argv) > 1 and sys.argv[1] == "normalize":
+        _run_normalize_from_argv(sys.argv[2:])
+        return
+
     args = parser.parse_args()
 
     logger = setup_logging(args.log_level)
@@ -903,7 +941,9 @@ def main():
 # Process each URL individually with scene naming pipeline
     results = []
     try:
+        total = len(unique_urls)
         for idx, url in enumerate(unique_urls):
+            print(f"[{idx+1}/{total}] Verwerken: {url}", flush=True)
             scene_template = None
             fallback_used = False
             
@@ -919,6 +959,7 @@ def main():
                 content_type = classifier.classify(vrt_info, metadata)
                 
                 # Step 4: Build scene filename based on content type
+                resolution = audio_codec = video_codec = None
                 if content_type == classifier.ContentType.TV:
                     # Get metadata for TV show
                     show_name = metadata.get('series') or vrt_info.show_slug.replace('-', ' ').title()
@@ -993,17 +1034,48 @@ def main():
                     else:
                         scene_template = "%(title)s.%(ext)s"
                     fallback_used = True
-                    
+
+                if not any([resolution, audio_codec, video_codec]):
+                    # Metadata failed — use scene template WITHOUT codecs
+                    # instead of falling back to %(title)s.%(ext)s.
+                    # This gives scene-compatible naming for dedup matching.
+                    if content_type == classifier.ContentType.TV:
+                        scene_template = scene_namer.build_tv_filename(
+                            show_name, season_num, episode_num,
+                            None, None, None)
+                    elif content_type == classifier.ContentType.MOVIE:
+                        scene_template = scene_namer.build_movie_filename(
+                            title, None, None, None, None)
+                    elif content_type == classifier.ContentType.SPECIAL:
+                        scene_template = scene_namer.build_special_filename(
+                            show_name, None, None, None)
+                    else:
+                        scene_template = "%(title)s.%(ext)s"
+                    fallback_used = True
+
             except Exception as e:
                 # If any step fails, log and skip — don't run yt-dlp on a known-bad URL
                 logger.warning("Failed to process %s: %s (%s)", url, e, type(e).__name__)
                 continue
             
-            # Retry check: skip if output file already exists
-            if args.retry:
-                output_file = Path(args.output_dir) / scene_template
+            # Pre-download dedup: skip if the episode already exists
+            # in the output directory in scene-normalized form.
+            # Uses glob matching on show/season/episode so it works
+            # even when the scene template is "%(title)s.%(ext)s".
+            if content_type == classifier.ContentType.TV:
+                show_norm = scene_namer.normalize_show_name(show_name)
+                res_part = f".{resolution}p" if resolution else ".*"
+                search = f"{show_norm}.S{season_num:02d}E{episode_num:02d}{res_part}*.mp4"
+                print(f"[DEBUG] Glob: {search}", flush=True)
+                matches = list(args.output_dir.glob(search))
+                if matches:
+                    names = ", ".join(m.name for m in matches)
+                    logger.info("Overgeslagen %s: bestaat al als %s", url, names)
+                    continue
+            elif scene_template and "%" not in scene_template:
+                output_file = args.output_dir / scene_template
                 if output_file.exists():
-                    logger.info("Skipping %s: output file already exists", url)
+                    logger.info("Overgeslagen %s: %s bestaat al", url, scene_template)
                     continue
 
             # Build yt-dlp arguments for this URL

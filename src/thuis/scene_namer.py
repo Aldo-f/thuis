@@ -1,7 +1,7 @@
 """Scene-compliant filename builder for media files.
 
 Builds filenames following scene release naming conventions:
-  Title.of.show.S00E00.WEB-DL.1080p.AAC.x264.mp4
+  Title.of.show.S00E00.1080p.WEB-DL.AAC.x264.mp4
 """
 
 import re
@@ -18,6 +18,15 @@ CODEC_MAP: dict[str, str] = {
     "ec-3": "EAC3",
     "opus": "Opus",
     "dts": "DTS",
+    "h264": "x264",
+    "hevc": "x265",
+    "vp9": "VP9",
+    "av1": "AV1",
+    "aac": "AAC",
+    "mp3": "MP3",
+    "ac3": "AC3",
+    "eac3": "EAC3",
+    "flac": "FLAC",
 }
 
 
@@ -81,18 +90,15 @@ def _format_episode(episode: int) -> str:
     return f"E{episode:02d}"
 
 
-def _tags_suffix(
-    resolution: Optional[str],
+def _codec_tags(
     audio_codec: Optional[str],
     video_codec: Optional[str],
 ) -> str:
-    """Build the dotted tags suffix (e.g. ``.1080p.AAC.x264``).
+    """Build the dotted codec suffix after ``WEB-DL`` (e.g. ``.AAC.x264``).
 
-    Returns empty string when all inputs are None/empty.
+    Returns empty string when both inputs are None/empty.
     """
     parts: list[str] = []
-    if resolution:
-        parts.append(f"{resolution}p")
     if audio_codec:
         parts.append(lookup_codec(audio_codec))
     if video_codec:
@@ -112,7 +118,7 @@ def build_tv_filename(
 
     Format (with all tags present)::
 
-        Show.Name.S02E03.WEB-DL.1080p.AAC.x264.mp4
+        Show.Name.S02E03.1080p.WEB-DL.AAC.x264.mp4
 
     Args:
         show_name: Show title (will be normalised).
@@ -126,8 +132,9 @@ def build_tv_filename(
         Scene-style filename string.
     """
     show = normalize_show_name(show_name)
-    tags = _tags_suffix(resolution, audio_codec, video_codec)
-    return f"{show}.S{season:02d}{_format_episode(episode)}.WEB-DL{tags}.mp4"
+    res = f".{resolution}p" if resolution else ""
+    codecs = _codec_tags(audio_codec, video_codec)
+    return f"{show}.S{season:02d}{_format_episode(episode)}{res}.WEB-DL{codecs}.mp4"
 
 
 def build_movie_filename(
@@ -141,7 +148,7 @@ def build_movie_filename(
 
     Format (with all tags present)::
 
-        Movie.Title.1999.WEB-DL.1080p.AAC.x264.mp4
+        Movie.Title.1999.1080p.WEB-DL.AAC.x264.mp4
 
     The ``year`` tag is omitted when *year* is ``None`` or ``0``.
 
@@ -156,9 +163,10 @@ def build_movie_filename(
         Scene-style filename string.
     """
     show = normalize_show_name(title)
-    tags = _tags_suffix(resolution, audio_codec, video_codec)
+    res = f".{resolution}p" if resolution else ""
+    codecs = _codec_tags(audio_codec, video_codec)
     year_str = f".{year}" if year else ""
-    return f"{show}{year_str}.WEB-DL{tags}.mp4"
+    return f"{show}{year_str}{res}.WEB-DL{codecs}.mp4"
 
 
 def build_special_filename(
@@ -171,7 +179,7 @@ def build_special_filename(
 
     Format (with all tags present)::
 
-        Show.Name.Special.WEB-DL.1080p.AAC.x264.mp4
+        Show.Name.Special.1080p.WEB-DL.AAC.x264.mp4
 
     Args:
         show_name: Show title (will be normalised).
@@ -183,8 +191,9 @@ def build_special_filename(
         Scene-style filename string.
     """
     show = normalize_show_name(show_name)
-    tags = _tags_suffix(resolution, audio_codec, video_codec)
-    return f"{show}.Special.WEB-DL{tags}.mp4"
+    res = f".{resolution}p" if resolution else ""
+    codecs = _codec_tags(audio_codec, video_codec)
+    return f"{show}.Special{res}.WEB-DL{codecs}.mp4"
 
 
 def build_dated_tv_filename(
@@ -198,7 +207,7 @@ def build_dated_tv_filename(
 
     Format (with all tags present)::
 
-        Show.Name.D20260706.WEB-DL.1080p.AAC.x264.mp4
+        Show.Name.D20260706.1080p.WEB-DL.AAC.x264.mp4
 
     Args:
         show_name: Show title (will be normalised).
@@ -211,5 +220,6 @@ def build_dated_tv_filename(
         Scene-style filename string.
     """
     show = normalize_show_name(show_name)
-    tags = _tags_suffix(resolution, audio_codec, video_codec)
-    return f"{show}.D{date_str}.WEB-DL{tags}.mp4"
+    res = f".{resolution}p" if resolution else ""
+    codecs = _codec_tags(audio_codec, video_codec)
+    return f"{show}.D{date_str}{res}.WEB-DL{codecs}.mp4"

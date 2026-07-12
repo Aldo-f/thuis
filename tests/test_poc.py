@@ -27,7 +27,7 @@ def test_poc_uses_default_credentials_when_env_missing(monkeypatch):
         # Import ContentType to properly mock the enum return value
         from thuis.classifier import ContentType
         mock_classify.return_value = ContentType.TV
-        mock_build.return_value = "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build.return_value = "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
         test_url = "https://example.com/video"
         original_argv = sys.argv
         try:
@@ -55,7 +55,7 @@ def test_poc_uses_default_credentials_when_env_missing(monkeypatch):
         output_arg = called_args[idx_o + 1]
         assert "%(title)s" not in output_arg
         # Check that it contains a scene-like pattern (from our mock)
-        assert "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4" in output_arg
+        assert "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4" in output_arg
 
 
 def test_poc_uses_provided_credentials(monkeypatch):
@@ -68,8 +68,9 @@ def test_poc_uses_provided_credentials(monkeypatch):
          patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
          patch("thuis.main.classifier.classify") as mock_classify, \
          patch("thuis.main.scene_namer.build_tv_filename") as mock_build:
+        mock_fetch.return_value = {"series": "Test Show", "season": 1, "episode": 1}
         mock_run.return_value = MagicMock(returncode=0)
-        mock_build.return_value = "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build.return_value = "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
         # Import ContentType to properly mock the enum return value
         from thuis.classifier import ContentType
         mock_classify.return_value = ContentType.TV
@@ -97,7 +98,7 @@ def test_poc_uses_provided_credentials(monkeypatch):
         output_arg = called_args[idx_o + 1]
         assert "%(title)s" not in output_arg
         # Check that it contains a scene-like pattern (from our mock)
-        assert "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4" in output_arg
+        assert "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4" in output_arg
 
 
 def test_poc_handles_file_input(monkeypatch, tmp_path):
@@ -119,7 +120,7 @@ def test_poc_handles_file_input(monkeypatch, tmp_path):
         # Import ContentType to properly mock the enum return value
         from thuis.classifier import ContentType
         mock_classify.return_value = ContentType.TV
-        mock_build.return_value = "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build.return_value = "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
         original_argv = sys.argv
         try:
             sys.argv = ["poc.py", "--file", str(url_file)]
@@ -139,7 +140,7 @@ def test_poc_handles_file_input(monkeypatch, tmp_path):
         first_output_arg = first_call_args[idx_o + 1]
         assert "%(title)s" not in first_output_arg
         # Check that it contains a scene-like pattern (from our mock)
-        assert "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4" in first_output_arg
+        assert "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4" in first_output_arg
         # Check second call
         second_call_args = mock_run.call_args_list[1][0][0]
         assert "https://example.com/video2" in second_call_args
@@ -148,7 +149,7 @@ def test_poc_handles_file_input(monkeypatch, tmp_path):
         second_output_arg = second_call_args[idx_o + 1]
         assert "%(title)s" not in second_output_arg
         # Check that it contains a scene-like pattern (from our mock)
-        assert "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4" in second_output_arg
+        assert "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4" in second_output_arg
         # Check that credentials are passed in both calls
         for call_args in mock_run.call_args_list:
             args = call_args[0][0]
@@ -174,7 +175,7 @@ def test_poc_dry_run_flag(monkeypatch):
         # Import ContentType to properly mock the enum return value
         from thuis.classifier import ContentType
         mock_classify.return_value = ContentType.TV
-        mock_build.return_value = "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build.return_value = "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
         test_url = "https://example.com/video3"
         original_argv = sys.argv
         try:
@@ -193,7 +194,7 @@ def test_poc_dry_run_flag(monkeypatch):
         output_arg = called_args[idx_o + 1]
         assert "%(title)s" not in output_arg
         # Check that it contains a scene-like pattern (from our mock)
-        assert "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4" in output_arg
+        assert "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4" in output_arg
 
 
 def test_scene_name_appears_in_output(monkeypatch):
@@ -238,7 +239,7 @@ def test_scene_name_appears_in_output(monkeypatch):
         mock_classify.return_value = ContentType.TV
         
         # Mock scene namer to return a predictable scene name
-        mock_build_tv.return_value = "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build_tv.return_value = "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
         
         original_argv = sys.argv
         try:
@@ -256,7 +257,7 @@ def test_scene_name_appears_in_output(monkeypatch):
         idx_o = called_args.index("-o")
         output_arg = called_args[idx_o + 1]
         # Verify that the scene name appears in the output argument
-        assert "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4" in output_arg
+        assert "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4" in output_arg
         # Verify it does NOT contain the old template
         assert "%(title)s" not in output_arg
     
@@ -297,7 +298,7 @@ def test_scene_name_appears_in_output(monkeypatch):
         mock_classify.return_value = ContentType.SPECIAL
         
         # Mock scene namer to return a predictable scene name for specials
-        mock_build_special.return_value = "Test.Show.Special.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build_special.return_value = "Test.Show.Special.1080p.WEB-DL.AAC.x264.mp4"
         
         original_argv = sys.argv
         try:
@@ -315,7 +316,7 @@ def test_scene_name_appears_in_output(monkeypatch):
         idx_o = called_args.index("-o")
         output_arg = called_args[idx_o + 1]
         # Verify that the scene name appears in the output argument
-        assert "Test.Show.Special.WEB-DL.1080p.AAC.x264.mp4" in output_arg
+        assert "Test.Show.Special.1080p.WEB-DL.AAC.x264.mp4" in output_arg
         # Verify it does NOT contain the old template
         assert "%(title)s" not in output_arg
 

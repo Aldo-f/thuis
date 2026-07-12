@@ -63,7 +63,7 @@ def test_integration_tv_url(monkeypatch):
             "title": "Test Show S01E01",
         }
         mock_classify.return_value = ContentType.TV
-        mock_build.return_value = "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build.return_value = "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
 
         test_url = "https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s01a01/"
         original_argv = sys.argv
@@ -86,7 +86,7 @@ def test_integration_tv_url(monkeypatch):
         output_arg = called_args[idx_o + 1]
         assert "%(title)s" not in output_arg, \
             "Should NOT fall back to default template for TV content"
-        assert "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4" in output_arg
+        assert "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4" in output_arg
 
         # Verify URL is passed to yt-dlp
         assert test_url in called_args
@@ -136,7 +136,7 @@ def test_integration_special_url(monkeypatch):
             "title": "Test Show Extra",
         }
         mock_classify.return_value = ContentType.SPECIAL
-        mock_build.return_value = "Test.Show.Special.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build.return_value = "Test.Show.Special.1080p.WEB-DL.AAC.x264.mp4"
 
         test_url = "https://www.vrt.be/vrtmax/a-z/test-show/extra-s/test-show-extra/"
         original_argv = sys.argv
@@ -156,7 +156,7 @@ def test_integration_special_url(monkeypatch):
         output_arg = called_args[idx_o + 1]
         assert "%(title)s" not in output_arg, \
             "Should NOT fall back to default template for special content"
-        assert "Test.Show.Special.WEB-DL.1080p.AAC.x264.mp4" in output_arg
+        assert "Test.Show.Special.1080p.WEB-DL.AAC.x264.mp4" in output_arg
         assert test_url in called_args
 
 
@@ -198,7 +198,7 @@ def test_integration_movie_url(monkeypatch):
             "title": "A Movie Title",
         }
         mock_classify.return_value = ContentType.MOVIE
-        mock_build.return_value = "A.Movie.Title.2023.WEB-DL.2160p.EAC3.x265.mp4"
+        mock_build.return_value = "A.Movie.Title.2023.2160p.WEB-DL.EAC3.x265.mp4"
 
         test_url = "https://www.vrt.be/vrtmax/a-z/a-movie-title/0/"
         original_argv = sys.argv
@@ -218,7 +218,7 @@ def test_integration_movie_url(monkeypatch):
         output_arg = called_args[idx_o + 1]
         assert "%(title)s" not in output_arg, \
             "Should NOT fall back to default template for movie content"
-        assert "A.Movie.Title.2023.WEB-DL.2160p.EAC3.x265.mp4" in output_arg
+        assert "A.Movie.Title.2023.2160p.WEB-DL.EAC3.x265.mp4" in output_arg
         assert test_url in called_args
 
 
@@ -323,8 +323,8 @@ def test_integration_multi_url_batch(monkeypatch):
             },
         ]
         mock_classify.side_effect = [ContentType.TV, ContentType.SPECIAL]
-        mock_build_tv.return_value = "Show.A.S01E01.WEB-DL.1080p.AAC.x264.mp4"
-        mock_build_special.return_value = "Show.B.Special.WEB-DL.720p.AAC.x264.mp4"
+        mock_build_tv.return_value = "Show.A.S01E01.1080p.WEB-DL.AAC.x264.mp4"
+        mock_build_special.return_value = "Show.B.Special.720p.WEB-DL.AAC.x264.mp4"
 
         original_argv = sys.argv
         try:
@@ -345,7 +345,7 @@ def test_integration_multi_url_batch(monkeypatch):
         assert "-o" in first_args
         idx_o1 = first_args.index("-o")
         assert "%(title)s" not in first_args[idx_o1 + 1]
-        assert "Show.A.S01E01.WEB-DL.1080p.AAC.x264.mp4" in first_args[idx_o1 + 1]
+        assert "Show.A.S01E01.1080p.WEB-DL.AAC.x264.mp4" in first_args[idx_o1 + 1]
 
         # --- Second call: Special URL ---
         second_args = mock_run.call_args_list[1][0][0]
@@ -353,7 +353,7 @@ def test_integration_multi_url_batch(monkeypatch):
         assert "-o" in second_args
         idx_o2 = second_args.index("-o")
         assert "%(title)s" not in second_args[idx_o2 + 1]
-        assert "Show.B.Special.WEB-DL.720p.AAC.x264.mp4" in second_args[idx_o2 + 1]
+        assert "Show.B.Special.720p.WEB-DL.AAC.x264.mp4" in second_args[idx_o2 + 1]
 
         # Both calls pass credentials
         for call_args in mock_run.call_args_list:
@@ -396,7 +396,7 @@ def test_integration_dry_run_mode(monkeypatch):
             "title": "Test Show S01E01",
         }
         mock_classify.return_value = ContentType.TV
-        mock_build.return_value = "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4"
+        mock_build.return_value = "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
 
         test_url = "https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s01a01/"
         original_argv = sys.argv
@@ -423,7 +423,7 @@ def test_integration_dry_run_mode(monkeypatch):
         output_arg = called_args[idx_o + 1]
         assert "%(title)s" not in output_arg, \
             "Dry-run should still use scene filename, not fallback template"
-        assert "Test.Show.S01E01.WEB-DL.1080p.AAC.x264.mp4" in output_arg
+        assert "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4" in output_arg
 
         # Credentials still present
         assert "--username" in called_args

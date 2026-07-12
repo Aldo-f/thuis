@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+export PYTHONPATH="$SCRIPT_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
+
 # Prefer venv Python (has patched yt-dlp for VRT MAX)
 if [ -f "$SCRIPT_DIR/.venv/bin/python3" ]; then
     PYTHON="$SCRIPT_DIR/.venv/bin/python3"
@@ -28,4 +30,4 @@ for arg in "$@"; do
     esac
 done
 
-exec "$PYTHON" "$SCRIPT_DIR/src/thuis/main.py" "$@"
+exec "$PYTHON" -m thuis.main "$@"
