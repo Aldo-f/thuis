@@ -19,6 +19,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 import urllib.request
 import signal
+import time
 
 # GraphQL query for paginated tile list (cursor-based pagination)
 _LIST_QUERY = """
@@ -107,13 +108,14 @@ except Exception:
 # Import scene naming pipeline modules
 try:
     # When used as part of a package
-    from . import url_parser, classifier, metadata_fetcher, scene_namer
+    from . import url_parser, classifier, metadata_fetcher, scene_namer, transcoder
 except ImportError:
     # When run directly
     import url_parser
     import classifier
     import metadata_fetcher
     import scene_namer
+    import transcoder
 
 # Default credentials (for demonstration / testing only)
 DEFAULT_EMAIL = "kuxelu@ipdeer.com"
@@ -834,6 +836,8 @@ def _run_normalize_from_argv(argv: list[str]) -> None:
 def main():
     signal.signal(signal.SIGINT, lambda sig, frame: sys.exit("\nInterrupted by user"))
     import argparse
+    from pathlib import Path
+    import re
     parser = argparse.ArgumentParser(description="Download VRT MAX videos using yt-dlp (POC)")
     parser.add_argument("urls", nargs="*", help="VRT MAX URL(s) to download")
     parser.add_argument("--file", type=Path, help="Path to a file containing URLs (one per line)")
@@ -845,6 +849,19 @@ def main():
     parser.add_argument("--max-episodes", type=int, default=None, help="Maximum number of episodes to process per season URL")
     parser.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")
 
+    # Transcoding options
+    parser.add_argument("--transcode", type=str, default=None, help="Target resolution for transcoding (e.g., '720p', '1080p'). If set, transcode downloaded files to this resolution.")
+    parser.add_argument("--allow-upscale", action="store_true", help="Allow upscaling lower resolutions to target (e.g., 540p -> 720p)")
+    parser.add_argument("--keep-original", action="store_true", help="Keep original file when transcoding (default: replace)")
+    parser.add_argument("--transcode-preset", type=str, default="fast", choices=["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"], help="FFmpeg preset for transcoding (default: fast)")
+    parser.add_argument("--transcode-crf", type=int, default=23, help="FFmpeg CRF quality (0-51, lower=better, default: 23)")
+
+    # Batch transcoding options
+    parser.add_argument("--input-dir", type=Path, help="Directory of existing files to transcode (batch mode)")
+    parser.add_argument("--filter", action="append", default=[], help="Filter files by name (substring, case-insensitive). Can be used multiple times.")
+    parser.add_argument("--recursive", action="store_true", help="Scan subdirectories recursively")
+    parser.add_argument("--parallel", type=int, default=2, help="Concurrent transcoding jobs (default: 2)")
+
     # Handle normalize subcommand — argparse nargs="*" on urls conflicts
     # with subparsers, so we intercept argv manually.
     if len(sys.argv) > 1 and sys.argv[1] == "normalize":
@@ -852,6 +869,37 @@ def main():
         return
 
     args = parser.parse_args()
+
+    # Handle batch transcoding mode (--input-dir provided)
+    if args.input_dir:
+        if not args.transcode:
+            sys.exit("Error: --transcode is required when using --input-dir")
+        from pathlib import Path
+        import transcoder
+        
+        target_height = transcoder.parse_target_height(args.transcode)
+        
+        logger = setup_logging(args.log_level)
+        
+        stats = transcoder.batch_transcode_directory(
+            directory=args.input_dir,
+            target_height=target_height,
+            filters=args.filter if args.filter else None,
+            recursive=args.recursive,
+            parallel=args.parallel,
+            allow_upscale=args.allow_upscale,
+            keep_original=args.keep_original,
+            preset=args.transcode_preset,
+            crf=args.transcode_crf,
+            dry_run=args.dry_run,
+        )
+        
+        print(f"\n=== Batch Transcode Summary ===")
+        print(f"Total:     {stats['total']}")
+        print(f"Transcoded: {stats['transcoded']}")
+        print(f"Skipped:    {stats['skipped']}")
+        print(f"Failed:     {stats['failed']}")
+        sys.exit(0 if stats['failed'] == 0 else 1)
 
     logger = setup_logging(args.log_level)
 
@@ -1097,6 +1145,43 @@ def main():
                 # Run yt-dlp
                 completed = subprocess.run(url_args_list, check=False)
                 results.append(completed.returncode)
+                
+                # Post-download transcoding if requested and download succeeded
+                if args.transcode and completed.returncode == 0 and not args.dry_run:
+                    import transcoder
+                    
+                    # Parse target height from --transcode argument
+                    target_height = transcoder.parse_target_height(args.transcode)
+                    
+                    # Find the downloaded file
+                    output_files = list(args.output_dir.glob("*.mp4"))
+                    for f in output_files:
+                        if f.stat().st_mtime > (time.time() - 300):  # Modified in last 5 minutes
+                            # Check if there are related files with different resolutions
+                            # (e.g., both 1080p and 540p versions of the same episode)
+                            base_name = re.sub(r'\.(S\d+E\d+|d\d{8}).*', '', f.stem)
+                            related_files = transcoder.find_related_files(args.output_dir, base_name)
+                            
+                            # Find the best source for transcoding (prefer higher resolution)
+                            best_source = transcoder.find_best_source_for_transcoding(
+                                related_files if related_files else [f],
+                                target_height,
+                            )
+                            
+                            if best_source and best_source != f:
+                                logger.info(f"Using best source for transcoding: {best_source.name}")
+                            
+                            success, out_path, error = transcoder.transcode_file_if_needed(
+                                best_source or f,
+                                keep_original=args.keep_original,
+                                target_height=target_height,
+                                allow_upscale=args.allow_upscale,
+                            )
+                            if success:
+                                logger.info(f"Transcoded {f.name} to {target_height}p")
+                            elif error:
+                                logger.warning(f"Transcoding failed for {f.name}: {error}")
+                            break  # Only process the most recent file
             except Exception:
                 # On any unexpected error, record failure
                 results.append(1)

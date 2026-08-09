@@ -221,6 +221,86 @@ To tail the current log in real-time:
 ./thuis.sh -f
 ```
 
+## Transcoding to 720p
+
+After downloading, you can transcode videos to a target resolution (e.g. 720p). This is useful for:
+
+- Reducing file size for storage or streaming
+- Ensuring consistent resolution across your library
+- Upscaling lower-resolution downloads
+
+### Transcode during download
+
+Use `--transcode` to automatically transcode files after download:
+
+```bash
+./thuis.sh --transcode 720p https://www.vrt.be/vrtmax/a/z/fc-de-kampioenen/1/
+```
+
+Options:
+
+- `--transcode TARGET` - Target resolution (e.g., `720p`, `1080p`). Files already at this resolution are skipped.
+- `--allow-upscale` - Allow upscaling lower resolutions (e.g., 540p → 720p).
+- `--keep-original` - Keep both original and transcoded files.
+- `--transcode-preset PRESET` - FFmpeg preset: `fast` (default), `medium`, `slow`, etc.
+- `--transcode-crf CRF` - Quality setting (0-51, lower = better quality, default: 23).
+
+**Smart source selection**: If multiple resolutions exist (e.g., 1080p and 540p), the highest available is used for transcoding (1080p → 720p is preferred over 540p → 720p).
+
+### Batch transcode existing files
+
+Use `--input-dir` to transcode files without downloading:
+
+```bash
+# Transcode FC De Kampioenen files to 720p
+python -m thuis.main --input-dir /path/to/media/tv/seed/ \
+    --transcode 720p \
+    --filter "kampioenen" \
+    --allow-upscale \
+    --keep-original \
+    --recursive \
+    --parallel 2
+
+# Preview without transcoding
+python -m thuis.main --input-dir /path/to/media/tv/seed/ \
+    --transcode 720p \
+    --filter "kampioenen" \
+    --recursive \
+    --dry-run
+```
+
+Options:
+
+- `--input-dir DIR` - Directory containing video files to transcode.
+- `--filter PATTERN` - Filter files by name (substring match, case-insensitive). Can be used multiple times.
+- `--recursive` - Scan subdirectories recursively.
+- `--parallel N` - Number of concurrent transcoding jobs (default: 2).
+
+### Examples
+
+```bash
+# Transcode all downloaded FC De Kampioenen episodes to 720p, keep originals
+python -m thuis.main --input-dir ~/media/tv/seed/ \
+    --transcode 720p \
+    --filter "kampioenen" \
+    --allow-upscale \
+    --keep-original \
+    --recursive
+
+# Transcode a single show with higher quality (CRF 18 = larger file, better quality)
+python -m thuis.main --input-dir ~/media/tv/ \
+    --transcode 720p \
+    --filter "thuis" \
+    --transcode-crf 18 \
+    --transcode-preset medium
+
+# Batch transcode with dry-run first
+python -m thuis.main --input-dir ~/media/ \
+    --transcode 720p \
+    --recursive \
+    --dry-run
+```
+
 ## Interrupt handling
 
 - Pressing Ctrl + C now exits cleanly with "Interrupted by user" and no traceback.
