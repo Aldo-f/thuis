@@ -4,7 +4,7 @@ import { VrtEpisodeService } from '../../episode/VrtEpisodeService.js';
 import { StreamResolver } from '../../download/StreamResolver.js';
 import { LoginArgs, ProviderTokens, SearchResult, EpisodeDetail, StreamData } from '../types.js';
 import { SEARCH_EPISODES_QUERY } from '../../graphql/queries.js';
-import { SearchResultSchema } from '../../types/index.js';
+import { SearchResultSchema, Episode } from '../../types/index.js';
 import { z } from 'zod';
 
 export interface VrtProviderAdapterOptions {
@@ -98,7 +98,7 @@ export class VrtProviderAdapter implements ProviderAdapter {
     // Validate against Zod schema
     const parsed = SearchResultSchema.parse(json.data);
     // Map to the SearchResult[] expected by ProviderAdapter
-    return parsed.episodes.map((episode: any) => ({
+    return parsed.episodes.map((episode: Episode) => ({
       id: episode.id,
       title: episode.title,
     }));
@@ -111,6 +111,6 @@ export class VrtProviderAdapter implements ProviderAdapter {
   async resolveStream(episode: EpisodeDetail): Promise<StreamData> {
     // Delegates to StreamResolver and returns the full StreamData object.
     // The caller can inspect drm, targetUrls, etc.
-    return this.streamResolver.resolveStream((episode as any).videoId);
+    return this.streamResolver.resolveStream(episode.videoId);
   }
 }

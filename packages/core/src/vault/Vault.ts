@@ -34,56 +34,52 @@ interface VaultConfig {
 
 /** Simple IndexedDB wrapper – stores a single Uint8Array under key "blob" */
 class IndexedDBStore {
-  private inMemory = new Map<string, any>();
+  private inMemory = new Map<string, Uint8Array>();
   
   private useSafeStorage = typeof window !== 'undefined' &&
-    (window as any).thuisAPI?.vault?.encrypt && (window as any).thuisAPI?.vault?.decrypt;
+    (window as { thuisAPI?: { vault?: { encrypt?: (data: string) => Promise<string>; decrypt?: (data: string) => Promise<string> } } }).thuisAPI?.vault?.encrypt && 
+    (window as { thuisAPI?: { vault?: { encrypt?: (data: string) => Promise<string>; decrypt?: (data: string) => Promise<string> } } }).thuisAPI?.vault?.decrypt;
 
   private dbName = "credential-vault";
   private storeName = "blobStore";
 
-private async getDB(): Promise<any> {
-if (typeof indexedDB === 'undefined') {
-       // Mock for environments without IndexedDB (e.g., Node.js)
-       return {
-         transaction: (storeName: string, mode: IDBTransactionMode) => {
-           const tx = {
-             objectStore: (storeName: string) => {
-               return {
-                    put: (value: any, key: any) => {
-                      this.inMemory.set(key, value);
-                      const req = {} as IDBRequest;
-                      setTimeout(() => {
-                        if (req.onsuccess) req.onsuccess(null as any);
-                      }, 0);
-                      return req;
-                    },
-                    get: (key: any) => {
-                      const req = { result: this.inMemory.get(key) ?? null } as IDBRequest;
-                      setTimeout(() => {
-                        if (req.onsuccess) req.onsuccess(null as any);
-                      }, 0);
-                      return req;
-                    },
-                    delete: (key: any) => {
-                      this.inMemory.delete(key);
-                      const req = {} as IDBRequest;
-                      setTimeout(() => {
-                        if (req.onsuccess) req.onsuccess(null as any);
-                      }, 0);
-                      return req;
-                    },
-               };
-             },
-             // The transaction object also needs oncomplete and onerror properties that can be set
-             oncomplete: null,
-             onerror: null,
-           } as IDBTransaction;
-           return tx;
-         },
-         // The database object also needs a close method
-         close: () => {},
-       } as any;
+  private async getDB(): Promise<IDBDatabase | { transaction: (storeName: string, mode: IDBTransactionMode) => IDBTransaction; close: () => void }> {
+    if (typeof indexedDB === 'undefined') {
+      // Mock for environments without IndexedDB (e.g., Node.js)
+      const mockTx: IDBTransaction = {
+        objectStore: (storeName: string) => ({
+          put: (value: Uint8Array, key: string) => {
+            this.inMemory.set(key, value);
+            const req = {} as IDBRequest;
+            setTimeout(() => {
+              if (req.onsuccess) req.onsuccess({} as Event);
+            }, 0);
+            return req;
+          },
+          get: (key: string) => {
+            const req = { result: this.inMemory.get(key) ?? null } as IDBRequest;
+            setTimeout(() => {
+              if (req.onsuccess) req.onsuccess({} as Event);
+            }, 0);
+            return req;
+          },
+          delete: (key: string) => {
+            this.inMemory.delete(key);
+            const req = {} as IDBRequest;
+            setTimeout(() => {
+              if (req.onsuccess) req.onsuccess({} as Event);
+            }, 0);
+            return req;
+          },
+        }),
+        oncomplete: null,
+        onerror: null,
+      } as IDBTransaction;
+      
+      return {
+        transaction: (storeName: string, mode: IDBTransactionMode) => mockTx,
+        close: () => {},
+      };
     }
     // Use real IndexedDB (or fake-indexeddb) when available
     return new Promise((resolve, reject) => {
@@ -109,9 +105,9 @@ if (typeof indexedDB === 'undefined') {
       return;
     }
     if (this.useSafeStorage) {
-        const base64 = Buffer.from(blob).toString('base64');
-      // @ts-ignore
-      await (window as any).thuisAPI.vault.encrypt(base64);
+      const base64 = Buffer.from(blob).toString('base64');
+      // @ts-expect-error - thuisAPI is injected by the Electron preload script
+      await (window as { thuisAPI: { vault: { encrypt: (data: string) => Promise<string> } } }).thuisAPI.vault.encrypt(base64);
       // Store the encrypted base64 string in IndexedDB for retrieval later
       const db = await this.getDB();
       return new Promise((resolve, reject) => {
@@ -146,15 +142,15 @@ if (typeof indexedDB === 'undefined') {
         }
         if (this.useSafeStorage && typeof result === 'string') {
           // Decrypt via bridge
-          // @ts-ignore
-          const decryptedBase64 = await (window as any).thuisAPI.vault.decrypt(result);
+          // @ts-expect-error - thuisAPI is injected by the Electron preload script
+          const decryptedBase64 = await (window as { thuisAPI: { vault: { decrypt: (data: string) => Promise<string> } } }).thuisAPI.vault.decrypt(result);
           const bytes = Buffer.from(decryptedBase64, 'base64');
           resolve(new Uint8Array(bytes));
         } else if (result instanceof Uint8Array) {
           resolve(result);
         } else {
           // Assume raw Uint8Array stored as is
-          resolve(new Uint8Array(result as any));
+          resolve(new Uint8Array(result as unknown as Uint8Array));
         }
       };
       request.onerror = () => reject(request.error);

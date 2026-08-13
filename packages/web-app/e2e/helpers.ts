@@ -2,6 +2,7 @@
 // This file contains utility functions for common operations in VRT MAX E2E tests.
 
 import { expect, Page } from '@playwright/test';
+import { ProviderTokens } from '@thuis/core';
 
 /**
  * Waits for the vault to be unlocked and returns true if successful.
@@ -146,7 +147,7 @@ export async function initiateAndVerifyDownload(page: Page): Promise<boolean> {
  * @param password VRT MAX password
  * @returns Promise resolving to the tokens if successful login response (tokens) or throwing an error
  */
-export async function loginViaAuthServer(email: string, password: string): Promise<any> {
+export async function loginViaAuthServer(email: string, password: string): Promise<ProviderTokens> {
   const response = await fetch('/api/auth/vrt-login', {
     method: 'POST',
     headers: {

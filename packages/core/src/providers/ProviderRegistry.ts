@@ -33,7 +33,9 @@ export class ProviderRegistry {
     const name = adapter.name;
     if (this.providers.has(name)) return;
     this.providers.set(name, adapter);
-    if (typeof (adapter as any).init === 'function') { await (adapter as any).init(); }
+    if (typeof adapter.init === 'function') {
+      await adapter.init();
+    }
   }
 
   /**

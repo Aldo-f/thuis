@@ -6,24 +6,18 @@ if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
   subtle = global.crypto.subtle;
 } else {
   // Try to get from Node.js crypto webcrypto
-  try {
-    // @ts-ignore: require might not be defined in browser, but we check if we are in Node-like environment
-    const { webcrypto } = require('crypto');
-    subtle = webcrypto.subtle;
-  } catch (e) {
-    throw new Error('Web Crypto API is not available in this environment');
-  }
+  const { webcrypto } = await import('crypto');
+  subtle = webcrypto.subtle as unknown as SubtleCrypto;
 }
 
 // Function to get cryptographically strong random values
-function getRandomValues(array: Uint8Array): Uint8Array {
+async function getRandomValues(array: Uint8Array): Promise<Uint8Array> {
   if (typeof window !== 'undefined' && window.crypto) {
     window.crypto.getRandomValues(array);
     return array;
   } else {
     // Node.js
-    // @ts-ignore: require might not be defined in browser, but we are in the else branch of window check
-    const { randomBytes } = require('crypto');
+    const { randomBytes } = await import('crypto');
     const bytes = randomBytes(array.length);
     array.set(bytes);
     return array;
@@ -32,21 +26,21 @@ function getRandomValues(array: Uint8Array): Uint8Array {
 
 // Detect if we are in Electron renderer process
 const isElectron = typeof window !== 'undefined' && 
-  typeof (window as any).process?.type === 'string' && 
-  (window as any).process.type === 'renderer';
+  typeof (window as { process?: { type?: string } }).process?.type === 'string' && 
+  (window as { process?: { type?: string } }).process?.type === 'renderer';
 
 // For Electron, we need to access safeStorage via the electron module
-let safeStorage: any = null;
+let safeStorage: { encryptString: (data: string) => string; decryptString: (data: string) => string } | null = null;
 if (isElectron) {
   try {
     // In renderer, we might need to use require if nodeIntegration is enabled
     // or via contextBridge. We'll assume we can require 'electron'
-    // @ts-ignore: require might not be defined, but we are in Electron renderer with nodeIntegration
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { safeStorage: ss } = require('electron');
     safeStorage = ss;
-  } catch (e) {
+  } catch {
     // If we cannot require electron, fall back to false
-    console.warn('Could not load electron safeStorage:', e);
+    console.warn('Could not load electron safeStorage');
   }
 }
 
@@ -99,9 +93,9 @@ export async function encrypt(key: CryptoKey, plaintext: string): Promise<Uint8A
   } else {
     // Web crypto implementation
     // Generate a random salt (16 bytes)
-    const salt = getRandomValues(new Uint8Array(16));
+    const salt = await getRandomValues(new Uint8Array(16));
     // Generate a random IV (12 bytes for AES-GCM)
-    const iv = getRandomValues(new Uint8Array(12));
+    const iv = await getRandomValues(new Uint8Array(12));
     // Encode the plaintext to bytes
     const encoder = new TextEncoder();
     const data = encoder.encode(plaintext);

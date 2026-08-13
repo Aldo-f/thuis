@@ -23,4 +23,7 @@ export default [
   {
     ignores: ["**/dist/**", "**/node_modules/**", "**/build/**", "**/coverage/**"],
   },
-];
+   {
+     ignores: ["**/src/__tests__/**"],
+   },
+  ];

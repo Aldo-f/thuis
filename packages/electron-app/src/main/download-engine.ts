@@ -1,7 +1,7 @@
 import { spawn, ChildProcess } from "node:child_process";
-import { createWriteStream, unlink } from "node:fs";
-import { join } from "node:path";
-import { app, Notification } from "electron";
+import { unlink } from "node:fs";
+import { Notification } from "electron";
+// Removed unused imports: createWriteStream, join, app
 
 interface DownloadJob {
   id: string;
@@ -109,9 +109,9 @@ export class DownloadEngine {
         job.error = result.error;
         this.emitProgress(jobId, 0, "failed");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       job.status = "failed";
-      job.error = err.message;
+      job.error = err instanceof Error ? err.message : String(err);
       this.emitProgress(jobId, 0, "failed");
     }
   }
@@ -177,7 +177,11 @@ export class DownloadEngine {
       const proc = spawn("ffmpeg", ["-version"], { stdio: "pipe" });
       proc.on("error", () => reject(new Error("FFmpeg not found")));
       proc.on("close", (code) => {
-        code === 0 ? resolve() : reject(new Error("FFmpeg not found"));
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error("FFmpeg not found"));
+        }
       });
     });
   }

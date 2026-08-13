@@ -28,6 +28,7 @@ export const EpisodeDetailSchema = EpisodeSchema.extend({
   seasonEpisodes: z.number().optional(),
   nextEpisode: z.object({ id: z.string(), title: z.string() }).optional(),
   previousEpisode: z.object({ id: z.string(), title: z.string() }).optional(),
+  videoId: z.string(),
 });
 
 export type EpisodeDetail = z.infer<typeof EpisodeDetailSchema>;
