@@ -8,15 +8,14 @@ const config = {
     },
   },
   testEnvironment: "jsdom",
-  setupFilesAfterEnv: ["./src/__tests__/setup-jest-globals.js"],
   roots: ["<rootDir>/src"],
   testMatch: ["**/__tests__/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
   transformIgnorePatterns: [
     "/node_modules/(?!nock/)",
   ],
   moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1",
     "^(\\.{1,2}/.*)\\.ts$": "$1",
-
   },
   transform: {
     "^.+\\.(ts|tsx)$": [
@@ -27,10 +26,7 @@ const config = {
       },
     ],
   },
-  // Temporarily ignore the existing test files until they are migrated to ESM.
-  // This prevents Jest from trying to parse CommonJS‑style tests in an ES‑module
-  // project ("import"/"export" syntax errors). Remove this entry once the
-  // tests are converted.
+  // Skip tests until they are migrated to ESM
   testPathIgnorePatterns: ["<rootDir>/src/__tests__"],
   collectCoverageFrom: ["src/**/*.ts", "!src/index.ts"],
   coverageThreshold: {
