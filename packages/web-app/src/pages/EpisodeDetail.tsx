@@ -5,6 +5,7 @@ import { useEpisode } from "../hooks/useEpisode.js";
 import { useVault } from "../hooks/useVault.js";
 import { ProviderRegistry } from "@thuis/core";
 import type { EpisodeDetail, StreamData } from "@thuis/core";
+import type { Hls } from "hls.js";
 
 type PageState = "loading" | "error" | "metadata" | "stream" | "playing";
 
@@ -18,7 +19,7 @@ function formatTime(t: number) {
 export default function EpisodeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { authService } = useAuth();
-  const { episode, isLoading, error, fetchEpisode } = useEpisode(authService as any);
+  const { episode, isLoading, error, fetchEpisode } = useEpisode(authService);
   const vault = useVault();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [pageState, setPageState] = useState<PageState>("loading");
@@ -31,7 +32,7 @@ export default function EpisodeDetailPage() {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [stream, setStream] = useState<StreamData | null>(null);
   const [showTechDetails, setShowTechDetails] = useState(false);
-  const hlsRef = useRef<any>(null);
+  const hlsRef = useRef<Hls | null>(null);
 
   const episodeUrl = id
     ? `https://www.vrt.be/vrtmax/a-z/${id.replace(/-/g, "/")}/`

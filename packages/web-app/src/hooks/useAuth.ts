@@ -8,8 +8,6 @@ function getVrtAdapter() {
   }
   return adapter;
 }
-const authService = { get: getVrtAdapter };
-
 
 export function useAuth() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -23,8 +21,8 @@ export function useAuth() {
       await getVrtAdapter().login({ username: email, password });
       setIsLoggedIn(true);
       return true;
-    } catch (err: any) {
-      const message = err?.message ?? "Onbekende fout bij inloggen.";
+    } catch (err: unknown) {
+      const message = (err as Error)?.message ?? "Onbekende fout bij inloggen.";
       setError(message);
       return false;
     } finally {
@@ -33,18 +31,19 @@ export function useAuth() {
   }, []);
 
   const logout = useCallback(async () => {
-    await (getVrtAdapter() as any).logout();
+    await getVrtAdapter().dispose();
     setIsLoggedIn(false);
   }, []);
 
   const getAccessToken = useCallback(async () => {
     try {
-      return await (getVrtAdapter() as any).getAccessToken();
+      const auth = new (await import("@thuis/core")).VrtAuthService();
+      return await auth.getAccessToken();
     } catch {
       setIsLoggedIn(false);
       return null;
     }
   }, []);
 
-  return { isLoggedIn, isLoading, error, login, logout, getAccessToken, authService: getVrtAdapter() };
+  return { isLoggedIn, isLoading, error, login, logout, getAccessToken };
 }

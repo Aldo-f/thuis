@@ -89,8 +89,8 @@ const canSubmit = email.length > 0 && password.length > 0 && isImplemented;
         await adapter.login({ username: email, password });
         await addProvider(provider.id, email, password);
         onSubmit({ email, password, label, verifyAfterSave });
-      } catch (err: any) {
-        const msg = err?.message ?? "Onbekende fout bij inloggen";
+      } catch (err: unknown) {
+        const msg = (err as Error)?.message ?? "Onbekende fout bij inloggen";
         setFormError(msg);
         onError?.(msg);
       }

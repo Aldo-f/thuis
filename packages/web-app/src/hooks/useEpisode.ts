@@ -4,7 +4,7 @@ import type { EpisodeDetail, StreamData } from "@thuis/core";
 
 // Hook returns authService dependency — in production, inject via context
 
-function getVrtAdapter(): any {
+function getVrtAdapter() {
   const provider = ProviderRegistry.getInstance().get('vrt');
   if (!provider) {
     throw new Error('VRT provider is not registered.');
@@ -24,12 +24,12 @@ export function useEpisode(authService: VrtAuthService) {
     setEpisode(null);
     setStream(null);
     try {
-const provider = getVrtAdapter();
-       const ep = await provider.getEpisode(url);
+      const provider = getVrtAdapter();
+      const ep = await provider.getEpisode(url);
       setEpisode(ep);
       return ep;
-    } catch (err: any) {
-      setError(err?.message ?? "Kon aflevering niet ophalen.");
+    } catch (err: unknown) {
+      setError((err as Error)?.message ?? "Kon aflevering niet ophalen.");
       return null;
     } finally {
       setIsLoading(false);
@@ -45,8 +45,8 @@ const provider = getVrtAdapter();
       const s = await resolver.resolveStream(streamId);
       setStream(s);
       return s;
-    } catch (err: any) {
-      setError(err?.message ?? "Kon stream niet oplossen.");
+    } catch (err: unknown) {
+      setError((err as Error)?.message ?? "Kon stream niet oplossen.");
       return null;
     } finally {
       setIsLoading(false);

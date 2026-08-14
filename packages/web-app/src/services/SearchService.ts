@@ -13,9 +13,9 @@ export class SearchService {
 
     // Execute all searches in parallel whilst capturing failures.
     const promises = searchable.map((adapter) =>
-      (adapter as any).search(query).then(
-        (results: SearchResult[]) => ({ status: "fulfilled" as const, results, provider: (adapter as any).id }),
-        (error: unknown) => ({ status: "rejected" as const, error, provider: (adapter as any).id })
+      adapter.search(query).then(
+        (results: SearchResult[]) => ({ status: "fulfilled" as const, results, provider: adapter.id }),
+        (error: unknown) => ({ status: "rejected" as const, error, provider: adapter.id })
       )
     );
 
