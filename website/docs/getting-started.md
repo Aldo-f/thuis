@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # Getting Started
 
-This guide shows you how to run Thuis V2 — a unified platform for watching and downloading Flemish TV content from VRT MAX (with VTM GO and Play.TV coming soon).
+This guide shows you how to run Thuis v5 — a unified platform for watching and downloading Flemish TV content from VRT MAX (with VTM GO and Play.TV coming soon).
 
 ## What's Available Now
 

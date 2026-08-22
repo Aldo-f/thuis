@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # Usage & MVP Guide
 
-This guide walks you through the primary Minimum Viable Product (MVP) workflow of the Thuis-V2 portal.
+This guide walks you through the primary Minimum Viable Product (MVP) workflow of the Thuis v5 portal.
 
 ## The MVP Workflow
 

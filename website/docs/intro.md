@@ -6,13 +6,13 @@ sidebar_position: 1
 
 # Introduction
 
-Welcome to the **Thuis-V2** documentation portal.
+Welcome to the **Thuis v5** documentation portal.
 
-Thuis-V2 is a high-precision, modular ecosystem engineered to monitor and manage media references from VRT MAX, specifically focusing on the popular Belgian television series **"Thuis"**.
+Thuis is a high-precision, modular ecosystem engineered to monitor and manage media references from VRT MAX, specifically focusing on the popular Belgian television series **"Thuis"**.
 
 ## Core Vision
 
-Thuis-V2 is built as a single monorepo powering both responsive web and native desktop applications from a shared business logic library.
+Thuis v5 is built as a single monorepo powering both responsive web and native desktop applications from a shared business logic library.
 
 - **Monorepo (pnpm Workspaces)**: Code is logically separated into reusable packages under `packages/*` and the `website/` portal.
 - **Single Source of Truth**: The `@thuis/core` package encapsulates all VRT MAX API communications, schema validations, and state.

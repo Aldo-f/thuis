@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # System Architecture
 
-Thuis-V2 relies on a clean, layered C4-inspired architecture separating shared business logic, UI renderers, and native shell execution.
+Thuis v5 relies on a clean, layered C4-inspired architecture separating shared business logic, UI renderers, and native shell execution.
 
 ## Monorepo Layout
 
