@@ -121,6 +121,9 @@ except ImportError:
 DEFAULT_EMAIL = "kuxelu@ipdeer.com"
 DEFAULT_PASSWORD = "Els123456"
 
+# Default output directory (can be overridden via OUTPUT_DIR env var / .env)
+DEFAULT_OUTPUT_DIR = os.getenv("OUTPUT_DIR", "media")
+
 # Valid video resolutions for --profile validation
 VALIDATIONS = [720, 1080, 1440, 2160]
 
@@ -397,7 +400,7 @@ def patch_ytdlp_if_needed():
     pass
 
 
-def build_yt_dlp_args(urls, dry_run=False, output_dir=Path("media"), output_template=None, email=None, password=None, resolution=None):
+def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), output_template=None, email=None, password=None, resolution=None):
     """Build yt-dlp argument list.
 
     Args:
@@ -845,7 +848,7 @@ def main():
 
     parser.add_argument("--profile", "-p", type=int, help="Specify desired video resolution (e.g., 1080).")
     parser.add_argument("--retry", action="store_true", help="If set, skip download when output file already exists.")
-    parser.add_argument("--output-dir", type=Path, default=Path("media"), help="Directory to save downloaded files (default: media)")
+    parser.add_argument("--output-dir", type=Path, default=Path(DEFAULT_OUTPUT_DIR), help="Directory to save downloaded files (default: media or OUTPUT_DIR env)")
     parser.add_argument("--max-episodes", type=int, default=None, help="Maximum number of episodes to process per season URL")
     parser.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")
 

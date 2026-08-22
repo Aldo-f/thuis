@@ -1,0 +1,14 @@
+# Thuis TV downloads (daily schedule)
+# Output: TV episodes go to Nextcloud media folder
+/mnt/HDD1/nextcloud/data/aldo/files/Media/tv/_seed
+
+# Daily new episode of Thuis
+[daily 08:00] https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6105/
+[daily 08:00] https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6106/
+[daily 08:00] https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6107/
+
+# Weekly check for other VRT shows
+[weekly] https://www.vrt.be/vrtmax/a-z/de-koolstraverij/1/
+
+# Manual only - run with --now
+# https://www.vrt.be/vrtmax/a-z/thuis/30/thuis-s30a3067/

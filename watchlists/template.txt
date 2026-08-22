@@ -1,0 +1,26 @@
+# First line: output directory for downloaded files
+# Supports: ~/path (home-relative), /absolute/path, relative/path
+# ~/downloads/thuis  or  /mnt/HDD1/nextcloud/data/aldo/files/Media/tv/_seed
+
+# Lines starting with # are comments
+# Format: [schedule] URL  # optional comment
+# Schedule formats:
+#   daily          - run once per day at any hourly cron tick
+#   daily 08:30    - run daily at 8:30am or later (next hourly cron)
+#   weekly         - run once per week
+#   2 weeks        - run every 2 weeks
+#   monday         - run on Monday at first cron tick
+#   monday 08:00   - run on Monday at 8am or later
+#   tuesday,wednesday,friday - run on those days
+#   weekdays       - Monday through Friday
+#   weekends       - Saturday and Sunday
+#
+# Without [schedule], entry runs every time --now is used
+
+# Example entries:
+# [daily 08:30] https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6105/
+# [weekly] https://www.vrt.be/vrtmax/a-z/some-show/season/2/
+# [monday,wednesday,friday 19:00] https://www.vrt.be/vrtmax/a-z/daily-show/3/episode/
+
+# No tag = runs every time --now is called
+# https://www.vrt.be/vrtmax/a-z/special/1/episode/
