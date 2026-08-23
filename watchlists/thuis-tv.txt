@@ -12,3 +12,6 @@
 
 # Manual only - run with --now
 # https://www.vrt.be/vrtmax/a-z/thuis/30/thuis-s30a3067/
+
+# Flikken Maastricht - weekly check (6 seasons)
+[weekly] https://www.vrt.be/vrtmax/a-z/flikken-maastricht/
