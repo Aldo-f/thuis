@@ -10,3 +10,6 @@
 
 # Thuis - show page (all seasons), weekdays at 10:00
 [weekdays 10:00] https://www.vrt.be/vrtmax/a-z/thuis/
+
+# De twaalf
+[weekly] https://www.vrt.be/vrtmax/a-z/de-twaalf/

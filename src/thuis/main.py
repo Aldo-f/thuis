@@ -36,6 +36,12 @@ query PaginatedTileListPage($listId: ID!, $after: ID) {
                 ... on LinkAction { link }
               }
             }
+            ... on PodcastEpisodeTile {
+              title
+              action {
+                ... on LinkAction { link }
+              }
+            }
           }
         }
         pageInfo { endCursor hasNextPage }
@@ -636,6 +642,126 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
         return []
 
 
+def _collect_list_ids(node, parent_title=''):
+    """Collect (title, listId) pairs from GraphQL page components (recursive)."""
+    results = []
+    if isinstance(node, list):
+        for item in node:
+            results.extend(_collect_list_ids(item, parent_title))
+    elif isinstance(node, dict):
+        typename = node.get('__typename')
+        title = node.get('title') or parent_title
+        if typename in ('PaginatedTileList', 'StaticTileList', 'LazyTileList') and node.get('listId'):
+            results.append((title, node['listId']))
+        for k in ['components', 'items']:
+            if k in node:
+                results.extend(_collect_list_ids(node[k], title))
+    return results
+
+
+def _resolve_podcast_stream_url(episode_url: str) -> tuple[str, str] | None:
+    """Resolve a VRT MAX podcast episode page URL to (HLS audio URL, title).
+
+    Uses the GraphQL player data to get the streamId, then the VRT media
+    aggregator (same as yt-dlp's VRT extractor) to get the HLS manifest.
+    Returns None on failure.
+    """
+    try:
+        import yt_dlp.extractor.vrt as vrt_ext
+        import yt_dlp
+
+        page_id = urlparse(episode_url).path.rstrip("/")
+
+        q = ("query($pageId: ID!) { page(id: $pageId) { ... on PodcastEpisodePage "
+             "{ title player { modes { streamId } } } } }")
+        data = _execute_graphql_query(q, {"pageId": page_id})
+        if not data:
+            return None
+        page = (data.get("data") or {}).get("page") or {}
+        title = page.get("title") or "podcast-aflevering"
+        modes = (page.get("player") or {}).get("modes") or []
+        stream_id = next((m["streamId"] for m in modes if m.get("streamId")), None)
+        if not stream_id:
+            print(f"[podcast] No streamId found for {episode_url}", flush=True)
+            return None
+
+        ydl = yt_dlp.YoutubeDL({"quiet": True})
+        ie = vrt_ext.VrtNUIE()
+        ie.set_downloader(ydl)
+        media = ie._call_api(stream_id)
+        for target in media.get("targetUrls", []):
+            if target.get("type", "").lower() == "hls":
+                return target["url"], title
+        print(f"[podcast] No HLS targetUrl in media response for {episode_url}", flush=True)
+        return None
+    except Exception as e:
+        print(f"[podcast] Failed to resolve stream for {episode_url}: {e}", flush=True)
+        return None
+
+
+def _fetch_podcast_episodes(url: str, slug: str, max_episodes: int | None = None) -> list[str]:
+    """Expand a podcast show URL into individual episode URLs.
+
+    Uses the same GraphQL page API with pageId ``/vrtmax/podcasts/…`` and
+    collects every tile-list entry, then rewrites each tile URL to the
+    canonical /vrtmax/podcasts/.../{season}/{episode-slug}/ form.
+    """
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    path = parsed.path.rstrip('/')
+    prefix = '/'.join(path.split('/')[:5])  # /vrtmax/podcasts/<station>/<letter>
+
+    _PAGE_QUERY = """
+    query($pageId: ID!) {
+      page(id: $pageId) {
+        ... on IPage {
+          components {
+            __typename
+            ... on ContainerNavigation {
+              items {
+                title
+                components {
+                  __typename
+                  ... on PaginatedTileList { listId title }
+                  ... on StaticTileList { listId title }
+                  ... on LazyTileList { listId title }
+                }
+              }
+            }
+            ... on PaginatedTileList { listId title }
+            ... on StaticTileList { listId title }
+            ... on LazyTileList { listId title }
+          }
+        }
+      }
+    }
+    """
+    variables = {"pageId": path}
+    print(f"[DEBUG] Fetching podcast lists for {path!r}", flush=True)
+    response_data = _execute_graphql_query(_PAGE_QUERY, variables)
+    if not response_data:
+        print("No GraphQL response; cannot expand podcast URL", flush=True)
+        return []
+
+    page_data = (response_data.get("data") or {}).get("page")
+    if not page_data:
+        print(f"No page data for podcast {slug!r}", flush=True)
+        return []
+
+    candidates = _collect_list_ids(page_data.get("components", []))
+    print(f"[DEBUG] Podcast: found {len(candidates)} list candidate(s)", flush=True)
+
+    all_episodes: list[str] = []
+    for title, list_id in candidates:
+        episodes = _fetch_episodes_by_list_id(list_id, max_episodes)
+        for ep_url in episodes:
+            # yt-dlp handles full VRT MAX episode URLs directly
+            all_episodes.append(ep_url)
+
+    return all_episodes
+
+
 def fetch_all_seasons(url: str, max_episodes: int | None = None) -> list[str]:
     """Given a show-level URL, discover all seasons and expand each into episode URLs.
 
@@ -651,6 +777,10 @@ def fetch_all_seasons(url: str, max_episodes: int | None = None) -> list[str]:
     parsed = urlparse(url)
     path = parsed.path.rstrip('/')
     segments = [seg for seg in path.split('/') if seg]
+
+    # Podcast show URL: /vrtmax/podcasts/{station}/{letter}/{slug}
+    if len(segments) >= 3 and segments[0] == 'vrtmax' and segments[1] == 'podcasts':
+        return _fetch_podcast_episodes(url, segments[2], max_episodes)
 
     if len(segments) < 3 or segments[0] != 'vrtmax' or segments[1] != 'a-z':
         return []
@@ -871,9 +1001,11 @@ def _run_watchlist(args) -> None:
         print("Nothing to do — all entries already handled.")
         return
 
-    # Record that these entries were triggered (per-URL last_run)
-    for url, _sched, _out in due:
-        db.set_last_run(url, status="triggered")
+    # Record that these entries were triggered (per-URL last_run).
+    # In dry-run mode we do NOT persist, so a real run can still pick them up.
+    if not args.dry_run:
+        for url, _sched, _out in due:
+            db.set_last_run(url, status="triggered")
     db.close()
 
     # Re-invoke the normal download pipeline with the due URLs.
@@ -994,9 +1126,14 @@ def main():
     # Verify output directory permission before proceeding
     if not args.output_dir.exists():
         try:
+            # parents=True: create missing intermediate dirs (e.g. Media/podcasts/_seed)
             args.output_dir.mkdir(parents=True, exist_ok=True)
         except PermissionError as e:
-            sys.exit(f"Error: cannot create output directory {args.output_dir}: {e}")
+            sys.exit(
+                f"Error: cannot create output directory {args.output_dir}: {e}\n"
+                f"Hint: the parent dir is likely owned by another user (www-data). "
+                f"Create it manually with correct ownership or run as a user with write access."
+            )
     else:
         if not os.access(args.output_dir, os.W_OK):
             sys.exit(f"Error: no write permission for output directory {args.output_dir}")
@@ -1042,6 +1179,18 @@ def main():
                 expanded_urls.extend(playlist)
             else:
                 print(f"No episodes found for any season, using URL as-is", flush=True)
+                expanded_urls.append(u)
+        elif "/vrtmax/podcasts/" in u and u.rstrip("/").count("/") >= 5:
+            # Podcast show-level URL (…/podcasts/<station>/<letter>/<slug>)
+            print(f"Expanding podcast URL to all episodes: {u}", flush=True)
+            from thuis.url_parser import parse_vrt_url
+            slug = parse_vrt_url(u).show_slug
+            playlist = _fetch_podcast_episodes(u, slug, max_episodes=args.max_episodes)
+            if playlist:
+                print(f"Found {len(playlist)} podcast episode(s)", flush=True)
+                expanded_urls.extend(playlist)
+            else:
+                print(f"No podcast episodes found, using URL as-is", flush=True)
                 expanded_urls.append(u)
         else:
             expanded_urls.append(u)
@@ -1203,12 +1352,39 @@ def main():
                     logger.info("Overgeslagen %s: %s bestaat al", url, scene_template)
                     continue
 
+            # Podcast URLs are not supported by yt-dlp's VRT extractor:
+            # resolve the page to a direct HLS audio URL first.
+            download_url = url
+            if "/vrtmax/podcasts/" in url:
+                resolved_pair = _resolve_podcast_stream_url(url)
+                if not resolved_pair:
+                    logger.error("Kon podcast stream niet resolven: %s", url)
+                    continue
+                download_url, podcast_title = resolved_pair
+                # Use the episode title as the output filename (sanitised)
+                safe_title = re.sub(r'[\\/:*?"<>|]+', "", podcast_title).strip().replace(" ", ".")
+                scene_template = f"{safe_title}.%(ext)s"
+                fallback_used = False
+
             # Build yt-dlp arguments for this URL
             url_args_list = build_yt_dlp_args(
-                [url], dry_run=args.dry_run, output_dir=args.output_dir,
+                [download_url], dry_run=args.dry_run, output_dir=args.output_dir,
                 output_template=scene_template, email=email, password=password,
                 resolution=args.profile_str,
             )
+            if "/vrtmax/podcasts/" in url:
+                # Audio-only: pick best audio format instead of video
+                try:
+                    idx = url_args_list.index("bestvideo+bestaudio")
+                    url_args_list[idx] = "bestaudio"
+                except ValueError:
+                    pass
+                # HLS audio: force mp3-friendly container via m4a, skip video merge flag
+                try:
+                    mi = url_args_list.index("--merge-output-format")
+                    del url_args_list[mi:mi + 2]
+                except ValueError:
+                    pass
             
             # Print status message
             if args.dry_run:

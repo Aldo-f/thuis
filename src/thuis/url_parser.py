@@ -55,6 +55,29 @@ def parse_vrt_url(url: str) -> VrtUrlInfo:
     parsed = urlparse(url)
     path = _normalize_path(parsed.path)
 
+    # Podcast URLs: /vrtmax/podcasts/{station}/{letter}/{show-slug}[/{season}/{episode-slug}]
+    # Treated like a-z URLs but with the podcasts marker.
+    podcast_marker = "/vrtmax/podcasts/"
+    if podcast_marker in path:
+        after = path.split(podcast_marker, 1)[1].strip("/")
+        segments = [s for s in after.split("/") if s]
+        # segments: [station, letter, show-slug, (season, episode-slug)?]
+        if len(segments) < 3:
+            raise ValueError(f"Could not parse VRT URL: {url}")
+        show_slug = segments[2].replace("---", "-").replace("&", "And")
+        season = 0
+        episode = 0
+        last_segment = segments[-1] if len(segments) > 3 else ""
+        if len(segments) > 4 and re.match(r"^\d+$", segments[3]):
+            season = int(segments[3])
+        ep_match = re.search(r"s(\d+)a(\d+)", last_segment, re.IGNORECASE)
+        if ep_match:
+            episode = int(ep_match.group(2))
+            if season == 0:
+                season = int(ep_match.group(1))
+        return VrtUrlInfo(show_slug=show_slug, season=season, episode=episode,
+                          path=path, url=url)
+
     if "/vrtmax/a-z/" not in path:
         raise ValueError(f"Could not parse VRT URL: {url}")
 

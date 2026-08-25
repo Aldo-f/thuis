@@ -1,0 +1,6 @@
+# Podcast downloads (daily schedule)
+# Output: Podcasts go to Nextcloud media folder
+/mnt/HDD1/nextcloud/data/aldo/files/Media/podcasts/_seed
+
+# De Gifmnger
+[weekly] https://www.vrt.be/vrtmax/podcasts/radio-1/d/de-gifmenger

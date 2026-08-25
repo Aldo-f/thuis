@@ -185,9 +185,9 @@ def _should_trigger_single(schedule: str,
         elif p in ("monday", "tuesday", "wednesday", "thursday",
                    "friday", "saturday", "sunday"):
             day_part = p
-        elif p == "weekdays":
+        elif p in ("weekdays", "weekday"):
             day_part = "weekdays"
-        elif p == "weekends":
+        elif p in ("weekends", "weekend"):
             day_part = "weekends"
         elif _is_week_interval_token(parts, p):
             # This handles "1 week" and "2 weeks" as two-word schedules
