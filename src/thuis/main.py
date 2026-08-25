@@ -836,6 +836,71 @@ def _run_normalize_from_argv(argv: list[str]) -> None:
     run_normalize(directory, dry_run=dry_run, cleanup=cleanup)
 
 
+def _run_watchlist(args) -> None:
+    """Run watchlist mode: check schedules and download due entries."""
+    from pathlib import Path as _Path
+    from thuis.watchlist import (
+        parse_watchlist_file,
+        resolve_output_dir,
+        WatchlistDB,
+        should_trigger,
+    )
+    from datetime import datetime
+
+    now = datetime.now()
+    db = WatchlistDB()
+    due: list[tuple[str, str, str]] = []  # (url, schedule, output_dir)
+
+    for wl_path in args.watchlist:
+        if not _Path(wl_path).is_file():
+            sys.exit(f"Error: watchlist file not found: {wl_path}")
+        wl = parse_watchlist_file(wl_path)
+        out_dir = resolve_output_dir(wl.output_dir)
+        print(f"Watchlist {wl_path} → output: {out_dir}")
+        for entry in wl.entries:
+            schedule = entry.schedule or "manual"
+            if entry.schedule is None and not args.now:
+                continue  # manual-only entries need --now
+            if not should_trigger(entry.schedule, now, db.get_last_run(entry.url)):
+                print(f"  [skip] not scheduled: [{schedule}] {entry.url}")
+                continue
+            print(f"  [due ] [{schedule}] {entry.url}")
+            due.append((entry.url, schedule, out_dir))
+
+    if not due:
+        print("Nothing to do — all entries already handled.")
+        return
+
+    # Record that these entries were triggered (per-URL last_run)
+    for url, _sched, _out in due:
+        db.set_last_run(url, status="triggered")
+    db.close()
+
+    # Re-invoke the normal download pipeline with the due URLs.
+    # Each watchlist file has one output dir; group by dir.
+    by_dir: dict[str, list[str]] = {}
+    for url, _sched, out_dir in due:
+        by_dir.setdefault(out_dir, []).append(url)
+
+    rc = 0
+    for out_dir, urls in by_dir.items():
+        cmd = [
+            os.path.dirname(os.path.abspath(__file__)) and sys.executable,
+            "-m", "thuis.main",
+            "--output-dir", out_dir,
+        ]
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.profile is not None:
+            cmd += ["--profile", str(args.profile)]
+        cmd += ["--retry"]
+        cmd += urls
+        completed = subprocess.run(cmd)
+        if completed.returncode != 0:
+            rc = completed.returncode
+    sys.exit(rc)
+
+
 def main():
     signal.signal(signal.SIGINT, lambda sig, frame: sys.exit("\nInterrupted by user"))
     import argparse
@@ -864,6 +929,10 @@ def main():
     parser.add_argument("--filter", action="append", default=[], help="Filter files by name (substring, case-insensitive). Can be used multiple times.")
     parser.add_argument("--recursive", action="store_true", help="Scan subdirectories recursively")
     parser.add_argument("--parallel", type=int, default=2, help="Concurrent transcoding jobs (default: 2)")
+    parser.add_argument("--watchlist", action="append", default=[], metavar="FILE",
+                        help="Process a watchlist file (first line = output dir, then [schedule] URL lines). Can be used multiple times.")
+    parser.add_argument("--now", action="store_true",
+                        help="With --watchlist: also run entries without a schedule (manual-only entries)")
 
     # Handle normalize subcommand — argparse nargs="*" on urls conflicts
     # with subparsers, so we intercept argv manually.
@@ -872,6 +941,11 @@ def main():
         return
 
     args = parser.parse_args()
+
+    # Handle watchlist mode (--watchlist provided)
+    if args.watchlist:
+        _run_watchlist(args)
+        return
 
     # Handle batch transcoding mode (--input-dir provided)
     if args.input_dir:
