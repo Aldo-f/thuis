@@ -445,6 +445,86 @@ class TestNoMediaFiles:
 
 
 # ===================================================================
+# Resolution probe fallback
+# ===================================================================
+
+
+class TestResolutionProbe:
+    """Files without a resolution token get one probed via ffprobe."""
+
+    def test_missing_resolution_probed_from_file(self, tmp_path, monkeypatch):
+        """No res token in name + ffprobe height 1080 → renamed with 1080p."""
+        src = tmp_path / "fc.de.kampioenen.s02e13.web-dl.mp4"
+        _touch(src)
+
+        monkeypatch.setattr(
+            "thuis.normalizer.resolve_show_title",
+            _make_mock_resolve({"fc.de.kampioenen": "FC.De.Kampioenen"}),
+        )
+        monkeypatch.setattr(
+            "thuis.normalizer.detect_codecs",
+            lambda p: ("mp4a", "avc1"),
+        )
+        monkeypatch.setattr(
+            "thuis.normalizer.get_video_resolution",
+            lambda p: 1080,
+        )
+
+        run_normalize(tmp_path, dry_run=False)
+
+        _assert_not_exists(src)
+        canonical = tmp_path / "FC.De.Kampioenen.S02E13.1080p.WEB-DL.AAC.x264.mp4"
+        _assert_exists(canonical)
+
+    def test_probe_failure_keeps_no_resolution(self, tmp_path, monkeypatch):
+        """ffprobe returns None (unreadable/empty file) → no res token."""
+        src = tmp_path / "show.s01e02.mp4"
+        _touch(src)
+
+        monkeypatch.setattr(
+            "thuis.normalizer.resolve_show_title",
+            _make_mock_resolve({"show": "Show"}),
+        )
+        monkeypatch.setattr(
+            "thuis.normalizer.detect_codecs",
+            lambda p: ("mp4a", "avc1"),
+        )
+        monkeypatch.setattr(
+            "thuis.normalizer.get_video_resolution",
+            lambda p: None,
+        )
+
+        run_normalize(tmp_path, dry_run=False)
+
+        canonical = tmp_path / "Show.S01E02.WEB-DL.AAC.x264.mp4"
+        _assert_exists(canonical)
+
+    def test_existing_resolution_not_probed(self, tmp_path, monkeypatch):
+        """File already has 720p token → get_video_resolution never called."""
+        src = tmp_path / "fc.de.kampioenen.s01e12.720p.mp4"
+        _touch(src)
+
+        monkeypatch.setattr(
+            "thuis.normalizer.resolve_show_title",
+            _make_mock_resolve({"fc.de.kampioenen": "Fc.De.Kampioenen"}),
+        )
+        monkeypatch.setattr(
+            "thuis.normalizer.detect_codecs",
+            lambda p: ("mp4a", "avc1"),
+        )
+
+        def _boom(p):
+            raise AssertionError("probe should not be called")
+
+        monkeypatch.setattr("thuis.normalizer.get_video_resolution", _boom)
+
+        run_normalize(tmp_path, dry_run=False)
+
+        canonical = tmp_path / "Fc.De.Kampioenen.S01E12.720p.WEB-DL.AAC.x264.mp4"
+        _assert_exists(canonical)
+
+
+# ===================================================================
 # Report output
 # ===================================================================
 

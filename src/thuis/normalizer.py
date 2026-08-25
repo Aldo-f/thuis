@@ -14,6 +14,7 @@ from thuis.codec_detector import detect_codecs
 from thuis.filename_parser import ParsedFilename, parse_filename
 from thuis.scene_namer import build_tv_filename
 from thuis.show_resolver import resolve_show_title
+from thuis.transcoder import get_video_resolution
 
 
 # ---------------------------------------------------------------------------
@@ -114,11 +115,16 @@ def run_normalize(
     for path, pf in normal_entries:
         show_name = titles.get(pf.show_slug, pf.show_slug)
         audio_codec, video_codec = detect_codecs(path)
+        resolution = pf.resolution
+        if resolution is None:
+            # Filename lacks a res token — probe the actual video height.
+            height = get_video_resolution(path)
+            resolution = str(height) if height else None
         new_name = build_tv_filename(
             show_name,
             pf.season,
             pf.episode,
-            pf.resolution,
+            resolution,
             audio_codec,
             video_codec,
         )
