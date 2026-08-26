@@ -479,6 +479,33 @@ def is_valid_vrt_url(url: str) -> bool:
     """Check if URL has no # fragment (fragments cause processing errors)."""
     return '#' not in url
 
+def is_audio_only_stream(url: str) -> bool:
+    """Detect whether a given HLS stream URL points to audio‑only content.
+
+    Fetches the m3u8 manifest and inspects the ``CODECS`` attribute of any
+    ``#EXT-X-STREAM-INF`` lines. If a known video codec (e.g. ``avc1``, ``hvc1``,
+    ``hev1``, ``av01``, ``vp9``, ``vp8``) appears, the function returns ``False``.
+    If only audio codecs like ``mp4a`` or ``aac`` are present, returns ``True``.
+    Network errors or missing ``CODECS`` are treated as not audio‑only (conservative).
+    """
+    try:
+        import urllib.request
+        with urllib.request.urlopen(url, timeout=10) as resp:
+            text = resp.read().decode(errors="ignore")
+    except Exception:
+        return False
+
+    for line in text.splitlines():
+        if line.startswith("#EXT-X-STREAM-INF"):
+            m = re.search(r'CODECS="([^\"]+)"', line)
+            if m:
+                codecs = m.group(1).lower()
+                video_markers = ["avc1", "hvc1", "hev1", "av01", "vp9", "vp8"]
+                if any(v in codecs for v in video_markers):
+                    return False
+                return True
+    return False
+
 
 def is_show_url(url: str) -> bool:
     """Detect if *url* points to a show-level page (not a specific season or episode).
@@ -1038,32 +1065,46 @@ def main():
     import argparse
     from pathlib import Path
     import re
-    parser = argparse.ArgumentParser(description="Download VRT MAX videos using yt-dlp (POC)")
-    parser.add_argument("urls", nargs="*", help="VRT MAX URL(s) to download")
-    parser.add_argument("--file", type=Path, help="Path to a file containing URLs (one per line)")
-    parser.add_argument("--dry-run", action="store_true", help="Simulate download without downloading")
+    parser = argparse.ArgumentParser(
+        description="Download VRT MAX videos using yt-dlp (POC)",
+        epilog="""examples:
+  ./thuis.sh https://www.vrt.be/vrtmax/...            # single URL
+  ./thuis.sh --transcode 720p --input-dir media       # batch transcode
+  ./thuis.sh --watchlist watchlists/podcast.txt --now # run watchlist now
 
-    parser.add_argument("--profile", "-p", type=int, help="Specify desired video resolution (e.g., 1080).")
-    parser.add_argument("--retry", action="store_true", help="If set, skip download when output file already exists.")
-    parser.add_argument("--output-dir", type=Path, default=Path(DEFAULT_OUTPUT_DIR), help="Directory to save downloaded files (default: media or OUTPUT_DIR env)")
-    parser.add_argument("--max-episodes", type=int, default=None, help="Maximum number of episodes to process per season URL")
-    parser.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")
+ Watchlist mode requires --watchlist; --now only applies there.""",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    # Download options
+    g_dl = parser.add_argument_group("download options")
+    g_dl.add_argument("urls", nargs="*", help="VRT MAX URL(s) to download")
+    g_dl.add_argument("--file", type=Path, help="Path to a file containing URLs (one per line)")
+    g_dl.add_argument("--dry-run", action="store_true", help="Simulate download without downloading")
+    g_dl.add_argument("--profile", "-p", type=int, help="Specify desired video resolution (e.g., 1080).")
+    g_dl.add_argument("--retry", action="store_true", help="If set, skip download when output file already exists.")
+    g_dl.add_argument("--output-dir", type=Path, default=Path(DEFAULT_OUTPUT_DIR), help="Directory to save downloaded files (default: media or OUTPUT_DIR env)")
+    g_dl.add_argument("--max-episodes", type=int, default=None, help="Maximum number of episodes to process per season URL")
+    g_dl.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")
 
-    # Transcoding options
-    parser.add_argument("--transcode", type=str, default=None, help="Target resolution for transcoding (e.g., '720p', '1080p'). If set, transcode downloaded files to this resolution.")
-    parser.add_argument("--allow-upscale", action="store_true", help="Allow upscaling lower resolutions to target (e.g., 540p -> 720p)")
-    parser.add_argument("--keep-original", action="store_true", help="Keep original file when transcoding (default: replace)")
-    parser.add_argument("--transcode-preset", type=str, default="fast", choices=["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"], help="FFmpeg preset for transcoding (default: fast)")
-    parser.add_argument("--transcode-crf", type=int, default=23, help="FFmpeg CRF quality (0-51, lower=better, default: 23)")
+    # Transcode options
+    g_tr = parser.add_argument_group("transcode options")
+    g_tr.add_argument("--transcode", type=str, default=None, help="Target resolution for transcoding (e.g., '720p', '1080p'). If set, transcode downloaded files to this resolution.")
+    g_tr.add_argument("--allow-upscale", action="store_true", help="Allow upscaling lower resolutions to target (e.g., 540p -> 720p)")
+    g_tr.add_argument("--keep-original", action="store_true", help="Keep original file when transcoding (default: replace)")
+    g_tr.add_argument("--transcode-preset", type=str, default="fast", choices=["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"], help="FFmpeg preset for transcoding (default: fast)")
+    g_tr.add_argument("--transcode-crf", type=int, default=23, help="FFmpeg CRF quality (0-51, lower=better, default: 23)")
 
-    # Batch transcoding options
-    parser.add_argument("--input-dir", type=Path, help="Directory of existing files to transcode (batch mode)")
-    parser.add_argument("--filter", action="append", default=[], help="Filter files by name (substring, case-insensitive). Can be used multiple times.")
-    parser.add_argument("--recursive", action="store_true", help="Scan subdirectories recursively")
-    parser.add_argument("--parallel", type=int, default=2, help="Concurrent transcoding jobs (default: 2)")
-    parser.add_argument("--watchlist", action="append", default=[], metavar="FILE",
+    # Batch transcoding options (share transcode group)
+    g_tr.add_argument("--input-dir", type=Path, help="Directory of existing files to transcode (batch mode)")
+    g_tr.add_argument("--filter", action="append", default=[], help="Filter files by name (substring, case-insensitive). Can be used multiple times.")
+    g_tr.add_argument("--recursive", action="store_true", help="Scan subdirectories recursively")
+    g_tr.add_argument("--parallel", type=int, default=2, help="Concurrent transcoding jobs (default: 2)")
+
+    # Watchlist options (require --watchlist)
+    g_wl = parser.add_argument_group("watchlist options (require --watchlist)")
+    g_wl.add_argument("--watchlist", action="append", default=[], metavar="FILE",
                         help="Process a watchlist file (first line = output dir, then [schedule] URL lines). Can be used multiple times.")
-    parser.add_argument("--now", action="store_true",
+    g_wl.add_argument("--now", action="store_true",
                         help="With --watchlist: also run entries without a schedule (manual-only entries)")
 
     # Handle normalize subcommand — argparse nargs="*" on urls conflicts
@@ -1372,14 +1413,14 @@ def main():
                 output_template=scene_template, email=email, password=password,
                 resolution=args.profile_str,
             )
-            if "/vrtmax/podcasts/" in url:
+            if is_audio_only_stream(download_url):
                 # Audio-only: pick best audio format instead of video
                 try:
                     idx = url_args_list.index("bestvideo+bestaudio")
                     url_args_list[idx] = "bestaudio"
                 except ValueError:
                     pass
-                # HLS audio: force mp3-friendly container via m4a, skip video merge flag
+                # Remove video merge flag to keep a pure audio container (e.g., .m4a)
                 try:
                     mi = url_args_list.index("--merge-output-format")
                     del url_args_list[mi:mi + 2]
