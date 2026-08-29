@@ -27,13 +27,13 @@ Download videos from VRT MAX with automatic authentication.
 ## Installation
 
 ```bash
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or: .\venv\Scripts\activate  # Windows
+# Create virtual environment with uv (hardlink mode to save space)
+uv venv --link-mode=hardlink
+source .venv/bin/activate  # Linux/Mac
+# or: .\\venv\\Scripts\\activate  # Windows
 
 # Install dependencies
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 
 # Install Playwright browsers
 playwright install chromium
