@@ -1019,9 +1019,17 @@ def _run_watchlist(args) -> None:
         out_dir = resolve_output_dir(wl.output_dir)
         print(f"Watchlist {wl_path} → output: {out_dir}")
         for entry in wl.entries:
+            # Determine schedule label for logging
             schedule = entry.schedule or "manual"
-            if entry.schedule is None and not args.now:
-                continue  # manual-only entries need --now
+            # If --now flag is set, treat all entries (scheduled or not) as due.
+            if args.now:
+                print(f"  [due now] [{schedule}] {entry.url}")
+                due.append((entry.url, schedule, out_dir))
+                continue
+            # Otherwise, only process manual entries when --now is present and scheduled entries per their schedule.
+            if entry.schedule is None:
+                # Manual-only entries require --now flag; skip otherwise
+                continue
             if not should_trigger(entry.schedule, now, db.get_last_run(entry.url)):
                 print(f"  [skip] not scheduled: [{schedule}] {entry.url}")
                 continue

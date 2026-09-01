@@ -69,7 +69,12 @@ The thuis tool includes a `--watchlist` feature for automated processing of mult
 ./thuis.sh --watchlist watchlists/podcast.txt --now --dry-run
 ```
 
-### Example Watchlist Files
+### ‑‑now override
+`--now` forces all entries (scheduled or manual) to be processed again, ignoring the
+last‑run timestamps stored in `~/.thuis/state.db`. Use this when a previous run
+failed or new episodes appeared.
+
+| Example Watchlist Files
 
 Each series has its own watchlist file in `watchlists/`:
 - `watchlists/Fc_De_Kampioenen.txt` - Fc De Kampioenen series (manual entries, use --now)

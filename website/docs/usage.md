@@ -153,6 +153,19 @@ thuis normalize --dry-run /path/to/videos
 thuis normalize --cleanup /path/to/videos
 ```
 
+### Watchlists
+
+Process multiple URLs from a text file with optional scheduling:
+
+```bash
+./thuis.sh --watchlist watchlists/Fc_De_Kampioenen.txt --now
+```
+
+- `--watchlist FILE`: Path to the watchlist file.
+- `--now`: Force run all entries regardless of their schedule or last-run status.
+
+See `AGENTS.md` for full watchlist format and scheduling details.
+
 ## Example output
 
 ```
