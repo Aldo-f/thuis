@@ -76,6 +76,27 @@ def normalize_show_name(name: str) -> str:
     return name
 
 
+def build_scene_filename(url: str, resolution: Optional[int] = None) -> str:
+    """Convenience wrapper to build a TV filename from a VRT URL.
+
+    Uses :func:`build_tv_filename` with default codecs (AAC, x264).
+    ``resolution`` is an integer height (e.g. 1080) or ``None``.
+    """
+    from .url_parser import parse_vrt_url
+    info = parse_vrt_url(url)
+    show_name = info.show_slug.replace("-", " ").title()
+    season = int(info.season) if info.season else 1
+    episode = int(info.episode) if info.episode else 1
+    res_str = str(resolution) if resolution is not None else "1080"
+    return build_tv_filename(
+        show_name=show_name,
+        season=season,
+        episode=episode,
+        resolution=res_str,
+        audio_codec="mp4a",
+        video_codec="avc1",
+    )
+
 def _format_episode(episode: int) -> str:
     """Format episode number per scene naming rules.
 
@@ -88,8 +109,6 @@ def _format_episode(episode: int) -> str:
     if episode == 0:
         return "E00"
     return f"E{episode:02d}"
-
-
 def _codec_tags(
     audio_codec: Optional[str],
     video_codec: Optional[str],
@@ -104,6 +123,7 @@ def _codec_tags(
     if video_codec:
         parts.append(lookup_codec(video_codec))
     return "." + ".".join(parts) if parts else ""
+
 
 
 def build_tv_filename(

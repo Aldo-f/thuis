@@ -19,17 +19,62 @@ Open a terminal and run these commands:
 git clone <repository-url> thuis
 cd thuis
 
-# Create a virtual environment (recommended)
-python3 -m venv .venv
-source .venv/bin/activate   # On Windows: .venv\Scripts\activate
+# Create a virtual environment with uv (recommended, uses hardlink mode for disk efficiency)
+uv venv --link-mode=hardlink
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies with uv
+uv pip install -r requirements.txt --python .venv/bin/python
 ```
 
 This installs a patched version of yt-dlp that can handle VRT MAX's login flow.
 
 ## Usage
+
+### Option 3: Watchlist Mode (for automated processing)
+
+Process multiple URLs from text files with scheduling support. Each series has its own watchlist file.
+
+```bash
+# Process a single series watchlist (dry run to see what would be downloaded)
+./thuis.sh --watchlist watchlists/Fc_De_Kampioenen.txt --dry-run
+
+# Process manual entries for a series (requires --now)
+./thuis.sh --watchlist watchlists/Fc_De_Kampioenen.txt --now
+
+# Process multiple series at once (all require --now for manual entries)
+./thuis.sh --watchlist watchlists/Fc_De_Kampioenen.txt \
+           --watchlist watchlists/Flikken.txt \
+           --watchlist watchlists/Flikken_Maastricht.txt \
+           --watchlist watchlists/Thuis.txt \
+           --now --dry-run
+
+# Process podcasts (scheduled entries run automatically, manual need --now)
+./thuis.sh --watchlist watchlists/podcast.txt --now --dry-run
+```
+
+#### Watchlist File Format
+
+1. **First non-comment line**: Output directory (where files will be saved)
+   - Supports absolute paths, relative paths, and `~/` home expansion
+   - TV series example: `/mnt/HDD1/nextcloud/data/aldo/files/Seed/media/tv/`
+   - Podcasts example: `/mnt/HDD1/nextcloud/data/aldo/files/Media/podcasts/_seed`
+
+2. **Subsequent lines**: URL entries
+   - No schedule = manual entries requiring `--now` flag to run
+   - Scheduled entries: `[daily]`, `[weekly]`, `[weekdays 10:00]`, etc.
+
+#### Example Watchlist Files
+
+Each series has its own watchlist file in `watchlists/`:
+- `watchlists/Fc_De_Kampioenen.txt` - Fc De Kampioenen series (manual entries, use --now)
+- `watchlists/Flikken.txt` - Flikken series (manual entries, use --now)
+- `watchlists/Flikken_Maastricht.txt` - Flikken Maastricht series (manual entries, use --now)
+- `watchlists/Thuis.txt` - Thuis series (manual entries, use --now)
+- `watchlists/podcast.txt` - Podcasts (weekly scheduled entry for De Gifmenger)
+
+All TV series watchlists output to `/mnt/HDD1/nextcloud/data/aldo/files/Seed/media/tv/`
+Podcast watchlist outputs to `/mnt/HDD1/nextcloud/data/aldo/files/Media/podcasts/_seed`
+
 
 You can run the tool in two ways.
 

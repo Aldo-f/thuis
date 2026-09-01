@@ -33,5 +33,9 @@ legacy/
 .omo/run-continuation/
 .omo/notepads/
 
+# Watchlists (user content — ignore all except the template)
+watchlists/*
+!watchlists/template.txt
+
 # Log files
 logs/
