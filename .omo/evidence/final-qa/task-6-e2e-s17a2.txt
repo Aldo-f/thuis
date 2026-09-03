@@ -1,0 +1,22 @@
+=== Scenario 1: DRM detection dry run ===
+Command: timeout 30 ./thuis.sh "https://www.vrt.be/vrtmax/a-z/flikken-maastricht/17/flikken-maastricht-s17a2/" --output-dir /tmp/qa-f3 --dry-run
+
+Exit code: 0
+
+Output:
+[1/1] Verwerken: https://www.vrt.be/vrtmax/a-z/flikken-maastricht/17/flikken-maastricht-s17a2/
+[DRY-RUN] (fallback) Flikken.Maastricht.S17E02.WEB-DL.mp4 ← https://www.vrt.be/vrtmax/a-z/flikken-maastricht/17/flikken-maastricht-s17a2/
+Running: /home/aldo/dev/06-apps-thuis-v4/.venv/bin/python3 -m yt_dlp -f bestvideo+bestaudio --merge-output-format mp4 --no-warnings --no-color --simulate -o /tmp/qa-f3/Flikken.Maastricht.S17E02.WEB-DL.mp4 --username **** --password **** https://www.vrt.be/vrtmax/a-z/flikken-maastricht/17/flikken-maastricht-s17a2/
+ERROR: [vrtmax] pbs-pub-4aa0901a-26dc-4f96-9aef-a8f0b356daa3$vid-530e118d-f6dd-4404-8ba0-058f255b054a: This video is DRM protected
+[vrtmax] Extracting URL: https://www.vrt.be/vrtmax/a-z/flikken-maastricht/17/flikken-maastricht-s17a2/
+[vrtmax] flikken-maastricht-s17a2: Downloading asset JSON
+[vrtmax] pbs-pub-4aa0901a-26dc-4f96-9aef-a8f0b356daa3$vid-530e118d-f6dd-4404-8ba0-058f255b054a: Downloading player token
+[vrtmax] pbs-pub-4aa0901a-26dc-4f96-9aef-a8f0b356daa3$vid-530e118d-f6dd-4404-8ba0-058f255b054a: Downloading API JSON
+[vrtmax] pbs-pub-4aa0901a-26dc-4f96-9aef-a8f0b356daa3$vid-530e118d-f6dd-4404-8ba0-058f255b054a: Downloading m3u8 information
+[vrtmax] pbs-pub-4aa0901a-26dc-4f96-9aef-a8f0b356daa3$vid-530e118d-f6dd-4404-8ba0-058f255b054a: Downloading MPD manifest
+
+=== DRM Summary ===
+Total DRM protected: 1
+No downloadable content found.
+
+Assertion: ✓ Exit 0, "DRM" mentioned, no crash

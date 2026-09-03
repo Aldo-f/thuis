@@ -1,0 +1,29 @@
+{
+  "duration": 2538060,
+  "skinType": "vod",
+  "title": "Flikken Maastricht S17 E2",
+  "shortDescription": null,
+  "drm": "vrt|2026-09-02T18:41:10Z|v2|K3EhuktZ45wP3kdJhHF34BTTvAR0roMvDToR8imkzUpLwcsx7YPmqBlD8KzOm3tL4zetwtlqW44e4WDI5gHRwQ4E+/mtwUezxMLqU139cswQI+24Tda026rdD+lEqHJKgwtH53EQ/BfyKdflNK6QDw==|f68e8201b473ad44534c7f25b666ff1083fabc440021a0db8ecad333e8184f0b",
+  "drmExpired": "2026-09-03T00:41:10.135932606Z",
+  "videoRobustness": "SW_SECURE_CRYPTO",
+  "aspectRatio": "16:9",
+  "posterImageUrl": "https://images.vrt.be/orig/2026/03/27/149576ea-1dcd-4559-8b4f-ce012b4c1477.jpg",
+  "channelId": null,
+  "targetUrls": [
+    {
+      "type": "hls",
+      "url": "https://vod.vrtcdn.be/ondemand/content/vod/vid-530e118d-f6dd-4404-8ba0-058f255b054a-CDN_3_HD2024MF/vid-530e118d-f6dd-4404-8ba0-058f255b054a-CDN_3_HD2024MF_drm_e8dd6e6b-83be-4d15-a2c4-dff148531820.ism/.m3u8?filter=%28%21%28type%3D%3D%22audio%22%26%26FourCC%21%3D%22AACL%22%29%29"
+    },
+    {
+      "type": "mpeg_dash",
+      "url": "https://vod.vrtcdn.be/ondemand/content/vod/vid-530e118d-f6dd-4404-8ba0-058f255b054a-CDN_3_HD2024MF/vid-530e118d-f6dd-4404-8ba0-058f255b054a-CDN_3_HD2024MF_drm_e8dd6e6b-83be-4d15-a2c4-dff148531820.ism/.mpd?filter=%28%21%28type%3D%3D%22audio%22%26%26FourCC%21%3D%22AACL%22%29%29"
+    }
+  ],
+  "downloadUrls": [],
+  "downloadAdUrls": [],
+  "playlist": {
+    "content": []
+  },
+  "metadata": {},
+  "mediaType": "VOD"
+}

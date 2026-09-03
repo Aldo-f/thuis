@@ -1,0 +1,21 @@
+=== Scenario 7: Non-DRM regression ===
+Command: timeout 30 ./thuis.sh "https://www.vrt.be/vrtmax/a-z/thuis/2026/" --output-dir /tmp/qa-f3-nodrm --dry-run
+
+Exit code: 0
+
+Output (partial - first episode):
+Expanding season URL: https://www.vrt.be/vrtmax/a-z/thuis/2026/
+Found 3 episode(s)
+[1/3] Verwerken: https://www.vrt.be/vrtmax/a-z/thuis/32/thuis-s32a6112/
+[DRY-RUN] Thuis.S32E6112.1080p.WEB-DL.AAC.x264.mp4 ← https://www.vrt.be/vrtmax/a-z/thuis/32/thuis-s32a6112/
+Running: /home/aldo/dev/06-apps-thuis-v4/.venv/bin/python3 -m yt_dlp -f bestvideo+bestaudio --merge-output-format mp4 --no-warnings --no-color --simulate -o /tmp/qa-f3-nodrm/Thuis.S32E6112.1080p.WEB-DL.AAC.x264.mp4 --username **** --password **** https://www.vrt.be/vrtmax/a-z/thuis/32/thuis-s32a6112/
+[vrtmax] Extracting URL: https://www.vrt.be/vrtmax/a-z/thuis/32/thuis-s32a6112/
+[vrtmax] thuis-s32a6112: Downloading asset JSON
+[vrtmax] pbs-pub-97ba9400-8bfe-465b-bbae-7bacc96e0a82$vid-274a7beb-3681-4699-917e-2b43f250d134: Downloading player token
+[vrtmax] pbs-pub-97ba9400-8bfe-465b-bbae-7bacc96e0a82$vid-274a7beb-3681-4699-917e-2b43f250d134: Downloading API JSON
+[vrtmax] pbs-pub-97ba9400-8bfe-465b-bbae-7bacc96e0a82$vid-274a7beb-3681-4699-917e-2b43f250d134: Downloading m3u8 information
+[vrtmax] pbs-pub-97ba9400-8bfe-465b-bbae-7bacc96e0a82$vid-274a7beb-3681-4699-917e-2b43f250d134: Downloading MPD manifest
+[info] pbs-pub-97ba9400-8bfe-465b-bbae-7bacc96e0a82$vid-274a7beb-3681-4699-917e-2b43f250d134: Downloading 1 format(s): MPEG_DASH-video=5002364+MPEG_DASH-audio=96001
+[2/3] Verwerken: https://www.vrt.be/vrtmax/a-z/thuis/32/thuis-s32a6111/
+
+Assertion: ✓ Runs normally, no DRM crash (Thuis is not DRM protected)

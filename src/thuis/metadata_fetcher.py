@@ -9,6 +9,7 @@ Standalone module — CODEC_MAP is duplicated here intentionally
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 
@@ -90,11 +91,13 @@ def fetch_metadata(
     dict
         Keys: ``series``, ``season``, ``episode``, ``height``,
         ``vcodec_raw``, ``vcodec_label``, ``acodec_raw``,
-        ``acodec_label``, ``ext``, ``title``.
+        ``acodec_label``, ``ext``, ``title``, and DRM fields:
+        ``_vrt_drm_vudrm_token``, ``_vrt_drm_mpd_url``, ``_vrt_drm_init_url``.
 
         If the subprocess fails for any reason an **empty dict** is
         returned (no exception is raised).
     """
+    # First, get the basic metadata via --print
     cmd = [sys.executable, "-m", "yt_dlp", "--print", _PRINT_FMT, url]
 
     if credentials:
@@ -127,7 +130,7 @@ def fetch_metadata(
     vcodec_label = lookup_codec(vcodec_raw)
     acodec_label = lookup_codec(acodec_raw)
 
-    return {
+    metadata = {
         "series": _na_to_none(series),
         "season": _na_to_none(season),
         "episode": _na_to_none(episode),
@@ -139,6 +142,57 @@ def fetch_metadata(
         "ext": ext,
         "title": _na_to_none(title),
     }
+
+    # Also fetch DRM metadata via -J (JSON output) if available
+    # This gets _vrt_drm_* fields from the fork
+    drm_fields = _fetch_drm_metadata(url, credentials)
+    metadata.update(drm_fields)
+
+    return metadata
+
+
+def _fetch_drm_metadata(
+    url: str, credentials: tuple[str, str] | None = None
+) -> dict:
+    """Fetch DRM metadata fields from yt-dlp -J output.
+    
+    Returns dict with _vrt_drm_vudrm_token, _vrt_drm_mpd_url, _vrt_drm_init_url
+    if present, empty dict otherwise.
+    """
+    cmd = [sys.executable, "-m", "yt_dlp", "-J", url]
+
+    if credentials:
+        email, password = credentials
+        cmd.extend(["--username", email, "--password", password])
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except Exception:
+        return {}
+
+    if result.returncode != 0:
+        return {}
+
+    raw = result.stdout.strip()
+    if not raw:
+        return {}
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+
+    drm_fields = {}
+    for key in ("_vrt_drm_vudrm_token", "_vrt_drm_mpd_url", "_vrt_drm_init_url"):
+        if key in data:
+            drm_fields[key] = data[key]
+
+    return drm_fields
 
 
 def fetch_preview_height(

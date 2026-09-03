@@ -1,0 +1,29 @@
+{
+  "duration": 30000,
+  "skinType": "vod",
+  "title": "VRT MAX: Ket & Doc",
+  "shortDescription": null,
+  "drm": null,
+  "drmExpired": null,
+  "videoRobustness": null,
+  "aspectRatio": "16:9",
+  "posterImageUrl": "https://images.vrt.be/orig/2025/02/21/63f07122-5bbd-4ca1-b42e-8565c6cd95df.jpg",
+  "channelId": null,
+  "targetUrls": [
+    {
+      "type": "hls",
+      "url": "https://vod.vrtcdn.be/ondemand/content/vod/vid-242ddfe9-18f5-4e16-ab45-09b122a19251-CDN_1_HD2022/vid-242ddfe9-18f5-4e16-ab45-09b122a19251-CDN_1_HD2022_nodrm_cc577f41-6b7a-49ef-a451-b8cecbe68f05.ism/.m3u8?filter=%28%21%28type%3D%3D%22audio%22%26%26FourCC%21%3D%22AACL%22%29%29"
+    },
+    {
+      "type": "mpeg_dash",
+      "url": "https://vod.vrtcdn.be/ondemand/content/vod/vid-242ddfe9-18f5-4e16-ab45-09b122a19251-CDN_1_HD2022/vid-242ddfe9-18f5-4e16-ab45-09b122a19251-CDN_1_HD2022_nodrm_cc577f41-6b7a-49ef-a451-b8cecbe68f05.ism/.mpd?filter=%28%21%28type%3D%3D%22audio%22%26%26FourCC%21%3D%22AACL%22%29%29"
+    }
+  ],
+  "downloadUrls": [],
+  "downloadAdUrls": [],
+  "playlist": {
+    "content": []
+  },
+  "metadata": {},
+  "mediaType": "VOD"
+}

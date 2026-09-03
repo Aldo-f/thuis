@@ -78,7 +78,7 @@ class TestResolutionValidation:
              patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
              patch("thuis.main.classifier.classify") as mock_classify, \
              patch("thuis.main.scene_namer.build_tv_filename") as mock_build, \
-             patch("subprocess.run") as mock_run, \
+             patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
              patch("os.access", return_value=True):
 
             mock_parse.return_value = MagicMock(
@@ -88,7 +88,7 @@ class TestResolutionValidation:
             mock_fetch.return_value = {}
             mock_classify.return_value = None
             mock_build.return_value = "Thuisow.S01E01.mp4"
-            mock_run.return_value = MagicMock(returncode=0)
+            mock_run.return_value = (0, "")
 
             with pytest.raises(SystemExit):
                 main()
@@ -113,7 +113,7 @@ class TestResolutionValidation:
              patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
              patch("thuis.main.classifier.classify") as mock_classify, \
              patch("thuis.main.scene_namer.build_tv_filename") as mock_build, \
-             patch("subprocess.run") as mock_run, \
+             patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
              patch("thuis.main.os.access", return_value=True):
 
             mock_parse.return_value = MagicMock(
@@ -123,7 +123,7 @@ class TestResolutionValidation:
             mock_fetch.return_value = {}
             mock_classify.return_value = None
             mock_build.return_value = "Thuisow.S01E01.mp4"
-            mock_run.return_value = MagicMock(returncode=0)
+            mock_run.return_value = (0, "")
 
             with pytest.raises(SystemExit):
                 main()
@@ -255,7 +255,7 @@ class TestRetrySkip:
              patch("thuis.main.os.access", return_value=True), \
              patch("thuis.main.Path.exists", return_value=True) as mock_exists, \
              patch("thuis.main.Path.glob", return_value=[Path("Thuisow.S01E01.mp4")]) as mock_glob, \
-             patch("subprocess.run") as mock_run:
+             patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run:
 
             mock_parse.return_value = MagicMock(
                 show_slug="thuisow", season="1", episode="1",
@@ -264,7 +264,7 @@ class TestRetrySkip:
             mock_fetch.return_value = {"series": "Test Show"}
             mock_classify.return_value = classifier.ContentType.TV
             mock_build.return_value = "Thuisow.S01E01.mp4"
-            mock_run.return_value = MagicMock(returncode=0)
+            mock_run.return_value = (0, "")
 
             with pytest.raises(SystemExit):
                 main()
@@ -296,7 +296,7 @@ class TestRetrySkip:
              patch("thuis.main.scene_namer.build_tv_filename") as mock_build, \
              patch("thuis.main.os.access", return_value=True), \
              patch("thuis.main.Path.exists", return_value=False) as mock_exists, \
-             patch("subprocess.run") as mock_run:
+             patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run:
 
             mock_parse.return_value = MagicMock(
                 show_slug="thuisow", season="1", episode="1",
@@ -305,7 +305,7 @@ class TestRetrySkip:
             mock_fetch.return_value = {}
             mock_classify.return_value = None
             mock_build.return_value = "Thuisow.S01E01.mp4"
-            mock_run.return_value = MagicMock(returncode=0)
+            mock_run.return_value = (0, "")
 
             with pytest.raises(SystemExit):
                 main()
@@ -327,7 +327,7 @@ class TestRetrySkip:
              patch("thuis.main.classifier.classify") as mock_classify, \
              patch("thuis.main.scene_namer.build_tv_filename") as mock_build, \
              patch("thuis.main.os.access", return_value=True), \
-             patch("subprocess.run") as mock_run:
+             patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run:
 
             mock_parse.return_value = MagicMock(
                 show_slug="thuisow", season="1", episode="1",
@@ -336,7 +336,7 @@ class TestRetrySkip:
             mock_fetch.return_value = {}
             mock_classify.return_value = None
             mock_build.return_value = "Thuisow.S01E01.mp4"
-            mock_run.return_value = MagicMock(returncode=0)
+            mock_run.return_value = (0, "")
 
             with pytest.raises(SystemExit):
                 main()

@@ -1,0 +1,20 @@
+=== Graceful Degradation Verification (Scenario 5) ===
+
+Critical Acceptance Criteria:
+1. Tool must NOT crash ✓ (exit code 0)
+2. Tool must degrade to 'drm' status ✓ (state.db shows 'drm')
+3. No traceback/exception crash ✓
+
+Verification Steps:
+1. Exit code check: 0 ✓
+2. State DB check: 
+   PYTHONPATH=/home/aldo/dev/06-apps-thuis-v4/src .venv/bin/python -c "from thuis.watchlist import WatchlistDB; db=WatchlistDB(); print(db.get_last_status('https://www.vrt.be/vrtmax/a-z/flikken-maastricht/17/flikken-maastricht-s17a2/')); db.close()"
+   Output: Last status for URL: drm ✓
+3. No crash/traceback in output ✓
+
+Additional Notes:
+- CDM auto-fetch failed (all sources unavailable)
+- N_m3u8DL-RE, mp4decrypt, shaka-packager NOT installed (only ffmpeg available)
+- This is EXPECTED behavior - the tool gracefully handles missing dependencies
+- The DRM detection correctly identifies the content as protected
+- State persistence works correctly for watchlist processing

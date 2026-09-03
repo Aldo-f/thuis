@@ -1,0 +1,9 @@
+=== Scenario 4: CDM provisioner ===
+Command: PYTHONPATH=/home/aldo/dev/06-apps-thuis-v4/src timeout 30 .venv/bin/python -c "from thuis.cdm import ensure_cdm; p = ensure_cdm(); print(f'CDM: {p}')"
+
+Exit code: 0
+Output:
+Failed to auto-fetch CDM from all sources. DRM decryption will be unavailable.
+CDM: None
+
+Assertion: ✓ Returns None gracefully (no crash), warning logged

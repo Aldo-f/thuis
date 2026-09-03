@@ -1,0 +1,7 @@
+=== Scenario 3: Policy default resolves to yes ===
+Command: PYTHONPATH=/home/aldo/dev/06-apps-thuis-v4/src .venv/bin/python -c "import os; os.environ.pop('DECRYPT_DRM',None); from thuis.main import get_decrypt_policy; print(get_decrypt_policy())"
+
+Exit code: 0
+Output: yes
+
+Assertion: ✓ prints "yes"

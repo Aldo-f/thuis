@@ -44,7 +44,7 @@ def test_season_expand_dry_run(capsys):
     original_argv = sys.argv
 
     with patch('thuis.main.fetch_season_episodes') as mock_fetch_season, \
-         patch('thuis.main.subprocess.run') as mock_run, \
+         patch('thuis.main._run_ytdlp_with_drm_detection') as mock_run, \
          patch('thuis.main.get_yt_dlp_cmd', return_value=['yt-dlp']), \
          patch('thuis.main.metadata_fetcher.fetch_metadata') as mock_fetch:
 

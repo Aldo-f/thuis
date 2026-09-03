@@ -1,0 +1,5 @@
+{
+  "_vrt_drm_vudrm_token": "vrt|2026-09-02T19:41:12Z|v2|SlbEgHduBX/3G1hkEEQdE6FmosqJaMDpDmoEUsKR9dItDVNEHzJyR/X43PMW4z/YrJ+g0ezaCIG1AZqbli4IikHoj8yjhrZq0SW/ly0ictOivAPQkip3kaScONla/olqEJg6gbKYFzsRe4Mvukg1eg==|bb39a01fae541cd83ff4c418c183e4186d48e5f2f3705ae75875249e3bf7c95c",
+  "_vrt_drm_mpd_url": "https://vod.vrtcdn.be/ondemand/content/vod/vid-530e118d-f6dd-4404-8ba0-058f255b054a-CDN_3_HD2024MF/vid-530e118d-f6dd-4404-8ba0-058f255b054a-CDN_3_HD2024MF_drm_e8dd6e6b-83be-4d15-a2c4-dff148531820.ism/.mpd?filter=%28%21%28type%3D%3D%22audio%22%26%26FourCC%21%3D%22AACL%22%29%29",
+  "_vrt_drm_init_url": "https://vod.vrtcdn.be/ondemand/content/vod/vid-530e118d-f6dd-4404-8ba0-058f255b054a-CDN_3_HD2024MF/vid-530e118d-f6dd-4404-8ba0-058f255b054a-CDN_3_HD2024MF_drm_e8dd6e6b-83be-4d15-a2c4-dff148531820.ism/.m3u8?filter=%28%21%28type%3D%3D%22audio%22%26%26FourCC%21%3D%22AACL%22%29%29"
+}

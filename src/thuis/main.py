@@ -103,6 +103,7 @@ import subprocess
 import tempfile
 import platform
 import logging
+import json
 from pathlib import Path
 
 try:
@@ -122,6 +123,12 @@ except ImportError:
     import metadata_fetcher
     import scene_namer
     import transcoder
+
+# Import DRM decrypt worker
+try:
+    from . import drm_decrypt
+except ImportError:
+    import drm_decrypt
 
 # Default credentials (for demonstration / testing only)
 DEFAULT_EMAIL = "kuxelu@ipdeer.com"
@@ -371,6 +378,48 @@ def get_credentials():
     return email, password
 
 
+def get_decrypt_policy() -> str:
+    """Return DRM decryption policy from environment.
+
+    Normalizes DECRYPT_DRM env var:
+    - yes|1|true (case-insensitive) -> "yes"
+    - anything else -> "no"
+    Default: "yes" (decrypt DRM by default)
+    """
+    val = os.getenv("DECRYPT_DRM", "yes").strip().lower()
+    if val in ("yes", "1", "true"):
+        return "yes"
+    return "no"
+
+
+def _is_drm_content(metadata: dict) -> bool:
+    """Check if content is DRM-protected based on yt-dlp metadata.
+
+    Currently checks for common DRM indicators in metadata.
+    Can be extended as more DRM detection logic is added.
+    """
+    # Check for common DRM scheme indicators in vcodec/acodec
+    vcodec = (metadata.get("vcodec_raw") or "").lower()
+    acodec = (metadata.get("acodec_raw") or "").lower()
+    
+    # Common DRM codec indicators
+    drm_indicators = [
+        "widevine", "playready", "fairplay", "clearkey",
+        "cenc", "cbcs", "cbc1", "cens",
+    ]
+    
+    for indicator in drm_indicators:
+        if indicator in vcodec or indicator in acodec:
+            return True
+    
+    # Check for encrypted extensions (yt-dlp returns ext without dot)
+    ext = (metadata.get("ext") or "").lower()
+    if ext in ("ism", "ismv", "isma"):  # Smooth Streaming often DRM
+        return True
+    
+    return False
+
+
 def get_yt_dlp_cmd():
     """Return the command to invoke yt-dlp, preferring the packaged binary in the project's bin directory.
     If a virtual environment is active, it will always use the venv's python -m yt_dlp.
@@ -458,8 +507,34 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), 
     args.extend(urls)
     return args
 
+def _run_ytdlp_with_drm_detection(url_args_list: list[str]) -> tuple[int, str]:
+    """Run yt-dlp with stderr tee for DRM detection.
 
+    Args:
+        url_args_list: Command line arguments for yt-dlp.
 
+    Returns:
+        Tuple of (returncode, stderr_text).
+    """
+    proc = subprocess.Popen(
+        url_args_list,
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=True,
+        bufsize=1,  # Line buffered
+    )
+    stderr_buffer = []
+    # Tee stderr to console and collect for DRM classification
+    for line in proc.stderr:
+        print(line, end="", flush=True)  # Live output
+        stderr_buffer.append(line)
+    # Also drain stdout to prevent pipe blocking
+    for line in proc.stdout:
+        print(line, end="", flush=True)
+    proc.wait()
+    returncode = proc.returncode
+    stderr_text = "".join(stderr_buffer)
+    return returncode, stderr_text
 
 def is_season_url(url: str) -> bool:
     """Detect if *url* points to a season page rather than a single episode.
@@ -1033,6 +1108,11 @@ def _run_watchlist(args) -> None:
             if not should_trigger(entry.schedule, now, db.get_last_run(entry.url)):
                 print(f"  [skip] not scheduled: [{schedule}] {entry.url}")
                 continue
+            # Skip DRM entries on scheduled runs (unless --now is used)
+            last_status = db.get_last_status(entry.url)
+            if last_status == "drm":
+                print(f"  [skip] DRM protected: [{schedule}] {entry.url}")
+                continue
             print(f"  [due ] [{schedule}] {entry.url}")
             due.append((entry.url, schedule, out_dir))
 
@@ -1285,6 +1365,68 @@ def main():
                 # Step 3: Classify content
                 content_type = classifier.classify(vrt_info, metadata)
                 
+                # Step 3b: DRM policy gate
+                # Check if content is DRM-protected and decryption is disabled
+                if _is_drm_content(metadata):
+                    policy = get_decrypt_policy()
+                    if policy != "yes":
+                        logger.info("DRM decryption disabled; set DECRYPT_DRM=yes in .env to enable")
+                        # Skip this URL but continue with others
+                        continue
+                    # Policy is "yes" -> try DRM decryption using fork metadata
+                    vudrm_token = metadata.get("_vrt_drm_vudrm_token")
+                    mpd_url = metadata.get("_vrt_drm_mpd_url")
+                    init_url = metadata.get("_vrt_drm_init_url")
+                    
+                    if vudrm_token and mpd_url and init_url:
+                        logger.info("Attempting DRM decryption for %s", url)
+                        # Build output name from scene template
+                        output_name = scene_template.replace(".%(ext)s", "").replace("%(title)s", metadata.get("title", "unknown"))
+                        if "%" in output_name:
+                            # Fallback: use show/season/episode
+                            if content_type == classifier.ContentType.TV:
+                                show_norm = scene_namer.normalize_show_name(show_name)
+                                output_name = f"{show_norm}.S{season_num:02d}E{episode_num:02d}"
+                            else:
+                                output_name = metadata.get("title", "unknown").replace(" ", ".")
+                        
+                        decrypted_file = drm_decrypt.decrypt_drm_content(
+                            vudrm_token=vudrm_token,
+                            mpd_url=mpd_url,
+                            init_url=init_url,
+                            output_dir=args.output_dir,
+                            output_name=output_name,
+                        )
+                        
+                        if decrypted_file and decrypted_file.exists():
+                            logger.info("DRM decryption successful: %s", decrypted_file)
+                            results.append(0)
+                            # Skip normal download/post-processing
+                            continue
+                        else:
+                            logger.warning("DRM decryption failed for %s, marking as drm", url)
+                            results.append("drm")
+                            # Persist DRM status
+                            try:
+                                from thuis.watchlist import WatchlistDB
+                                db = WatchlistDB()
+                                db.set_last_run(url, status="drm")
+                                db.close()
+                            except Exception as e:
+                                logger.warning("Failed to persist DRM status: %s", e)
+                            continue
+                    else:
+                        logger.warning("DRM detected but missing _vrt_drm_* metadata for %s", url)
+                        results.append("drm")
+                        try:
+                            from thuis.watchlist import WatchlistDB
+                            db = WatchlistDB()
+                            db.set_last_run(url, status="drm")
+                            db.close()
+                        except Exception as e:
+                            logger.warning("Failed to persist DRM status: %s", e)
+                        continue
+                
                 # Step 4: Build scene filename based on content type
                 resolution = audio_codec = video_codec = None
                 if content_type == classifier.ContentType.TV:
@@ -1463,12 +1605,28 @@ def main():
 
             print("Running:", " ".join(_mask_secrets(url_args_list)))
             try:
-                # Run yt-dlp
-                completed = subprocess.run(url_args_list, check=False)
-                results.append(completed.returncode)
+                # Run yt-dlp with stderr tee for DRM detection
+                returncode, stderr_text = _run_ytdlp_with_drm_detection(url_args_list)
+
+                # DRM classification: check for exact marker from yt-dlp's report_drm
+                drm_marker = "This video is DRM protected"
+                if drm_marker in stderr_text:
+                    logger.info("DRM detected for %s", url)
+                    results.append("drm")
+                    # Persist DRM status in WatchlistDB
+                    try:
+                        from thuis.watchlist import WatchlistDB
+                        db = WatchlistDB()
+                        db.set_last_run(url, status="drm")
+                        db.close()
+                    except Exception as e:
+                        logger.warning("Failed to persist DRM status: %s", e)
+                    continue  # Skip post-download processing for DRM
+
+                results.append(returncode)
                 
                 # Post-download transcoding if requested and download succeeded
-                if args.transcode and completed.returncode == 0 and not args.dry_run:
+                if args.transcode and returncode == 0 and not args.dry_run:
                     import transcoder
                     
                     # Parse target height from --transcode argument
@@ -1510,16 +1668,27 @@ def main():
                 print("\nInterrupted")
                 sys.exit(1)
         
-        # Exit with appropriate code
-        if results:
-            # If any subprocess failed, exit with error code
+        def _exit_with_code(results):
+            drm_results = [r for r in results if r == "drm"]
+            non_drm_results = [r for r in results if r != "drm"]
+            
+            if drm_results and not non_drm_results:
+                print(f"\n=== DRM Summary ===")
+                print(f"Total DRM protected: {len(drm_results)}")
+                print(f"No downloadable content found.")
+                sys.exit(0)
+            if drm_results and non_drm_results:
+                print(f"\n=== DRM Summary ===")
+                print(f"DRM protected: {len(drm_results)}")
+                print(f"Other results: {len(non_drm_results)}")
+                if any(r != 0 for r in non_drm_results):
+                    sys.exit(1)
+                sys.exit(0)
             if any(r != 0 for r in results):
                 sys.exit(1)
-            else:
-                sys.exit(0)
-        else:
-            # No URLs processed
             sys.exit(0)
+
+        _exit_with_code(results)
             
     except KeyboardInterrupt:
         print("\nInterrupted")

@@ -34,7 +34,7 @@ def test_integration_tv_url(monkeypatch):
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
@@ -42,7 +42,7 @@ def test_integration_tv_url(monkeypatch):
          patch("thuis.main.classifier.classify") as mock_classify, \
          patch("thuis.main.scene_namer.build_tv_filename") as mock_build:
 
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
         mock_parse.return_value = VrtUrlInfo(
             show_slug="test-show",
             season=1,
@@ -107,7 +107,7 @@ def test_integration_special_url(monkeypatch):
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
@@ -115,7 +115,7 @@ def test_integration_special_url(monkeypatch):
          patch("thuis.main.classifier.classify") as mock_classify, \
          patch("thuis.main.scene_namer.build_special_filename") as mock_build:
 
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
         mock_parse.return_value = VrtUrlInfo(
             show_slug="test-show",
             season=0,
@@ -169,7 +169,7 @@ def test_integration_movie_url(monkeypatch):
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
@@ -177,7 +177,7 @@ def test_integration_movie_url(monkeypatch):
          patch("thuis.main.classifier.classify") as mock_classify, \
          patch("thuis.main.scene_namer.build_movie_filename") as mock_build:
 
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
         mock_parse.return_value = VrtUrlInfo(
             show_slug="a-movie-title",
             season=0,
@@ -231,14 +231,14 @@ def test_integration_fallback_url(monkeypatch):
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
          patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
          patch("thuis.main.classifier.classify") as mock_classify:
 
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
         mock_parse.return_value = VrtUrlInfo(
             show_slug="unknown-content",
             season=0,
@@ -281,7 +281,7 @@ def test_integration_multi_url_batch(monkeypatch):
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
@@ -290,7 +290,7 @@ def test_integration_multi_url_batch(monkeypatch):
          patch("thuis.main.scene_namer.build_tv_filename") as mock_build_tv, \
          patch("thuis.main.scene_namer.build_special_filename") as mock_build_special:
 
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
 
         # -- side effects for two different URLs --
         url1 = "https://www.vrt.be/vrtmax/a-z/show-a/1/show-a-s01a01/"
@@ -373,7 +373,7 @@ def test_integration_dry_run_mode(monkeypatch):
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
@@ -381,7 +381,7 @@ def test_integration_dry_run_mode(monkeypatch):
          patch("thuis.main.classifier.classify") as mock_classify, \
          patch("thuis.main.scene_namer.build_tv_filename") as mock_build:
 
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
         mock_parse.return_value = VrtUrlInfo(
             show_slug="test-show",
             season=1,

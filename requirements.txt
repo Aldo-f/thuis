@@ -1,3 +1,4 @@
-git+https://github.com/Aldo-f/yt-dlp.git@v2026.06.09-patch1#egg=yt-dlp
+git+https://github.com/Aldo-f/yt-dlp.git@v2026.06.09-patch2#egg=yt-dlp
 pytest>=8.0
 python-dotenv>=1.0
+pywidevine>=1.9.0

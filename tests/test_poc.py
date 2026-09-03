@@ -14,14 +14,14 @@ def test_poc_uses_default_credentials_when_env_missing(monkeypatch):
     monkeypatch.delenv("VRT_EMAIL", raising=False)
     monkeypatch.delenv("VRT_PASSWORD", raising=False)
     # Mock subprocess.run to capture the actual yt-dlp call
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
          patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
          patch("thuis.main.classifier.classify") as mock_classify, \
          patch("thuis.main.scene_namer.build_tv_filename") as mock_build:
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
         mock_parse.return_value = MagicMock(show_slug="test-show", season=1, episode=1)
         mock_fetch.return_value = {"series": "Test Show", "season": 1, "episode": 1, "height": "1080", "vcodec_raw": "avc1", "acodec_raw": "mp4a"}
         # Import ContentType to properly mock the enum return value
@@ -61,7 +61,7 @@ def test_poc_uses_default_credentials_when_env_missing(monkeypatch):
 def test_poc_uses_provided_credentials(monkeypatch):
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
@@ -69,7 +69,7 @@ def test_poc_uses_provided_credentials(monkeypatch):
          patch("thuis.main.classifier.classify") as mock_classify, \
          patch("thuis.main.scene_namer.build_tv_filename") as mock_build:
         mock_fetch.return_value = {"series": "Test Show", "season": 1, "episode": 1}
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
         mock_build.return_value = "Test.Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
         # Import ContentType to properly mock the enum return value
         from thuis.classifier import ContentType
@@ -107,14 +107,14 @@ def test_poc_handles_file_input(monkeypatch, tmp_path):
     url_file.write_text("https://example.com/video1\nhttps://example.com/video2\n")
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
          patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
          patch("thuis.main.classifier.classify") as mock_classify, \
          patch("thuis.main.scene_namer.build_tv_filename") as mock_build:
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
         mock_parse.return_value = MagicMock(show_slug="test-show", season=1, episode=1)
         mock_fetch.return_value = {"series": "Test Show", "season": 1, "episode": 1, "height": "1080", "vcodec_raw": "avc1", "acodec_raw": "mp4a"}
         # Import ContentType to properly mock the enum return value
@@ -162,14 +162,14 @@ def test_poc_handles_file_input(monkeypatch, tmp_path):
 def test_poc_dry_run_flag(monkeypatch):
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
          patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
          patch("thuis.main.classifier.classify") as mock_classify, \
          patch("thuis.main.scene_namer.build_tv_filename") as mock_build:
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
         mock_parse.return_value = MagicMock(show_slug="test-show", season=1, episode=1, path="/vrtmax/a/show/test-show/1/test-show-s01a01/", url="https://example.com/video3")
         mock_fetch.return_value = {"series": "Test Show", "season": 1, "episode": 1, "height": "1080", "vcodec_raw": "avc1", "acodec_raw": "mp4a"}
         # Import ContentType to properly mock the enum return value
@@ -203,7 +203,7 @@ def test_scene_name_appears_in_output(monkeypatch):
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
     
     # Test case 1: TV content
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
@@ -211,7 +211,7 @@ def test_scene_name_appears_in_output(monkeypatch):
          patch("thuis.main.classifier.classify") as mock_classify, \
          patch("thuis.main.scene_namer.build_tv_filename") as mock_build_tv:
         
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
         test_url = "https://www.vrt.be/vrtmax/a/show/test-show/1/test-show-s01a01/"
         
         # Mock the URL parser to return specific values
@@ -262,7 +262,7 @@ def test_scene_name_appears_in_output(monkeypatch):
         assert "%(title)s" not in output_arg
     
     # Test case 2: SPECIAL content
-    with patch("subprocess.run") as mock_run, \
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
@@ -270,7 +270,7 @@ def test_scene_name_appears_in_output(monkeypatch):
          patch("thuis.main.classifier.classify") as mock_classify, \
          patch("thuis.main.scene_namer.build_special_filename") as mock_build_special:
         
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = (0, "")
         test_url = "https://www.vrt.be/vrtmax/a/show/test-show/extra-s/test-show-extra/"
         
         # Mock the URL parser to return specific values for special content
