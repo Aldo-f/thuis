@@ -398,25 +398,29 @@ def _is_drm_content(metadata: dict) -> bool:
     Currently checks for common DRM indicators in metadata.
     Can be extended as more DRM detection logic is added.
     """
+    # Check for VRT MAX DRM metadata fields (emitted by fork)
+    if metadata.get("_vrt_drm_vudrm_token") and metadata.get("_vrt_drm_mpd_url"):
+        return True
+
     # Check for common DRM scheme indicators in vcodec/acodec
     vcodec = (metadata.get("vcodec_raw") or "").lower()
     acodec = (metadata.get("acodec_raw") or "").lower()
-    
+
     # Common DRM codec indicators
     drm_indicators = [
         "widevine", "playready", "fairplay", "clearkey",
         "cenc", "cbcs", "cbc1", "cens",
     ]
-    
+
     for indicator in drm_indicators:
         if indicator in vcodec or indicator in acodec:
             return True
-    
+
     # Check for encrypted extensions (yt-dlp returns ext without dot)
     ext = (metadata.get("ext") or "").lower()
     if ext in ("ism", "ismv", "isma"):  # Smooth Streaming often DRM
         return True
-    
+
     return False
 
 
@@ -1380,15 +1384,13 @@ def main():
                     
                     if vudrm_token and mpd_url and init_url:
                         logger.info("Attempting DRM decryption for %s", url)
-                        # Build output name from scene template
-                        output_name = scene_template.replace(".%(ext)s", "").replace("%(title)s", metadata.get("title", "unknown"))
-                        if "%" in output_name:
-                            # Fallback: use show/season/episode
-                            if content_type == classifier.ContentType.TV:
-                                show_norm = scene_namer.normalize_show_name(show_name)
-                                output_name = f"{show_norm}.S{season_num:02d}E{episode_num:02d}"
-                            else:
-                                output_name = metadata.get("title", "unknown").replace(" ", ".")
+                        # Build output name — scene_template not yet set at this point
+                        title = metadata.get("title") or vrt_info.show_slug or "unknown"
+                        if content_type == classifier.ContentType.TV:
+                            show_norm = scene_namer.normalize_show_name(vrt_info.show_slug)
+                            output_name = f"{show_norm}.S{vrt_info.season:02d}E{vrt_info.episode:02d}"
+                        else:
+                            output_name = title.replace(" ", ".")
                         
                         decrypted_file = drm_decrypt.decrypt_drm_content(
                             vudrm_token=vudrm_token,

@@ -98,7 +98,7 @@ def fetch_metadata(
         returned (no exception is raised).
     """
     # First, get the basic metadata via --print
-    cmd = [sys.executable, "-m", "yt_dlp", "--print", _PRINT_FMT, url]
+    cmd = [sys.executable, "-m", "yt_dlp", "--print", _PRINT_FMT, "--ignore-no-formats-error", url]
 
     if credentials:
         email, password = credentials
@@ -112,9 +112,14 @@ def fetch_metadata(
             timeout=60,
         )
     except Exception:
-        return {}
+        # Even if --print fails, try to get DRM metadata
+        return _fetch_drm_metadata(url, credentials)
 
     if result.returncode != 0:
+        # If --print failed, still try to get DRM metadata
+        drm_fields = _fetch_drm_metadata(url, credentials)
+        if drm_fields:
+            return drm_fields
         return {}
 
     raw = result.stdout.strip()
@@ -159,7 +164,7 @@ def _fetch_drm_metadata(
     Returns dict with _vrt_drm_vudrm_token, _vrt_drm_mpd_url, _vrt_drm_init_url
     if present, empty dict otherwise.
     """
-    cmd = [sys.executable, "-m", "yt_dlp", "-J", url]
+    cmd = [sys.executable, "-m", "yt_dlp", "-J", "--ignore-no-formats-error", url]
 
     if credentials:
         email, password = credentials
