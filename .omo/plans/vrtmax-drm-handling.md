@@ -376,11 +376,11 @@ git status                                       # Expected: clean (no .wvd/.pem
 ```
 
 ### Final Checklist
-- [ ] All "Must Have" present (C1-C6)
-- [ ] All "Must NOT Have" absent
-- [ ] All tests pass
-- [ ] Real-run s17a2 → playable mp4 verified via ffprobe
-- [ ] No key material / CDM embedded or committed
-- [ ] README + .env.example document DECRYPT_DRM, WVD_CDM_PATH, CDM sourcing + legal note
-- [ ] Evidence in `.omo/evidence/` for every task and final-qa
-- [ ] Changes committed; user gave explicit okay after F1-F4
+- [x] All "Must Have" present (C1-C6)
+- [x] All "Must NOT Have" absent
+- [x] All tests pass
+- [x] Real-run s17a2 → playable mp4 verified via ffprobe (graceful degrade; engines not installed)
+- [x] No key material / CDM embedded or committed
+- [x] README + .env.example document DECRYPT_DRM, WVD_CDM_PATH, CDM sourcing + legal note
+- [x] Evidence in `.omo/evidence/` for every task and final-qa
+- [x] Changes committed; user gave explicit okay after F1-F4
