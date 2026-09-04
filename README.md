@@ -350,6 +350,44 @@ python -m thuis.main --input-dir ~/media/ \
 
 - Pressing Ctrl + C now exits cleanly with "Interrupted by user" and no traceback.
 
+## Resume & Partial File Handling
+
+The tool automatically handles interrupted or failed downloads — just re-run the same command. No manual cleanup required.
+
+```mermaid
+flowchart TD
+    A[Start download] --> B{URL in DB<br/>downloaded_files?}
+    B -->|Yes| C[Skip - already downloaded]
+    B -->|No| D{Final .mp4<br/>exists on disk?}
+    D -->|Yes| C
+    D -->|No| E{.part file<br/>exists?}
+    E -->|Yes| F[Delete stale .part]
+    E -->|No| G[Start fresh download]
+    F --> G
+    G --> H{yt-dlp exit code}
+    H -->|0 success| I[Record in DB<br/>downloaded_files]
+    H -->|DRM error| J[Record in DB<br/>last_run = 'drm']
+    H -->|Other error| K[No DB record]
+    I --> L[Done]
+    J --> L
+    K --> L
+```
+
+### Behavior Summary
+
+| Scenario | On re-run |
+|----------|-----------|
+| Network error / Ctrl+C | Stale `.part` auto-deleted, download restarts |
+| DRM protected | Marked `drm` in DB, skipped unless `--now` |
+| Complete file exists | Skipped (DB or filesystem check) |
+| Partial `.part` only | Auto-deleted, download restarts |
+
+**Key points:**
+- Only **successful** downloads (`returncode == 0`) are recorded in `downloaded_files`
+- Failed/partial downloads are **not** recorded, so re-running picks them up
+- `check_file_exists()` in `watchlist.py` removes orphaned `.part` files automatically
+- DRM failures persist in `last_run` table; use `--now` to retry
+
 [Contributing Guidelines](CONTRIBUTING.md)
 
 Website documentation: `website/docs/`
