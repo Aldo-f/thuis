@@ -64,28 +64,28 @@ Process multiple URLs from text files with scheduling support. Each series has i
 
 ```bash
 # Process a single series watchlist (dry run to see what would be downloaded)
-./thuis.sh --watchlist watchlists/Fc_De_Kampioenen.txt --dry-run
+./thuis.sh --watchlist watchlists/series_a.txt --dry-run
 
 # Process manual entries for a series (requires --now)
-./thuis.sh --watchlist watchlists/Fc_De_Kampioenen.txt --now
+./thuis.sh --watchlist watchlists/series_a.txt --now
 
 # Process multiple series at once (all require --now for manual entries)
-./thuis.sh --watchlist watchlists/Fc_De_Kampioenen.txt \
-           --watchlist watchlists/Flikken.txt \
-           --watchlist watchlists/Flikken_Maastricht.txt \
-           --watchlist watchlists/Thuis.txt \
+./thuis.sh --watchlist watchlists/series_a.txt \
+           --watchlist watchlists/series_b.txt \
+           --watchlist watchlists/series_c.txt \
+           --watchlist watchlists/series_d.txt \
            --now --dry-run
 
 # Process podcasts (scheduled entries run automatically, manual need --now)
-./thuis.sh --watchlist watchlists/podcast.txt --now --dry-run
+./thuis.sh --watchlist watchlists/podcasts.txt --now --dry-run
 ```
 
 #### Watchlist File Format
 
 1. **First non-comment line**: Output directory (where files will be saved)
    - Supports absolute paths, relative paths, and `~/` home expansion
-   - TV series example: `/mnt/HDD1/nextcloud/data/aldo/files/Seed/media/tv/`
-   - Podcasts example: `/mnt/HDD1/nextcloud/data/aldo/files/Media/podcasts/_seed`
+   - TV series example: `/path/to/tv/shows/`
+   - Podcasts example: `/path/to/podcasts/`
 
 2. **Subsequent lines**: URL entries
    - No schedule = manual entries requiring `--now` flag to run
@@ -93,15 +93,10 @@ Process multiple URLs from text files with scheduling support. Each series has i
 
 #### Example Watchlist Files
 
-Each series has its own watchlist file in `watchlists/`:
-- `watchlists/Fc_De_Kampioenen.txt` - Fc De Kampioenen series (manual entries, use --now)
-- `watchlists/Flikken.txt` - Flikken series (manual entries, use --now)
-- `watchlists/Flikken_Maastricht.txt` - Flikken Maastricht series (manual entries, use --now)
-- `watchlists/Thuis.txt` - Thuis series (manual entries, use --now)
-- `watchlists/podcast.txt` - Podcasts (weekly scheduled entry for De Gifmenger)
+Example watchlist files are provided in the `watchlists/` directory for different types of content (TV shows, podcasts, etc.).
 
-All TV series watchlists output to `/mnt/HDD1/nextcloud/data/aldo/files/Seed/media/tv/`
-Podcast watchlist outputs to `/mnt/HDD1/nextcloud/data/aldo/files/Media/podcasts/_seed`
+TV series watchlists typically point to a TV shows directory.
+Podcast watchlist points to a podcasts directory.
 
 ## Examples
 
@@ -332,7 +327,7 @@ python -m thuis.main --input-dir ~/media/tv/seed/ \
 # Transcode a single show with higher quality (CRF 18 = larger file, better quality)
 python -m thuis.main --input-dir ~/media/tv/ \
     --transcode 720p \
-    --filter "thuis" \
+    --filter "your-show" \
     --transcode-crf 18 \
     --transcode-preset medium
 
