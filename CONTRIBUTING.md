@@ -9,7 +9,7 @@ Thank you for considering contributing to this project! Below are the steps to g
 - A fork of the repository on GitHub (click the *Fork* button on the repo page).
 - (Optional) Install the [pre‑commit](https://pre-commit.com/) hooks to keep the codebase tidy:
   ```bash
-  pip install pre-commit
+  uv pip install pre-commit
   pre-commit install
   ```
 
@@ -20,12 +20,12 @@ Thank you for considering contributing to this project! Below are the steps to g
 git clone https://github.com/<your‑username>/thuis.git
 cd thuis
 
-# Create a virtual environment (recommended)
-python3 -m venv .venv
+# Create a virtual environment with uv (recommended, uses hardlink mode for disk efficiency)
+uv venv --link-mode=hardlink
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies with uv
+uv pip install -r requirements.txt
 ```
 
 ## Running the Test Suite
