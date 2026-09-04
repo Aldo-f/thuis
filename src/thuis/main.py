@@ -543,7 +543,6 @@ def _run_ytdlp_with_drm_detection(url_args_list: list[str]) -> tuple[int, str]:
     os.close(slave_fd)  # Close slave in parent after fork
 
     stderr_buffer = []
-    leftover = b""
     while True:
         # Use select to avoid blocking forever when process exits
         ready, _, _ = select.select([master_fd], [], [], 0.1)
@@ -559,11 +558,9 @@ def _run_ytdlp_with_drm_detection(url_args_list: list[str]) -> tuple[int, str]:
             sys.stdout.buffer.write(chunk)
             sys.stdout.buffer.flush()
             # Also decode for DRM detection buffer
-            text = chunk.decode("utf-8", errors="replace")
-            stderr_buffer.append(text)
-        # Process has exited — drain any remaining PTY output
-        if proc.poll() is not None:
-            import time
+            stderr_buffer.append(chunk.decode("utf-8", errors="replace"))
+        elif proc.poll() is not None:
+            # Process has exited — drain any remaining PTY output
             time.sleep(0.2)
             while True:
                 try:
@@ -1394,6 +1391,7 @@ def main():
 
 # Process each URL individually with scene naming pipeline
     results = []
+    db = watchlist.WatchlistDB()
     try:
         total = len(unique_urls)
         for idx, url in enumerate(unique_urls):
@@ -1580,13 +1578,12 @@ def main():
                 continue
             
             # Pre-download dedup: check database FIRST (O(1)), fall back to filesystem glob
-            db = watchlist.WatchlistDB()
             try:
                 if db.file_was_downloaded(url, scene_template, str(args.output_dir)):
                     logger.info("Overgeslagen %s: al in database als %s", url, scene_template)
                     continue
-            finally:
-                db.close()
+            except Exception as e:
+                logger.warning("DB dedup failed for %s: %s", url, e)
 
             # Fallback: filesystem glob check (existing logic)
             if content_type == classifier.ContentType.TV:
@@ -1688,9 +1685,7 @@ def main():
                 # Record successful download in database
                 if returncode == 0 and not args.dry_run:
                     try:
-                        db = watchlist.WatchlistDB()
                         db.record_download(url, scene_template, str(args.output_dir))
-                        db.close()
                     except Exception as e:
                         logger.warning("Failed to record download in DB: %s", e)
 
@@ -1758,10 +1753,12 @@ def main():
             sys.exit(0)
 
         _exit_with_code(results)
-            
+
     except KeyboardInterrupt:
         print("\nInterrupted")
         sys.exit(1)
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":
