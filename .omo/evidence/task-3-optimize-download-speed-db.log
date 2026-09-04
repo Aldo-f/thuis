@@ -1,0 +1,16 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+rootdir: /home/aldo/dev/06-apps-thuis-v4
+configfile: pyproject.toml
+plugins: anyio-4.8.0
+collecting ... collected 405 items / 399 deselected / 6 selected
+
+tests/test_download_db_integration.py::TestDownloadDBIntegration::test_record_download_called_on_success PASSED [ 16%]
+tests/test_download_db_integration.py::TestDownloadDBIntegration::test_file_was_downloaded_skips_download PASSED [ 33%]
+tests/test_download_db_integration.py::TestDownloadDBIntegration::test_glob_fallback_when_db_returns_false PASSED [ 50%]
+tests/test_download_db_integration.py::TestDownloadDBIntegration::test_no_record_for_dry_run PASSED [ 66%]
+tests/test_download_db_integration.py::TestDownloadDBIntegration::test_no_record_for_failed_download PASSED [ 83%]
+tests/test_watchlist.py::TestWatchlistDB::test_record_download_and_check_exists PASSED [100%]
+
+====================== 6 passed, 399 deselected in 4.04s =======================

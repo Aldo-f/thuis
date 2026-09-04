@@ -96,19 +96,3 @@ pytest -x
 
 Happy coding! 🎉
 
-## Versioning Release Checklist
-
-When a new release is tagged, follow these steps to add a Docusaurus version:
-
-1. **Create the tag**: `git tag v<major>.<minor>.<patch>` and push: `git push origin v<major>.<minor>.<patch>`
-2. **Create/update the branch**: If not exists, create `v<major>/main` from the tag: `git checkout -b v<major>/main v<major>.<minor>.<patch>` and push.
-3. **Generate versioned docs**: Check out `v4/main`, then run:
-   ```bash
-   cd website
-   npx docusaurus docs:version v<major>.<minor>.<patch>
-   ```
-4. **Update the config**: Edit `website/docusaurus.config.ts` to add the new version to the `versions` block.
-5. **Build and verify**: Run `cd website && npx docusaurus build` to confirm it builds successfully.
-6. **Commit and push**: Commit the changes to the `v<major>/main` branch with message `docs: add versioned docs for v<major>.<minor>.<patch>`.
-
-The versioned docs are generated from the current `website/docs/` folder. If the release predates the Docusaurus website, the current docs content will be used as a baseline.
