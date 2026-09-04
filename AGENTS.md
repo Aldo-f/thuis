@@ -17,7 +17,6 @@ Thuis v4 home app (repo `aldo-f/thuis`, branch `v4/main`), deployed via manifest
 | `infra/docker-compose.yml` | Service definition: image, ports, volumes, networks, healthcheck |
 | `infra/.env.template` | Required env vars (no secrets; copy to `.env` at runtime) |
 | `templates/infra/repos.manifest.jsonc` | Repo mapping: `infraSubdir: "infra"`, branch `v4/main` |
-| `templates/infra/repos.manifest.jsonc` | Repo mapping: `infraSubdir: "infra"`, branch `v4/main` |
 
 ## CONVENTIONS
 - **Edit templates only** — runtime dir `~/dev/06-apps-thuis-v4/` is regenerated on deploy
@@ -39,7 +38,7 @@ The thuis tool includes a `--watchlist` feature for automated processing of mult
 
 1. **First non-comment line**: Output directory (where files will be saved)
    - Supports absolute paths, relative paths, and `~/` home expansion
-   - Example: `/mnt/HDD1/nextcloud/data/aldo/files/Seed/media/tv/`
+   - Example: `/path/to/tv/shows/`
 
 2. **Subsequent lines**: URL entries with optional scheduling
    - Format: `[schedule] URL # optional comment`
@@ -53,20 +52,20 @@ The thuis tool includes a `--watchlist` feature for automated processing of mult
 
 ```bash
 # Process a single series watchlist (dry run)
-./thuis.sh --watchlist watchlists/Fc_De_Kampioenen.txt --dry-run
+./thuis.sh --watchlist watchlists/series_a.txt --dry-run
 
 # Process manual entries for a series (requires --now)
-./thuis.sh --watchlist watchlists/Fc_De_Kampioenen.txt --now
+./thuis.sh --watchlist watchlists/series_a.txt --now
 
 # Process multiple series at once (all require --now for manual entries)
-./thuis.sh --watchlist watchlists/Fc_De_Kampioenen.txt \
-           --watchlist watchlists/Flikken.txt \
-           --watchlist watchlists/Flikken_Maastricht.txt \
-           --watchlist watchlists/Thuis.txt \
+./thuis.sh --watchlist watchlists/series_a.txt \
+           --watchlist watchlists/series_b.txt \
+           --watchlist watchlists/series_c.txt \
+           --watchlist watchlists/series_d.txt \
            --now --dry-run
 
 # Process podcasts (scheduled entries run automatically, manual need --now)
-./thuis.sh --watchlist watchlists/podcast.txt --now --dry-run
+./thuis.sh --watchlist watchlists/podcasts.txt --now --dry-run
 ```
 
 ### ‑‑now override
@@ -74,14 +73,9 @@ The thuis tool includes a `--watchlist` feature for automated processing of mult
 last‑run timestamps stored in `~/.thuis/state.db`. Use this when a previous run
 failed or new episodes appeared.
 
-| Example Watchlist Files
+### Example Watchlist Files
 
-Each series has its own watchlist file in `watchlists/`:
-- `watchlists/Fc_De_Kampioenen.txt` - Fc De Kampioenen series (manual entries, use --now)
-- `watchlists/Flikken.txt` - Flikken series (manual entries, use --now)
-- `watchlists/Flikken_Maastricht.txt` - Flikken Maastricht series (manual entries, use --now)
-- `watchlists/Thuis.txt` - Thuis series (manual entries, use --now)
-- `watchlists/podcast.txt` - Podcasts (scheduled entries: weekly)
+Example watchlist files are provided in the `watchlists/` directory for different types of content (TV shows, podcasts, etc.).
 
-All TV series watchlists output to `/mnt/HDD1/nextcloud/data/aldo/files/Seed/media/tv/`
-Podcast watchlist outputs to `/mnt/HDD1/nextcloud/data/aldo/files/Media/podcasts/_seed`
+TV series watchlists typically point to a TV shows directory.
+Podcast watchlist points to a podcasts directory.
