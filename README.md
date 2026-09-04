@@ -30,6 +30,34 @@ This installs a patched version of yt-dlp that can handle VRT MAX's login flow.
 
 ## Usage
 
+### Option 1: Wrapper scripts (easiest)
+
+Linux:
+
+```bash
+./thuis.sh https://www.vrt.be/vrtmax/a/show/...
+```
+
+Windows:
+
+```cmd
+thuis.bat https://www.vrt.be/vrtmax/a/show/...
+```
+
+### Option 2: Direct Python
+
+If you prefer calling the Python module directly (or the wrapper scripts are not working):
+
+```bash
+python -m thuis.main https://www.vrt.be/vrtmax/a/show/...
+```
+
+Or from the project root:
+
+```bash
+python src/thuis/main.py https://www.vrt.be/vrtmax/a/show/...
+```
+
 ### Option 3: Watchlist Mode (for automated processing)
 
 Process multiple URLs from text files with scheduling support. Each series has its own watchlist file.
@@ -74,37 +102,6 @@ Each series has its own watchlist file in `watchlists/`:
 
 All TV series watchlists output to `/mnt/HDD1/nextcloud/data/aldo/files/Seed/media/tv/`
 Podcast watchlist outputs to `/mnt/HDD1/nextcloud/data/aldo/files/Media/podcasts/_seed`
-
-
-You can run the tool in two ways.
-
-### Option 1: Wrapper scripts (easiest)
-
-Linux:
-
-```bash
-./thuis.sh https://www.vrt.be/vrtmax/a/show/...
-```
-
-Windows:
-
-```cmd
-thuis.bat https://www.vrt.be/vrtmax/a/show/...
-```
-
-### Option 2: Direct Python
-
-If you prefer calling the Python module directly (or the wrapper scripts are not working):
-
-```bash
-python -m thuis.main https://www.vrt.be/vrtmax/a/show/...
-```
-
-Or from the project root:
-
-```bash
-python src/thuis/main.py https://www.vrt.be/vrtmax/a/show/...
-```
 
 ## Examples
 
