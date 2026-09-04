@@ -184,23 +184,23 @@ Pass a season URL to download every episode in that season:
 
 ```bash
 # By season number in path
-./thuis.sh https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/
+./thuis.sh https://www.vrt.be/vrtmax/a-z/your-show/2/
 
 # By query parameter
-./thuis.sh 'https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/?seizoen=seizoen-2'
+./thuis.sh 'https://www.vrt.be/vrtmax/a-z/your-show/?seizoen=seizoen-2'
 ```
 
 The tool expands the season URL to individual episode URLs by querying the VRT MAX GraphQL API, falling back to HEAD-request guessing if the API returns no results. Combine with `--dry-run` to preview what would be downloaded:
 
 ```bash
-./thuis.sh --dry-run 'https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/?seizoen=seizoen-2'
+./thuis.sh --dry-run 'https://www.vrt.be/vrtmax/a-z/your-show/?seizoen=seizoen-2'
 ```
 
 Limit the number of episodes processed per season with `--max-episodes`:
 
 ```bash
 # Download only the first 5 episodes of a season
-./thuis.sh --max-episodes 5 https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/
+./thuis.sh --max-episodes 5 https://www.vrt.be/vrtmax/a-z/your-show/2/
 ```
 
 ### Download all seasons of a show
@@ -208,20 +208,20 @@ Limit the number of episodes processed per season with `--max-episodes`:
 Pass a bare show URL (without a season number) to automatically discover and download every season:
 
 ```bash
-./thuis.sh https://www.vrt.be/vrtmax/a-z/thuis
+./thuis.sh https://www.vrt.be/vrtmax/a-z/your-show
 ```
 
 The tool queries the show page, detects all available seasons, and expands each into its episodes. Combine with `--dry-run` to preview:
 
 ```bash
-./thuis.sh --dry-run https://www.vrt.be/vrtmax/a-z/thuis
+./thuis.sh --dry-run https://www.vrt.be/vrtmax/a-z/your-show
 ```
 
 Limit episodes per season with `--max-episodes`:
 
 ```bash
 # Download at most 10 episodes per season, across all seasons
-./thuis.sh --max-episodes 10 https://www.vrt.be/vrtmax/a-z/thuis
+./thuis.sh --max-episodes 10 https://www.vrt.be/vrtmax/a-z/your-show
 ```
 
 ## Credentials
@@ -271,7 +271,7 @@ After downloading, you can transcode videos to a target resolution (e.g. 720p). 
 Use `--transcode` to automatically transcode files after download:
 
 ```bash
-./thuis.sh --transcode 720p https://www.vrt.be/vrtmax/a/z/fc-de-kampioenen/1/
+./thuis.sh --transcode 720p https://www.vrt.be/vrtmax/a/z/your-show/1/
 ```
 
 Options:
@@ -289,10 +289,10 @@ Options:
 Use `--input-dir` to transcode files without downloading:
 
 ```bash
-# Transcode FC De Kampioenen files to 720p
+# Transcode your-show files to 720p
 python -m thuis.main --input-dir /path/to/media/tv/seed/ \
     --transcode 720p \
-    --filter "kampioenen" \
+    --filter "your-show" \
     --allow-upscale \
     --keep-original \
     --recursive \
@@ -301,7 +301,7 @@ python -m thuis.main --input-dir /path/to/media/tv/seed/ \
 # Preview without transcoding
 python -m thuis.main --input-dir /path/to/media/tv/seed/ \
     --transcode 720p \
-    --filter "kampioenen" \
+    --filter "your-show" \
     --recursive \
     --dry-run
 ```
@@ -316,10 +316,10 @@ Options:
 ### Examples
 
 ```bash
-# Transcode all downloaded FC De Kampioenen episodes to 720p, keep originals
+# Transcode all downloaded your-show episodes to 720p, keep originals
 python -m thuis.main --input-dir ~/media/tv/seed/ \
     --transcode 720p \
-    --filter "kampioenen" \
+    --filter "your-show" \
     --allow-upscale \
     --keep-original \
     --recursive
