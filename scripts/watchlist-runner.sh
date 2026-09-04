@@ -26,6 +26,5 @@ cd "$REPO_DIR"
   --watchlist watchlists/Flikken.txt \
   --watchlist watchlists/Flikken_Maastricht.txt \
   --watchlist watchlists/Thuis.txt \
-  --watchlist watchlists/Thuis-test.txt \
   --watchlist watchlists/podcast.txt \
   "$@"
