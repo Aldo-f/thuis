@@ -989,3 +989,159 @@ def test_get_credentials_uses_env_vars(monkeypatch):
     email, password = get_credentials()
     assert email == "custom@example.com"
     assert password == "custompass"
+
+
+# ===================================================================
+# Date-based URL naming (UNKNOWN classification with -d YYYYMMDD slug)
+# ===================================================================
+
+def test_unknown_with_date_slug_uses_dated_filename(monkeypatch, capsys):
+    """When classifier returns UNKNOWN but URL has a date-based slug
+    (e.g. het-weer-d20260903), the dated scene template should be used
+    with resolution and codecs from metadata — NOT the fallback %(title)s."""
+    monkeypatch.setenv("VRT_EMAIL", "test@example.com")
+    monkeypatch.setenv("VRT_PASSWORD", "testpass")
+
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
+         patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
+         patch("thuis.main.patch_ytdlp_if_needed"), \
+         patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
+         patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
+         patch("thuis.main.classifier.classify") as mock_classify, \
+         patch("thuis.main.watchlist.WatchlistDB") as mock_db_cls:
+
+        mock_run.return_value = (0, "")
+        mock_parse.return_value = MagicMock(
+            show_slug="het-weer", season=0, episode=0,
+            path="/vrtmax/a-z/het-weer/2026/het-weer-d20260903/",
+            url="https://www.vrt.be/vrtmax/a-z/het-weer/2026/het-weer-d20260903/"
+        )
+        # Simulate what yt-dlp returns for this URL: NA for series/season/episode
+        mock_fetch.return_value = {
+            "series": None, "season": None, "episode": None,
+            "height": "1080p",
+            "vcodec_raw": "avc1.64002A",
+            "acodec_raw": "mp4a.40.2",
+            "ext": "mp4",
+            "title": "vrtmax video #generic",
+        }
+        mock_classify.return_value = ContentType.UNKNOWN
+
+        # Prevent DB dedup from skipping the download
+        mock_db = MagicMock()
+        mock_db_cls.return_value = mock_db
+        mock_db.file_was_downloaded.return_value = False
+
+        test_url = "https://www.vrt.be/vrtmax/a-z/het-weer/2026/het-weer-d20260903/"
+        original_argv = sys.argv
+        try:
+            sys.argv = ["poc.py", test_url]
+            try:
+                main()
+            except SystemExit as e:
+                assert e.code == 0
+        finally:
+            sys.argv = original_argv
+
+        mock_run.assert_called_once()
+        args = mock_run.call_args[0][0]
+        idx_o = args.index("-o")
+        output_arg = args[idx_o + 1]
+        # Should use dated filename, NOT %(title)s fallback
+        assert "Het.Weer.D20260903" in output_arg, \
+            f"Expected dated filename, got: {output_arg}"
+        assert "1080p" in output_arg
+        assert "AAC" in output_arg
+        assert "x264" in output_arg
+        assert "%(title)s" not in output_arg
+
+
+def test_download_started_message_not_in_dry_run(monkeypatch, capsys):
+    """--dry-run should NOT print 'Download started' message."""
+    monkeypatch.setenv("VRT_EMAIL", "test@example.com")
+    monkeypatch.setenv("VRT_PASSWORD", "testpass")
+
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
+         patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
+         patch("thuis.main.patch_ytdlp_if_needed"), \
+         patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
+         patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
+         patch("thuis.main.classifier.classify") as mock_classify, \
+         patch("thuis.main.watchlist.WatchlistDB") as mock_db_cls:
+
+        mock_run.return_value = (0, "")
+        mock_parse.return_value = MagicMock(
+            show_slug="test-show", season=1, episode=1,
+            path="/vrtmax/a-z/test-show/1/test-show-s01e01/",
+            url="https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s01e01/"
+        )
+        mock_fetch.return_value = {
+            "series": "Test Show", "season": "1", "episode": "1",
+            "height": "1080p", "vcodec_raw": "avc1", "acodec_raw": "mp4a",
+            "ext": "mp4", "title": "Episode 1",
+        }
+        mock_classify.return_value = ContentType.TV
+
+        mock_db = MagicMock()
+        mock_db_cls.return_value = mock_db
+        mock_db.file_was_downloaded.return_value = False
+
+        test_url = "https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s01e01/"
+        original_argv = sys.argv
+        try:
+            sys.argv = ["poc.py", "--dry-run", test_url]
+            try:
+                main()
+            except SystemExit as e:
+                assert e.code == 0
+        finally:
+            sys.argv = original_argv
+
+        captured = capsys.readouterr()
+        assert "Download started" not in captured.out
+
+
+def test_download_started_message_in_real_run(monkeypatch, capsys):
+    """Non-dry-run should print 'Download started' before yt-dlp runs."""
+    monkeypatch.setenv("VRT_EMAIL", "test@example.com")
+    monkeypatch.setenv("VRT_PASSWORD", "testpass")
+
+    with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
+         patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
+         patch("thuis.main.patch_ytdlp_if_needed"), \
+         patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
+         patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
+         patch("thuis.main.classifier.classify") as mock_classify, \
+         patch("thuis.main.watchlist.WatchlistDB") as mock_db_cls:
+
+        mock_run.return_value = (0, "")
+        mock_parse.return_value = MagicMock(
+            show_slug="test-show", season=1, episode=1,
+            path="/vrtmax/a-z/test-show/1/test-show-s01e01/",
+            url="https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s01e01/"
+        )
+        mock_fetch.return_value = {
+            "series": "Test Show", "season": "1", "episode": "1",
+            "height": "1080p", "vcodec_raw": "avc1", "acodec_raw": "mp4a",
+            "ext": "mp4", "title": "Episode 1",
+        }
+        mock_classify.return_value = ContentType.TV
+
+        mock_db = MagicMock()
+        mock_db_cls.return_value = mock_db
+        mock_db.file_was_downloaded.return_value = False
+
+        test_url = "https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s01e01/"
+        original_argv = sys.argv
+        try:
+            sys.argv = ["poc.py", test_url]
+            try:
+                main()
+            except SystemExit as e:
+                assert e.code == 0
+        finally:
+            sys.argv = original_argv
+
+        captured = capsys.readouterr()
+        assert "Download started" in captured.out
+        assert test_url in captured.out

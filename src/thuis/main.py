@@ -130,6 +130,12 @@ try:
 except ImportError:
     import drm_decrypt
 
+# Import watchlist database for download tracking
+try:
+    from . import watchlist
+except ImportError:
+    import watchlist
+
 # Default credentials (for demonstration / testing only)
 DEFAULT_EMAIL = "kuxelu@ipdeer.com"
 DEFAULT_PASSWORD = "Els123456"
@@ -512,7 +518,10 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), 
     return args
 
 def _run_ytdlp_with_drm_detection(url_args_list: list[str]) -> tuple[int, str]:
-    """Run yt-dlp with stderr tee for DRM detection.
+    """Run yt-dlp via a PTY so it detects a real terminal and shows an
+    in-place progress bar.  Lines read from the PTY have trailing ``\\r``
+    stripped and are printed via ``print(..., end="")`` so the terminal
+    renders the carriage-return updates as a single updating bar.
 
     Args:
         url_args_list: Command line arguments for yt-dlp.
@@ -520,24 +529,58 @@ def _run_ytdlp_with_drm_detection(url_args_list: list[str]) -> tuple[int, str]:
     Returns:
         Tuple of (returncode, stderr_text).
     """
+    import pty
+    import select
+    master_fd, slave_fd = pty.openpty()
+
     proc = subprocess.Popen(
         url_args_list,
-        stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        text=True,
-        bufsize=1,  # Line buffered
+        stdout=slave_fd,
+        stderr=slave_fd,
+        stdin=subprocess.DEVNULL,
+        close_fds=True,
     )
+    os.close(slave_fd)  # Close slave in parent after fork
+
     stderr_buffer = []
-    # Tee stderr to console and collect for DRM classification
-    for line in proc.stderr:
-        print(line, end="", flush=True)  # Live output
-        stderr_buffer.append(line)
-    # Also drain stdout to prevent pipe blocking
-    for line in proc.stdout:
-        print(line, end="", flush=True)
+    leftover = b""
+    while True:
+        # Use select to avoid blocking forever when process exits
+        ready, _, _ = select.select([master_fd], [], [], 0.1)
+        if ready:
+            try:
+                chunk = os.read(master_fd, 4096)
+            except OSError:
+                break
+            if not chunk:
+                break
+            # Pass raw bytes straight to stdout so the terminal handles
+            # carriage returns and ANSI escape sequences for the progress bar
+            sys.stdout.buffer.write(chunk)
+            sys.stdout.buffer.flush()
+            # Also decode for DRM detection buffer
+            text = chunk.decode("utf-8", errors="replace")
+            stderr_buffer.append(text)
+        # Process has exited — drain any remaining PTY output
+        if proc.poll() is not None:
+            import time
+            time.sleep(0.2)
+            while True:
+                try:
+                    chunk = os.read(master_fd, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                sys.stdout.buffer.write(chunk)
+                sys.stdout.buffer.flush()
+                stderr_buffer.append(chunk.decode("utf-8", errors="replace"))
+            break
+
     proc.wait()
     returncode = proc.returncode
     stderr_text = "".join(stderr_buffer)
+    os.close(master_fd)
     return returncode, stderr_text
 
 def is_season_url(url: str) -> bool:
@@ -1500,8 +1543,15 @@ def main():
                     date_match = re.search(r'-d(\d{8})/?$', str(vrt_info.path)) if isinstance(vrt_info.path, str) else None
                     if date_match:
                         show_name = vrt_info.show_slug.replace('-', ' ').title()
+                        # Set codecs/resolution so second fallback block doesn't overwrite dated template
+                        resolution = metadata.get('height')
+                        if resolution and resolution.endswith('p'):
+                            resolution = resolution[:-1]
+                        audio_codec = metadata.get('acodec_raw')
+                        video_codec = metadata.get('vcodec_raw')
                         scene_template = scene_namer.build_dated_tv_filename(
-                            show_name=show_name, date_str=date_match.group(1))
+                            show_name=show_name, date_str=date_match.group(1),
+                            resolution=resolution, audio_codec=audio_codec, video_codec=video_codec)
                     else:
                         scene_template = "%(title)s.%(ext)s"
                     fallback_used = True
@@ -1529,15 +1579,21 @@ def main():
                 logger.warning("Failed to process %s: %s (%s)", url, e, type(e).__name__)
                 continue
             
-            # Pre-download dedup: skip if the episode already exists
-            # in the output directory in scene-normalized form.
-            # Uses glob matching on show/season/episode so it works
-            # even when the scene template is "%(title)s.%(ext)s".
+            # Pre-download dedup: check database FIRST (O(1)), fall back to filesystem glob
+            db = watchlist.WatchlistDB()
+            try:
+                if db.file_was_downloaded(url, scene_template, str(args.output_dir)):
+                    logger.info("Overgeslagen %s: al in database als %s", url, scene_template)
+                    continue
+            finally:
+                db.close()
+
+            # Fallback: filesystem glob check (existing logic)
             if content_type == classifier.ContentType.TV:
                 show_norm = scene_namer.normalize_show_name(show_name)
                 res_part = f".{resolution}p" if resolution else ""
                 search = f"{show_norm}.S{season_num:02d}E{episode_num:02d}{res_part}*.mp4"
-                logger.debug("Glob: %s", search)
+                logger.debug("Glob fallback: %s", search)
                 matches = list(args.output_dir.glob(search))
                 if matches:
                     names = ", ".join(m.name for m in matches)
@@ -1589,6 +1645,8 @@ def main():
                     print(f"[DRY-RUN] (fallback) {scene_template} ← {url}")
                 else:
                     print(f"[DRY-RUN] {scene_template} ← {url}")
+            else:
+                print(f"Download started: {url}", flush=True)
 # Always run yt-dlp (in dry-run mode, this will be with --simulate)
             def _mask_secrets(args_list):
                 """Mask sensitive arguments like --password and --username in the args list."""
@@ -1626,7 +1684,16 @@ def main():
                     continue  # Skip post-download processing for DRM
 
                 results.append(returncode)
-                
+
+                # Record successful download in database
+                if returncode == 0 and not args.dry_run:
+                    try:
+                        db = watchlist.WatchlistDB()
+                        db.record_download(url, scene_template, str(args.output_dir))
+                        db.close()
+                    except Exception as e:
+                        logger.warning("Failed to record download in DB: %s", e)
+
                 # Post-download transcoding if requested and download succeeded
                 if args.transcode and returncode == 0 and not args.dry_run:
                     import transcoder
