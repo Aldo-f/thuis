@@ -265,7 +265,10 @@ def ensure_cdm() -> Optional[str]:
     fetched_wvd = fetch_cdm()
     
     if fetched_wvd is None:
-        logger.warning("Failed to auto-fetch CDM from all sources. DRM decryption will be unavailable.")
+        logger.warning(
+            "Failed to auto-fetch CDM from all sources. DRM decryption will be unavailable. "
+            "See docs/REQUIREMENTS.md and run python scripts/extract_cdm.py to extract a CDM from your Android device."
+        )
         return None
     
     # Step 3: Cache the fetched CDM

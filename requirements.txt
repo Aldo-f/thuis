@@ -2,3 +2,5 @@ git+https://github.com/Aldo-f/yt-dlp.git@v2026.06.09-patch2#egg=yt-dlp
 pytest>=8.0
 python-dotenv>=1.0
 pywidevine>=1.9.0
+
+# System deps (not pip): mp4decrypt (Bento4: apt install bento4-utils / brew install bento4), shaka-packager, ffmpeg, N_m3u8DL-RE — see docs/REQUIREMENTS.md

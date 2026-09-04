@@ -358,34 +358,17 @@ Website documentation: `website/docs/`
 
 The tool finds the patched yt-dlp binary, passes it your VRT MAX URLs along with the right settings (best video + audio, merged to MP4), and lets yt-dlp handle the actual download. It uses your VRT MAX credentials to log in so the videos are accessible.
 
-## DRM Handling (VRT MAX)
+## DRM Quick Start
 
-Some VRT MAX content uses Widevine DRM (s17a2 license scheme). The tool handles this automatically:
+Some VRT MAX content uses Widevine DRM. To enable decryption:
 
-- **Auto-detection**: DRM content is detected via metadata from the patched yt-dlp fork (`_vrt_drm_*` fields)
-- **Decryption pipeline**: Uses pywidevine for license acquisition and N_m3u8DL-RE for HLS/DASH decryption
-- **Graceful degradation**: If decryption fails (missing engine, revoked CDM), the URL is marked as `drm` in state.db and skipped — no crash
-- **No prompts**: Set `DECRYPT_DRM=yes` in `.env` (default) for fully automatic handling
+1. **Install a decryption engine** — one of: `N_m3u8DL-RE` (recommended), `mp4decrypt` (Bento4), or `shaka-packager`
+2. **Provide a `.wvd` file** — place your Widevine CDM file at `~/.thuis/wvd/device.wvd` (or set `WVD_CDM_PATH` in `.env`)
+3. **Enable in `.env`** — `DECRYPT_DRM=yes` (default)
 
-### Environment Variables
+Extract your CDM: `python scripts/extract_cdm.py`
 
-Add to `.env`:
-
-```bash
-DECRYPT_DRM=yes                    # Enable automatic DRM decryption (default)
-# WVD_CDM_PATH=/path/to/cache      # Optional: custom Widevine CDM cache location
-```
-
-The tool will auto-provision an L3 (Android) CDM if none is found. Never commit `.wvd` files or key material to the repository.
-
-### Requirements for DRM Content
-
-To decrypt DRM-protected content, one of these must be installed:
-- `N_m3u8DL-RE` (recommended)
-- `mp4decrypt` (from Bento4)
-- `shaka-packager`
-
-Without these, DRM URLs degrade gracefully to `drm` status.
+Full details: see `docs/REQUIREMENTS.md`
 
 ## Disclaimer
 
