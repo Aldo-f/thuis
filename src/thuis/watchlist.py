@@ -343,6 +343,11 @@ class WatchlistDB:
                 last_episode INTEGER DEFAULT 0,
                 PRIMARY KEY (show_slug, season)
             );
+            CREATE TABLE IF NOT EXISTS episode_cache (
+                cache_key TEXT PRIMARY KEY,
+                episodes_json TEXT NOT NULL,
+                cached_at TIMESTAMP NOT NULL
+            );
         """)
         self.conn.commit()
 
@@ -448,6 +453,36 @@ class WatchlistDB:
             VALUES (?, ?, ?)
             ON CONFLICT(show_slug, season) DO UPDATE SET last_episode = excluded.last_episode
         """, (show_slug, season, episode))
+        self.conn.commit()
+
+    def get_cached_episodes(self, cache_key: str, max_age_hours: int = 24) -> Optional[list]:
+        """Get cached episodes if still fresh (default: 24h)."""
+        import json
+        from datetime import timedelta
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT episodes_json, cached_at FROM episode_cache
+            WHERE cache_key = ?
+        """, (cache_key,))
+        row = cursor.fetchone()
+        if not row:
+            return None
+        cached_at = datetime.fromisoformat(row[1])
+        if datetime.now() - cached_at > timedelta(hours=max_age_hours):
+            return None
+        try:
+            return json.loads(row[0])
+        except json.JSONDecodeError:
+            return None
+
+    def set_cached_episodes(self, cache_key: str, episodes: list) -> None:
+        """Cache episode list with current timestamp."""
+        import json
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO episode_cache (cache_key, episodes_json, cached_at)
+            VALUES (?, ?, ?)
+        """, (cache_key, json.dumps(episodes), datetime.now().isoformat()))
         self.conn.commit()
 
     def close(self):

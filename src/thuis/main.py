@@ -817,6 +817,19 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
 
         logger.debug(f"Extracted slug={slug!r} season={season}")
 
+        # Try cache first (avoid redundant API calls)
+        cache_key = f"{slug}:{season}"
+        try:
+            db = watchlist.WatchlistDB()
+            cached = db.get_cached_episodes(cache_key, max_age_hours=24)
+            if cached:
+                logger.debug(f"Using cached episodes for {slug} season {season}: {len(cached)} episodes")
+                db.close()
+                return cached
+            db.close()
+        except Exception as e:
+            logger.debug(f"Cache lookup failed: {e}")
+
         list_id = _get_list_id(slug, season)
         if not list_id:
             logger.debug("No list_id found, falling back to HEAD probing...")
@@ -831,6 +844,16 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
             return _guess_episode_urls(slug, season, max_episodes)
 
         logger.debug(f"GraphQL returned {len(episodes)} episodes total")
+        
+        # Cache the result for future runs
+        try:
+            db = watchlist.WatchlistDB()
+            db.set_cached_episodes(cache_key, episodes)
+            db.close()
+            logger.debug(f"Cached {len(episodes)} episodes for {slug} season {season}")
+        except Exception as e:
+            logger.debug(f"Cache write failed: {e}")
+        
         return episodes
     except Exception as e:
         logger.debug(f"fetch_season_episodes exception: {type(e).__name__}: {e}")
