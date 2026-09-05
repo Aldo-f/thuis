@@ -400,6 +400,32 @@ Extract your CDM: `python scripts/extract_cdm.py`
 
 Full details: see `docs/REQUIREMENTS.md`
 
+## Doctor Command
+
+Diagnose DRM pipeline readiness and auto-fix issues:
+
+```bash
+# Check status
+./thuis.sh doctor
+
+# Auto-fix installable issues (apt/brew/scoop, .env)
+./thuis.sh doctor --fix
+
+# Show help
+./thuis.sh doctor --help
+```
+
+The doctor command checks:
+
+- Python dependencies (yt-dlp, pywidevine, pymp4)
+- Decryption engines (mp4decrypt, shaka-packager, ffmpeg)
+- N_m3u8DL-RE binary
+- Widevine CDM (.wvd file)
+- Environment variables (DECRYPT_DRM, WVD_CDM_PATH)
+- .env file configuration
+
+Run `./thuis.sh doctor` whenever DRM downloads fail to see what's missing.
+
 ## Disclaimer
 
 This is a proof of concept. It may break if VRT MAX changes their website or login flow. The default credentials are shared demo credentials. Respect VRT's terms of service.

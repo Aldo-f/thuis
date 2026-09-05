@@ -114,8 +114,7 @@ class TestDownloadDBIntegration:
         mock_db.record_download.assert_called_once_with(
             self.test_url, self.scene_template, str(self.output_dir)
         )
-        # close() called twice: once for pre-download check, once for record_download
-        assert mock_db.close.call_count == 2
+        mock_db.close.assert_called_once()
 
     # -------------------------------------------------------------------------
     # Test 2: file_was_downloaded skips download when file already recorded

@@ -106,9 +106,10 @@ def parse_vrt_url(url: str) -> VrtUrlInfo:
     if len(segments) > 1 and re.match(r"^\d+$", segments[1]):
         season = int(segments[1])
 
-    # Extract episode from the last path segment: s{season}a{episode}
+    # Extract episode from the last path segment: supports both s{season}a{episode}
+    # and s{season}e{episode} patterns (e.g. s20a3 or s01e01)
     last_segment = segments[-1] if segments else ""
-    ep_match = re.search(r"s(\d+)a(\d+)", last_segment, re.IGNORECASE)
+    ep_match = re.search(r"s(\d+)[ae](\d+)", last_segment, re.IGNORECASE)
     if ep_match:
         episode = int(ep_match.group(2))
         if season == 0:

@@ -6,6 +6,7 @@ Provides post-download transcoding to target resolution.
 
 from __future__ import annotations
 
+import json
 import subprocess
 import logging
 import re
@@ -31,7 +32,7 @@ def check_ffmpeg() -> bool:
 
 def get_video_resolution(path: Path) -> Optional[int]:
     """Get video height from file using ffprobe.
-    
+
     Returns height in pixels (e.g., 1080, 720) or None on failure.
     """
     try:
@@ -55,7 +56,6 @@ def get_video_resolution(path: Path) -> Optional[int]:
         return None
 
     try:
-        import json
         data = json.loads(result.stdout)
     except json.JSONDecodeError:
         return None
@@ -65,6 +65,40 @@ def get_video_resolution(path: Path) -> Optional[int]:
         return None
 
     return streams[0].get("height")
+
+
+def probe_resolutions_parallel(paths: List[Path], max_workers: int = 16) -> Dict[Path, Optional[int]]:
+    """Probe resolutions for multiple files in parallel.
+
+    Much faster on network mounts than sequential calls.
+    Uses filename parsing when available, falls back to ffprobe.
+    """
+    results: Dict[Path, Optional[int]] = {}
+    # Fast path: parse resolution from filename like S01E01.1080p.WEB-DL...
+    import re
+    name_pattern = re.compile(r'S\d{2}E\d{2}\.(\d+)p\.', re.IGNORECASE)
+
+    to_probe = []
+    for p in paths:
+        match = name_pattern.search(p.name)
+        if match:
+            results[p] = int(match.group(1))
+        else:
+            to_probe.append(p)
+
+    if not to_probe:
+        return results
+
+    # Only probe files without resolution in filename
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_path = {executor.submit(get_video_resolution, p): p for p in to_probe}
+        for future in as_completed(future_to_path):
+            path = future_to_path[future]
+            try:
+                results[path] = future.result(timeout=30)
+            except Exception:
+                results[path] = None
+    return results
 
 
 def parse_target_height(target: str) -> int:
@@ -174,28 +208,34 @@ def transcode_to_target(
 def find_best_source_for_transcoding(
     files: List[Path],
     target_height: int,
+    resolutions: Optional[Dict[Path, Optional[int]]] = None,
 ) -> Optional[Path]:
     """Find the best source file for transcoding to target height.
-    
+
     Prefers:
     1. File with resolution closest to but higher than target (downscale)
     2. If none higher, file with highest resolution (for upscale)
+
+    Args:
+        files: List of candidate files
+        target_height: Target resolution height
+        resolutions: Pre-computed resolution map (optional, speeds up batch processing)
     """
     if not files:
         return None
-    
+
     files_with_res = []
     for f in files:
-        res = get_video_resolution(f)
+        res = resolutions.get(f) if resolutions else get_video_resolution(f)
         if res is not None:
             files_with_res.append((f, res))
-    
+
     if not files_with_res:
         return None
-    
+
     # Sort by distance to target (prefer higher resolutions for downscale)
     files_with_res.sort(key=lambda x: (x[1] < target_height, abs(x[1] - target_height)))
-    
+
     # Prefer files that are higher than target (for downscale)
     higher = [(f, r) for f, r in files_with_res if r > target_height]
     if higher:
@@ -353,6 +393,7 @@ def batch_transcode_directory(
     preset: str = "fast",
     crf: int = 23,
     dry_run: bool = False,
+    max_jobs: Optional[int] = None,
 ) -> Dict[str, int]:
     """Batch transcode video files in a directory.
     
@@ -387,46 +428,53 @@ def batch_transcode_directory(
     # Group by episode
     episode_groups = find_episode_groups(video_files)
     logger.info(f"Grouped into {len(episode_groups)} episode(s)")
-    
+
+    # Pre-compute resolutions for all files (parallel for speed)
+    logger.info("Probing resolutions...")
+    all_resolutions = probe_resolutions_parallel(video_files)
+
     # Plan transcoding jobs
     jobs = []
     for episode_key, group_files in episode_groups.items():
         # Check if target resolution already exists
         target_exists = False
         for f in group_files:
-            current_height = get_video_resolution(f)
+            current_height = all_resolutions.get(f)
             if current_height == target_height:
                 logger.debug(f"Target {target_height}p already exists for {episode_key}: {f.name}")
                 target_exists = True
                 break
-        
+
         if target_exists:
             continue
-        
+
         # Find best source for transcoding
-        best_source = find_best_source_for_transcoding(group_files, target_height)
+        best_source = find_best_source_for_transcoding(group_files, target_height, all_resolutions)
         if not best_source:
             logger.warning(f"No valid source for {episode_key}")
             continue
-        
+
         # Determine output path
         source = best_source
         if keep_original:
             output_path = source.with_stem(f"{source.stem}_{target_height}p")
         else:
             output_path = source
-        
+
         # Check if upscale is needed and allowed
-        current_height = get_video_resolution(source)
+        current_height = all_resolutions.get(source)
         if current_height is not None:
             if current_height < target_height and not allow_upscale:
                 logger.info(f"Skipping {source.name}: {current_height}p -> {target_height}p requires upscale (not allowed)")
                 continue
             if current_height == target_height:
                 continue
-        
+
+        if max_jobs is not None and len(jobs) >= max_jobs:
+            break
+
         jobs.append((source, target_height, keep_original))
-    
+
     logger.info(f"Planned {len(jobs)} transcoding job(s)")
     
     if dry_run:
@@ -442,7 +490,7 @@ def batch_transcode_directory(
             executor.submit(
                 transcode_worker,
                 source,
-                Path(str(source).replace(f".{source.suffix}", f"_{target_height}p{source.suffix}")),
+                source.with_stem(f"{source.stem}_{target_height}p"),
                 target_height,
                 "fast",
                 23,

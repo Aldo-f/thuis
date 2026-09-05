@@ -39,3 +39,4 @@ watchlists/*
 
 # Log files
 logs/
+nohup.out

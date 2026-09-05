@@ -94,9 +94,10 @@ def _execute_graphql_query(query: str, variables: dict | None = None) -> dict | 
     except Exception as e:
         logger.debug(f"GraphQL error{var_hint}: {type(e).__name__}: {e}")
         return None
-# Ensure project root and src/thuis are on sys.path for absolute imports
+# Ensure project root, src, and src/thuis are on sys.path for absolute imports
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, 'src'))
 sys.path.insert(0, os.path.join(project_root, 'src', 'thuis'))
 import shutil
 import subprocess
@@ -516,6 +517,50 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), 
     # Append URLs
     args.extend(urls)
     return args
+
+
+def _find_downloaded_file(output_dir: Path, template: str, url: str) -> str | None:
+    """Find the actual file created by yt-dlp given a template and URL.
+
+    When template contains %%-placeholders (e.g. %(title)s.%(ext)s),
+    scan the output directory for recently modified files and try to
+    match them against the template pattern or URL association.
+
+    Returns the discovered filename, or None if no match is found.
+    """
+    import fnmatch
+    if "%" not in template:
+        # Concrete filename — just check if it exists
+        candidate = output_dir / template
+        if candidate.exists():
+            return candidate.name
+        return None
+
+    # Template with placeholders — find recently created mp4 files
+    # and try to match by pattern
+    now = time.time()
+    candidates: list[tuple[str, float]] = []  # (filename, mtime)
+    for f in output_dir.glob("*.mp4"):
+        if f.stat().st_mtime > (now - 600):  # Last 10 minutes
+            candidates.append((f.name, f.stat().st_mtime))
+
+    if not candidates:
+        return None
+
+    # Sort by most recent first
+    candidates.sort(key=lambda x: x[1], reverse=True)
+    filename, _mtime = candidates[0]
+
+    # Try to match template pattern against filename
+    # Convert yt-dlp template to glob pattern
+    glob_pattern = template.replace("%(", "{").replace("s)", "*").replace("ext)", "*")
+    if fnmatch.fnmatch(filename, glob_pattern):
+        return filename
+
+    # Fallback: return most recent file
+    logger.debug("Could not match template %r against files in %s; using most recent", template, output_dir)
+    return filename
+
 
 def _run_ytdlp_with_drm_detection(url_args_list: list[str]) -> tuple[int, str]:
     """Run yt-dlp via a PTY so it detects a real terminal and shows an
@@ -1088,15 +1133,15 @@ def setup_logging(level: str | None = None) -> logging.Logger:
 _NORMALIZE_HELP = """\
 usage: thuis normalize [-h] [--dry-run] [--cleanup] directory
 
-Normaliseer videobestanden naar scene-formaat.
+Normalize video files to scene format.
 
 positional arguments:
-  directory   Directory met videobestanden
+  directory   Directory with video files
 
 options:
-  -h, --help  Toon deze hulp en sluit af
-  --dry-run   Toon wat er zou gebeuren zonder wijzigingen
-  --cleanup   Verwijder duplicates (_1) en stale .part files
+  -h, --help  Show this help and exit
+  --dry-run   Show what would be done without making changes
+  --cleanup   Remove duplicates (_1) and stale .part files
 """
 
 
@@ -1234,7 +1279,8 @@ def main():
     g_tr.add_argument("--input-dir", type=Path, help="Directory of existing files to transcode (batch mode)")
     g_tr.add_argument("--filter", action="append", default=[], help="Filter files by name (substring, case-insensitive). Can be used multiple times.")
     g_tr.add_argument("--recursive", action="store_true", help="Scan subdirectories recursively")
-    g_tr.add_argument("--parallel", type=int, default=2, help="Concurrent transcoding jobs (default: 2)")
+    g_tr.add_argument("--parallel", type=int, default=4, help="Concurrent transcoding jobs (default: 4)")
+    g_tr.add_argument("--max", type=int, default=None, help="Maximum number of files to transcode (for testing)")
 
     # Watchlist options (require --watchlist)
     g_wl = parser.add_argument_group("watchlist options (require --watchlist)")
@@ -1247,6 +1293,21 @@ def main():
     # with subparsers, so we intercept argv manually.
     if len(sys.argv) > 1 and sys.argv[1] == "normalize":
         _run_normalize_from_argv(sys.argv[2:])
+        return
+
+    # Handle doctor subcommand
+    if len(sys.argv) > 1 and sys.argv[1] == "doctor":
+        try:
+            from .doctor import run_doctor
+        except ImportError:
+            import doctor
+            run_doctor = doctor.run_doctor
+        import argparse as _ap
+        _doc_parser = _ap.ArgumentParser()
+        _doc_parser.add_argument("--fix", action="store_true", help="Attempt to auto-fix issues")
+        _doc_parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+        _doc_args = _doc_parser.parse_args(sys.argv[2:])
+        sys.exit(run_doctor(fix_mode=_doc_args.fix, verbose=_doc_args.verbose))
         return
 
     args = parser.parse_args()
@@ -1278,6 +1339,7 @@ def main():
             preset=args.transcode_preset,
             crf=args.transcode_crf,
             dry_run=args.dry_run,
+            max_jobs=args.max,
         )
         
         print(f"\n=== Batch Transcode Summary ===")
@@ -1395,7 +1457,7 @@ def main():
     try:
         total = len(unique_urls)
         for idx, url in enumerate(unique_urls):
-            print(f"[{idx+1}/{total}] Verwerken: {url}", flush=True)
+            print(f"[{idx+1}/{total}] Processing: {url}", flush=True)
             scene_template = None
             fallback_used = False
             
@@ -1551,12 +1613,42 @@ def main():
                             show_name=show_name, date_str=date_match.group(1),
                             resolution=resolution, audio_codec=audio_codec, video_codec=video_codec)
                     else:
-                        scene_template = "%(title)s.%(ext)s"
+                        # Use metadata title (sanitized) instead of raw yt-dlp %(title)s
+                        # to avoid ugly internal IDs like "vrtmax video #pbs-...$vid-..."
+                        raw_title = metadata.get('title') or vrt_info.show_slug.replace('-', ' ').title()
+                        resolution = metadata.get('height')
+                        if resolution and resolution.endswith('p'):
+                            resolution = resolution[:-1]
+                        audio_codec = metadata.get('acodec_raw')
+                        video_codec = metadata.get('vcodec_raw')
+
+                        # If we have an episode slug from the URL path, include it
+                        # (e.g. /fc-de-favorieten-bella-africa/ → Bella Africa)
+                        episode_slug = None
+                        path_segments = [s for s in vrt_info.path.split('/') if s]
+                        if len(path_segments) >= 4:
+                            episode_slug = path_segments[-1]
+                        if episode_slug and episode_slug != vrt_info.show_slug:
+                            # Build a descriptive filename: ShowName.S20.Bella.Africa.1080p.WEB-DL.AAC.x264.mp4
+                            show_name = scene_namer.normalize_show_name(raw_title)
+                            ep_name = episode_slug.replace('-', '.').title()
+                            res = f".{resolution}p" if resolution else ""
+                            codecs = scene_namer._codec_tags(audio_codec, video_codec)
+                            season_int = int(vrt_info.season) if vrt_info.season else 0
+                            scene_template = f"{show_name}.S{season_int:02d}.{ep_name}{res}.WEB-DL{codecs}.mp4"
+                        else:
+                            scene_template = scene_namer.build_special_filename(
+                                show_name=raw_title,
+                                resolution=resolution,
+                                audio_codec=audio_codec,
+                                video_codec=video_codec,
+                            )
                     fallback_used = True
 
-                if not any([resolution, audio_codec, video_codec]):
+                if not any([resolution, audio_codec, video_codec]) and "%" in scene_template:
                     # Metadata failed — use scene template WITHOUT codecs
-                    # instead of falling back to %(title)s.%(ext)s.
+                    # only when we haven't already built a concrete filename
+                    # (e.g. UNKNOWN branch with episode slug already set one).
                     # This gives scene-compatible naming for dedup matching.
                     if content_type == classifier.ContentType.TV:
                         scene_template = scene_namer.build_tv_filename(
@@ -1580,7 +1672,7 @@ def main():
             # Pre-download dedup: check database FIRST (O(1)), fall back to filesystem glob
             try:
                 if db.file_was_downloaded(url, scene_template, str(args.output_dir)):
-                    logger.info("Overgeslagen %s: al in database als %s", url, scene_template)
+                    logger.info("Skipped %s: already in database as %s", url, scene_template)
                     continue
             except Exception as e:
                 logger.warning("DB dedup failed for %s: %s", url, e)
@@ -1594,12 +1686,12 @@ def main():
                 matches = list(args.output_dir.glob(search))
                 if matches:
                     names = ", ".join(m.name for m in matches)
-                    logger.info("Overgeslagen %s: bestaat al als %s", url, names)
+                    logger.info("Skipped %s: already exists as %s", url, names)
                     continue
             elif scene_template and "%" not in scene_template:
                 output_file = args.output_dir / scene_template
                 if output_file.exists():
-                    logger.info("Overgeslagen %s: %s bestaat al", url, scene_template)
+                    logger.info("Skipped %s: %s already exists", url, scene_template)
                     continue
 
             # Podcast URLs are not supported by yt-dlp's VRT extractor:
@@ -1685,7 +1777,13 @@ def main():
                 # Record successful download in database
                 if returncode == 0 and not args.dry_run:
                     try:
-                        db.record_download(url, scene_template, str(args.output_dir))
+                        # Find the actual filename that yt-dlp created
+                        actual_filename = _find_downloaded_file(
+                            args.output_dir, scene_template, url)
+                        record_name = actual_filename or scene_template
+                        db.record_download(url, record_name, str(args.output_dir))
+                        if actual_filename:
+                            logger.info("Recorded download as: %s", actual_filename)
                     except Exception as e:
                         logger.warning("Failed to record download in DB: %s", e)
 

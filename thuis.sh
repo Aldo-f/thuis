@@ -30,4 +30,9 @@ for arg in "$@"; do
     esac
 done
 
+# Intercept doctor subcommand
+if [ "$1" = "doctor" ]; then
+    exec "$PYTHON" -m thuis.main doctor "${@:2}"
+fi
+
 exec "$PYTHON" -m thuis.main "$@"

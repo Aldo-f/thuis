@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "active_work_id": "optimize-download-speed-db-1725460371992",
+  "active_work_id": "",
   "works": {
     "vrtmax-drm-handling-1725213610758": {
       "work_id": "vrtmax-drm-handling-1725213610758",
@@ -52,21 +52,36 @@
       },
       "agent": "atlas",
       "task_sessions": {}
+    },
+    "thuis-doctor-81a7933f": {
+      "work_id": "thuis-doctor-81a7933f",
+      "active_plan": "/home/aldo/dev/06-apps-thuis-v4/.omo/plans/thuis-doctor.md",
+      "plan_name": "thuis-doctor",
+      "status": "completed",
+      "started_at": "2026-09-04T19:45:10.727Z",
+      "ended_at": "2026-09-04T21:00:00.000Z",
+      "elapsed_ms": 4189273,
+      "session_ids": [
+        "opencode:ses_fa2894a03ffezFES30ArcUGXfn"
+      ],
+      "session_origins": {
+        "opencode:ses_fa2894a03ffezFES30ArcUGXfn": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {}
     }
   },
   "session_ids": [
-    "opencode:ses_fa2894a03ffezFES30ArcUGXfn",
-    "opencode:ses_f93843051ffedvBtCeXG0GQsEb"
+    "opencode:ses_fa2894a03ffezFES30ArcUGXfn"
   ],
   "session_origins": {
-    "opencode:ses_fa2894a03ffezFES30ArcUGXfn": "direct",
-    "opencode:ses_f93843051ffedvBtCeXG0GQsEb": "direct"
+    "opencode:ses_fa2894a03ffezFES30ArcUGXfn": "direct"
   },
-  "active_plan": "/home/aldo/dev/06-apps-thuis-v4/.omo/plans/optimize-download-speed-db.md",
-  "plan_name": "optimize-download-speed-db",
+  "active_plan": null,
+  "plan_name": null,
   "status": "completed",
-  "started_at": "2026-09-04T13:52:51.992Z",
-  "ended_at": "2026-09-04T20:55:00.000Z",
-  "elapsed_ms": 25508008,
+  "started_at": null,
+  "ended_at": "2026-09-04T21:00:00.000Z",
+  "elapsed_ms": 0,
   "agent": "atlas"
 }

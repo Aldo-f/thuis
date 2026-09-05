@@ -66,7 +66,7 @@ def run_normalize(
     )
 
     if not files:
-        print("Geen media-bestanden gevonden.")
+        print("No media files found.")
         return
 
     # ------------------------------------------------------------------
@@ -138,16 +138,16 @@ def run_normalize(
         # Collision with an already-existing file on disk
         if new_path.exists():
             print(
-                f"WAARSCHUWING: '{new_name}' bestaat al — "
-                f"overslaan van '{path.name}'"
+                f"WARNING: '{new_name}' already exists — "
+                f"skipping '{path.name}'"
             )
             continue
 
         # Collision with another file that was renamed earlier in this run
         if new_name in claimed:
             print(
-                f"WAARSCHUWING: '{new_name}' wordt ook door een ander "
-                f"bestand gebruikt — overslaan van '{path.name}'"
+                f"WARNING: '{new_name}' is also used by another "
+                f"file — skipping '{path.name}'"
             )
             continue
 
@@ -155,7 +155,7 @@ def run_normalize(
             print(f"[DRY RUN] Hernoem: '{path.name}' → '{new_name}'")
         else:
             path.rename(new_path)
-            print(f"Hernoemd: '{path.name}' → '{new_name}'")
+            print(f"Renamed: '{path.name}' -> '{new_name}'")
 
         renamed += 1
         processed_ids.add((pf.show_slug, pf.season, pf.episode))
@@ -173,18 +173,18 @@ def run_normalize(
             identity = (pf.show_slug, pf.season, pf.episode)
             if identity not in processed_ids:
                 print(
-                    f"Duplicate behouden (geen origineel verwerkt): "
+                    f"Keeping duplicate (no original processed): "
                     f"'{path.name}'"
                 )
                 continue
 
             if dry_run:
                 print(
-                    f"[DRY RUN] Verwijder duplicate: '{path.name}'"
+                    f"[DRY RUN] Remove duplicate: '{path.name}'"
                 )
             else:
                 path.unlink()
-                print(f"Duplicate verwijderd: '{path.name}'")
+                print(f"Duplicate removed: '{path.name}'")
             duplicates_removed += 1
 
         # -- 7b. Remove .part files older than 24 hours ---------------------
@@ -201,14 +201,14 @@ def run_normalize(
 
             if dry_run:
                 print(
-                    f"[DRY RUN] Verwijder part file: '{path.name}' "
-                    f"({age_hours:.1f}u oud)"
+                    f"[DRY RUN] Remove part file: '{path.name}' "
+                    f"({age_hours:.1f}h old)"
                 )
             else:
                 path.unlink()
                 print(
-                    f"Part file verwijderd: '{path.name}' "
-                    f"({age_hours:.1f}u oud)"
+                    f"Part file removed: '{path.name}' "
+                    f"({age_hours:.1f}h old)"
                 )
             part_removed += 1
 
@@ -216,7 +216,7 @@ def run_normalize(
     # 8. Report
     # ------------------------------------------------------------------
     print(
-        f"{renamed} bestanden hernoemd, "
-        f"{duplicates_removed} duplicates verwijderd, "
-        f"{part_removed} part files opgeruimd"
+        f"{renamed} files renamed, "
+        f"{duplicates_removed} duplicates removed, "
+        f"{part_removed} part files cleaned up"
     )

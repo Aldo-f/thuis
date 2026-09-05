@@ -266,9 +266,9 @@ def test_integration_fallback_url(monkeypatch):
         assert "-o" in called_args
         idx_o = called_args.index("-o")
         output_arg = called_args[idx_o + 1]
-        # Fallback must use the default template
-        assert "%(title)s.%(ext)s" in output_arg, \
-            "UNKNOWN content should fall back to default template"
+        # Fallback should now use a concrete filename from the URL slug, not %(title)s
+        assert "%(title)s" not in output_arg, \
+            "UNKNOWN content should now use URL slug for filename, not fallback template"
         assert test_url in called_args
 
 
