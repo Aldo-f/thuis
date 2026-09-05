@@ -1458,16 +1458,31 @@ def main():
         total = len(unique_urls)
         for idx, url in enumerate(unique_urls):
             print(f"[{idx+1}/{total}] Processing: {url}", flush=True)
+            _t_start = time.time()
             scene_template = None
             fallback_used = False
             
             try:
                 # Step 1: Parse URL
+                _t_parse = time.time()
                 vrt_info = url_parser.parse_vrt_url(url)
+                logger.debug("URL parse: %.2fs", time.time() - _t_parse)
+                
+                # Optimization: Skip episodes older than what we've already seen
+                if vrt_info.season > 0 and vrt_info.episode > 0:
+                    last_seen = db.get_last_episode(vrt_info.show_slug, vrt_info.season)
+                    if vrt_info.episode <= last_seen:
+                        logger.info("Skipping %s: episode %d <= last seen %d", url, vrt_info.episode, last_seen)
+                        continue
+                    # Update last seen episode immediately (we've now checked it)
+                    db.set_last_episode(vrt_info.show_slug, vrt_info.season, vrt_info.episode)
                 
                 # Step 2: Fetch metadata for classification
+                _t_meta = time.time()
                 credentials = (email, password) if email and password else None
                 metadata = metadata_fetcher.fetch_metadata(url, credentials)
+                _t_meta_elapsed = time.time() - _t_meta
+                logger.debug("Metadata fetch: %.2fs", _t_meta_elapsed)
                 
                 # Step 3: Classify content
                 content_type = classifier.classify(vrt_info, metadata)
@@ -1670,12 +1685,15 @@ def main():
                 continue
             
             # Pre-download dedup: check database FIRST (O(1)), fall back to filesystem glob
-            try:
-                if db.file_was_downloaded(url, scene_template, str(args.output_dir)):
-                    logger.info("Skipped %s: already in database as %s", url, scene_template)
-                    continue
-            except Exception as e:
-                logger.warning("DB dedup failed for %s: %s", url, e)
+            _t_db = time.time()
+            if db.any_file_for_url(url, str(args.output_dir)):
+                logger.info("Skipped %s: already downloaded (DB check: %.3fs)", url, time.time() - _t_db)
+                continue
+            
+            if scene_template and db.file_was_downloaded(url, scene_template, str(args.output_dir)):
+                logger.info("Skipped %s: already in database as %s (DB: %.3fs)", url, scene_template, time.time() - _t_db)
+                continue
+            logger.debug("DB dedup: %.3fs", time.time() - _t_db)
 
             # Fallback: filesystem glob check (existing logic)
             if content_type == classifier.ContentType.TV:

@@ -337,6 +337,12 @@ class WatchlistDB:
                 downloaded_at TIMESTAMP,
                 PRIMARY KEY (url, filename, output_dir)
             );
+            CREATE TABLE IF NOT EXISTS episode_progress (
+                show_slug TEXT NOT NULL,
+                season INTEGER NOT NULL,
+                last_episode INTEGER DEFAULT 0,
+                PRIMARY KEY (show_slug, season)
+            );
         """)
         self.conn.commit()
 
@@ -413,6 +419,36 @@ class WatchlistDB:
             WHERE url = ? AND filename = ? AND output_dir = ?
         """, (url, filename, output_dir))
         return cursor.fetchone() is not None
+
+    def any_file_for_url(self, url: str, output_dir: str) -> bool:
+        """Check if any file is recorded for the given URL and output_dir."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT 1 FROM downloaded_files
+            WHERE url = ? AND output_dir = ?
+            LIMIT 1
+        """, (url, output_dir))
+        return cursor.fetchone() is not None
+
+    def get_last_episode(self, show_slug: str, season: int) -> int:
+        """Get the last seen episode number for a show+season."""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT last_episode FROM episode_progress WHERE show_slug = ? AND season = ?",
+            (show_slug, season)
+        )
+        row = cursor.fetchone()
+        return row[0] if row else 0
+
+    def set_last_episode(self, show_slug: str, season: int, episode: int) -> None:
+        """Update the last seen episode number for a show+season."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT INTO episode_progress (show_slug, season, last_episode)
+            VALUES (?, ?, ?)
+            ON CONFLICT(show_slug, season) DO UPDATE SET last_episode = excluded.last_episode
+        """, (show_slug, season, episode))
+        self.conn.commit()
 
     def close(self):
         self.conn.close()
