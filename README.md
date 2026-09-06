@@ -386,7 +386,82 @@ Website documentation: `website/docs/`
 
 ## How it works
 
-The tool finds the patched yt-dlp binary, passes it your VRT MAX URLs along with the right settings (best video + audio, merged to MP4), and lets yt-dlp handle the actual download. It uses your VRT MAX credentials to log in so the videos are accessible.
+The tool uses two main optimizations to process large watchlists efficiently:
+
+### Episode List Caching
+When expanding a show URL (e.g., all seasons of "Thuis"), the episode list for each season is fetched from the VRT MAX API and cached in SQLite for 24 hours. Subsequent runs retrieve the list from cache instead of making API calls.
+
+```mermaid
+flowchart TD
+    A[Show URL: /a-z/thuis] --> B[Fetch season list<br/>GraphQL API call]
+    B --> C{Season list<br/>cached? <br/>&lt; 24h old}
+    C -->|Yes| D[Use cached list<br/>0 API calls]
+    C -->|No| E[Fetch from API<br/>~33 calls for 33 seasons]
+    E --> F[Cache result<br/>for 24 hours]
+    D --> G[Process episodes]
+    F --> G
+```
+
+### Episode Deduplication
+For each episode URL, the tool checks if it was already downloaded using the `downloaded_files` database table (O(1) lookup).
+
+```mermaid
+flowchart TD
+    A[Episode URL] --> B{URL in<br/>downloaded_files?}
+    B -->|Yes| C[Skip - already downloaded]
+    B -->|No| D{Episode number<br/>&gt; last_seen?}
+    D -->|No| E[Skip - older episode]
+    D -->|Yes| F[Fetch metadata<br/>(API call)]
+    F --> G{File exists<br/>on disk?}
+    G -->|Yes| C
+    G -->|No| H[Download with yt-dlp]
+    H --> I[Record in DB]
+    I --> J[Done]
+```
+
+### Performance Impact
+
+| Scenario | Before | After |
+|----------|--------|-------|
+| 6050 episode show scan | ~33 API calls + 6050 metadata calls | **33 API calls once/day** + only new episodes |
+| Re-run existing watchlist | 6050 metadata fetches (~7s each) | **Instant skip** (DB lookup only) |
+| First run (cache miss) | N/A | ~33 API calls to build cache |
+
+**Key points:**
+- Episode lists cached for 24 hours in `episode_cache` table
+- `episode_progress` table tracks highest episode per show+season
+- Only new episodes (higher than last_seen) trigger metadata fetching
+- Cache expires after 24h or when manually cleared
+
+```mermaid
+flowchart LR
+    subgraph Cache["Episode List Cache (24h)"]
+        C1["Season 32: 5 eps"]
+        C2["Season 31: 215 eps"]
+        C3["Season 30: 215 eps"]
+    end
+    subgraph Progress["Episode Progress"]
+        P1["S32: last=6114"]
+        P2["S31: last=5899"]
+    end
+    subgraph DB["Downloaded Files"]
+        D1["6114: downloaded"]
+        D2["6113: downloaded"]
+    end
+    
+    URL["Show URL /thuis"] -->|1st run| API["VRT MAX API"]
+    API --> Cache
+    Cache --> Process["Process episodes"]
+    Process -->|S32E6114| D1
+    Process -->|S32E6113| D2
+    Process -->|S32E6115| New["New episode → download"]
+    New --> P1
+    URL -->|2nd run| Cache
+```
+
+[Contributing Guidelines](CONTRIBUTING.md)
+
+Website documentation: `website/docs/`
 
 ## DRM Quick Start
 
