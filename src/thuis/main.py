@@ -1289,6 +1289,9 @@ def main():
     g_dl.add_argument("--output-dir", type=Path, default=Path(DEFAULT_OUTPUT_DIR), help="Directory to save downloaded files (default: media or OUTPUT_DIR env)")
     g_dl.add_argument("--max-episodes", type=int, default=None, help="Maximum number of episodes to process per season URL")
     g_dl.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")
+    g_dl.add_argument("--key-file", type=Path, default=None, help="JSON file with KID:KEY pairs for DRM decryption (alternative to CDM)")
+    g_dl.add_argument("--key", action="append", default=[], metavar="KID:KEY", help="Direct KID:KEY pair for DRM decryption (repeatable, overrides CDM)")
+    g_dl.add_argument("--key-provider", type=str, choices=["cdm", "file", "cli"], default="cdm", help="Key source: cdm (pywidevine), file (--key-file), cli (--key)")
 
     # Transcode options
     g_tr = parser.add_argument_group("transcode options")
@@ -1533,12 +1536,27 @@ def main():
                         else:
                             output_name = title.replace(" ", ".")
                         
+                        cli_keys = {}
+                        for entry in args.key:
+                            if ":" not in entry:
+                                logger.warning("Invalid KID:KEY format '%s', skipping", entry)
+                                continue
+                            kid, key = entry.split(":", 1)
+                            if not kid or not key:
+                                logger.warning("Missing KID or KEY in '%s', skipping", entry)
+                                continue
+                            cli_keys[kid.lower().replace("-", "")] = key.lower().replace("-", "")
+                        
                         decrypted_file = drm_decrypt.decrypt_drm_content(
                             vudrm_token=vudrm_token,
                             mpd_url=mpd_url,
                             init_url=init_url,
                             output_dir=args.output_dir,
                             output_name=output_name,
+                            cdm_path=None,
+                            key_file=args.key_file,
+                            cli_keys=cli_keys if args.key else None,
+                            key_provider=args.key_provider,
                         )
                         
                         if decrypted_file and decrypted_file.exists():

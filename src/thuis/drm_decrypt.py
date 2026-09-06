@@ -94,6 +94,41 @@ def find_binary(name: str) -> Optional[str]:
     return None
 
 
+def load_keys_from_file(key_file_path: str) -> Dict[str, str]:
+    """Load KID:KEY pairs from a JSON file."""
+    import json
+    path = Path(key_file_path)
+    if not path.exists():
+        raise DrmDecryptError(f"Key file not found: {key_file_path}")
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    result = {}
+    for k, v in data.items():
+        result[k.lower().replace("-", "")] = v.lower().replace("-", "")
+    return result
+
+
+def load_keys_from_source(
+    provider: str,
+    vudrm_token: Optional[str] = None,
+    pssh_bytes: Optional[bytes] = None,
+    cdm_path: Optional[str] = None,
+    key_file: Optional[str] = None,
+    cli_keys: Optional[Dict[str, str]] = None,
+) -> Dict[str, str]:
+    """Resolve keys from selected provider (cdm, file, cli)."""
+    if provider == "cli" and cli_keys:
+        return cli_keys
+    if provider == "file" and key_file:
+        return load_keys_from_file(key_file)
+    if not cdm_path:
+        from thuis.cdm import ensure_cdm
+        cdm_path = ensure_cdm()
+    if not cdm_path or not vudrm_token or not pssh_bytes:
+        raise DrmDecryptError("CDM provider requires vudrm_token, pssh_bytes, and valid cdm_path")
+    return acquire_license(vudrm_token, pssh_bytes, cdm_path)
+
+
 def get_available_decryption_engine() -> Tuple[str, str]:
     """
     Find the best available decryption engine.
@@ -467,7 +502,10 @@ def decrypt_drm_content(
     init_url: str,
     output_dir: Path,
     output_name: str,
-    cdm_path: Optional[str] = None
+    cdm_path: Optional[str] = None,
+    key_file: Optional[str] = None,
+    cli_keys: Optional[Dict[str, str]] = None,
+    key_provider: str = "cdm",
 ) -> Optional[Path]:
     """
     Main DRM decryption pipeline.
@@ -501,11 +539,18 @@ def decrypt_drm_content(
         logger.error("PSSH extraction failed: %s", e)
         return None
     
-    # Step 2: Acquire license keys
+    # Step 2: Resolve content keys (CDM or external provider)
     try:
-        keys = acquire_license(vudrm_token, pssh, cdm_path)
-    except LicenseAcquisitionError as e:
-        logger.error("License acquisition failed: %s", e)
+        keys = load_keys_from_source(
+            provider=key_provider,
+            vudrm_token=vudrm_token,
+            pssh_bytes=pssh,
+            cdm_path=cdm_path,
+            key_file=key_file,
+            cli_keys=cli_keys,
+        )
+    except DrmDecryptError as e:
+        logger.error("Key acquisition failed: %s", e)
         return None
     
     logger.info("Acquired %d content key(s)", len(keys))
