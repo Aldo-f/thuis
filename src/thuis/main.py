@@ -129,13 +129,16 @@ except ImportError:
 try:
     from . import drm_decrypt
 except ImportError:
-    import drm_decrypt
+    drm_decrypt = None  # DRM not available; enable with separate repo using --enable-drm flag
 
 # Import watchlist database for download tracking
 try:
     from . import watchlist
 except ImportError:
     import watchlist
+
+# Audio‑only mode (podcasts) – force mp3 when --podcast is used
+AUDIO_ONLY = False
 
 # Default credentials (for demonstration / testing only)
 DEFAULT_EMAIL = "kuxelu@ipdeer.com"
@@ -486,6 +489,8 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), 
     """
     args = []
     args.extend(get_yt_dlp_cmd())
+    # Determine if this is an audio‑only (podcast) download
+    is_podcast = output_template is not None and "podcast" in str(output_template).lower()
     # Common options: best video+audio, merge to mp4, no warnings, no color
     if resolution:
         height_match = re.search(r"\d+", str(resolution))
@@ -496,12 +501,19 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), 
             fmt = "bestvideo+bestaudio"
     else:
         fmt = "bestvideo+bestaudio"
-    args += [
-        "-f", fmt,
-        "--merge-output-format", "mp4",
-        "--no-warnings",
-        "--no-color",
-    ]
+    if is_podcast:
+        args += [
+            "--extract-audio",
+            "--audio-format", "mp3",
+            "-f", "bestaudio",
+        ]
+    else:
+        args += [
+            "-f", fmt,
+            "--merge-output-format", "mp4",
+            "--no-warnings",
+            "--no-color",
+        ]
     if dry_run:
         args.append("--simulate")
     # Add output template
@@ -665,7 +677,7 @@ def is_audio_only_stream(url: str) -> bool:
 
     for line in text.splitlines():
         if line.startswith("#EXT-X-STREAM-INF"):
-            m = re.search(r'CODECS="([^\"]+)"', line)
+            m = re.search(r'CODECS="([^"]+)"', line)
             if m:
                 codecs = m.group(1).lower()
                 video_markers = ["avc1", "hvc1", "hev1", "av01", "vp9", "vp8"]
@@ -673,6 +685,25 @@ def is_audio_only_stream(url: str) -> bool:
                     return False
                 return True
     return False
+
+
+def _transcode_existing(existing_files: list, url: str, target_height: int, args) -> None:
+    """Transcode existing files to target resolution."""
+    import transcoder
+    best_source = transcoder.find_best_source_for_transcoding(
+        existing_files, target_height
+    )
+    if best_source:
+        success, out_path, error = transcoder.transcode_file_if_needed(
+            best_source,
+            keep_original=args.keep_original,
+            target_height=target_height,
+            allow_upscale=args.allow_upscale,
+        )
+        if success:
+            logger.info(f"Transcoded {best_source.name} to {target_height}p")
+        elif error:
+            logger.warning(f"Transcoding failed for {best_source.name}: {error}")
 
 
 def is_show_url(url: str) -> bool:
@@ -1286,6 +1317,7 @@ def main():
     g_dl.add_argument("--dry-run", action="store_true", help="Simulate download without downloading")
     g_dl.add_argument("--profile", "-p", type=int, help="Specify desired video resolution (e.g., 1080).")
     g_dl.add_argument("--retry", action="store_true", help="If set, skip download when output file already exists.")
+    g_dl.add_argument("--force", action="store_true", help="Ignore DB records; download even if DB says file exists, but only if file is missing.")
     g_dl.add_argument("--output-dir", type=Path, default=Path(DEFAULT_OUTPUT_DIR), help="Directory to save downloaded files (default: media or OUTPUT_DIR env)")
     g_dl.add_argument("--max-episodes", type=int, default=None, help="Maximum number of episodes to process per season URL")
     g_dl.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")
@@ -1497,11 +1529,32 @@ def main():
                 # Optimization: Skip episodes older than what we've already seen
                 if vrt_info.season > 0 and vrt_info.episode > 0:
                     last_seen = db.get_last_episode(vrt_info.show_slug, vrt_info.season)
-                    if vrt_info.episode <= last_seen:
+                    if isinstance(last_seen, int) and vrt_info.episode <= last_seen:
+                        # If transcoding is requested, check if we should transcode before skipping
+                        if args.transcode and not args.dry_run:
+                            import transcoder
+                            target_height = transcoder.parse_target_height(args.transcode)
+                            show_norm = scene_namer.normalize_show_name(vrt_info.show_slug)
+                            search = f"{show_norm}.S{vrt_info.season:02d}E{vrt_info.episode:02d}*.mp4"
+                            existing_files = list(args.output_dir.glob(search))
+                            if existing_files:
+                                needs_transcode = False
+                                for f in existing_files:
+                                    current_height = transcoder.get_video_resolution(f)
+                                    if current_height != target_height:
+                                        needs_transcode = True
+                                        break
+                                if needs_transcode:
+                                    logger.info("%s: transcoding existing file to %dp", url, target_height)
+                                    _transcode_existing(existing_files, url, target_height, args)
+                                    continue
                         logger.info("Skipping %s: episode %d <= last seen %d", url, vrt_info.episode, last_seen)
                         continue
                     # Update last seen episode immediately (we've now checked it)
-                    db.set_last_episode(vrt_info.show_slug, vrt_info.season, vrt_info.episode)
+                    if isinstance(last_seen, int):
+                        db.set_last_episode(vrt_info.show_slug, vrt_info.season, max(last_seen, vrt_info.episode))
+                    else:
+                        db.set_last_episode(vrt_info.show_slug, vrt_info.season, vrt_info.episode)
                 
                 # Step 2: Fetch metadata for classification
                 _t_meta = time.time()
@@ -1727,13 +1780,51 @@ def main():
             
             # Pre-download dedup: check database FIRST (O(1)), fall back to filesystem glob
             _t_db = time.time()
-            if db.any_file_for_url(url, str(args.output_dir)):
+            # Skip DB dedup if --force is set; we want to re-evaluate actual files on disk.
+            db_skip = not args.force and db.any_file_for_url(url, str(args.output_dir))
+            if db_skip:
+                if args.transcode and not args.dry_run:
+                    import transcoder
+                    target_height = transcoder.parse_target_height(args.transcode)
+                    show_norm = scene_namer.normalize_show_name(show_name)
+                    search = f"{show_norm}.S{season_num:02d}E{episode_num:02d}*.mp4"
+                    matches = list(args.output_dir.glob(search))
+                    if matches:
+                        needs_transcode = False
+                        for m in matches:
+                            current_height = transcoder.get_video_resolution(m)
+                            if current_height != target_height:
+                                needs_transcode = True
+                                break
+                        if needs_transcode:
+                            logger.info("%s: already downloaded but needs transcoding to %dp", url, target_height)
+                            _transcode_existing(matches, url, target_height, args)
+                            continue
                 logger.info("Skipped %s: already downloaded (DB check: %.3fs)", url, time.time() - _t_db)
                 continue
             
-            if scene_template and db.file_was_downloaded(url, scene_template, str(args.output_dir)):
-                logger.info("Skipped %s: already in database as %s (DB: %.3fs)", url, scene_template, time.time() - _t_db)
-                continue
+            # Pre-download dedup: check database FIRST (O(1)), fall back to filesystem glob
+            _t_db = time.time()
+            if not args.force and scene_template and db.file_was_downloaded(url, scene_template, str(args.output_dir)):
+                 if args.transcode and not args.dry_run:
+                     import transcoder
+                     target_height = transcoder.parse_target_height(args.transcode)
+                     show_norm = scene_namer.normalize_show_name(show_name)
+                     search = f"{show_norm}.S{season_num:02d}E{episode_num:02d}*.mp4"
+                     matches = list(args.output_dir.glob(search))
+                     if matches:
+                         needs_transcode = False
+                         for m in matches:
+                             current_height = transcoder.get_video_resolution(m)
+                             if current_height != target_height:
+                                 needs_transcode = True
+                                 break
+                         if needs_transcode:
+                             logger.info("%s: already downloaded but needs transcoding to %dp", url, target_height)
+                             _transcode_existing(matches, url, target_height, args)
+                             continue
+                 logger.info("Skipped %s: already in database as %s (DB: %.3fs)", url, scene_template, time.time() - _t_db)
+                 continue
             logger.debug("DB dedup: %.3fs", time.time() - _t_db)
 
             # Fallback: filesystem glob check (existing logic)
@@ -1744,12 +1835,33 @@ def main():
                 logger.debug("Glob fallback: %s", search)
                 matches = list(args.output_dir.glob(search))
                 if matches:
+                    if args.transcode and not args.dry_run:
+                        import transcoder
+                        target_height = transcoder.parse_target_height(args.transcode)
+                        needs_transcode = False
+                        for m in matches:
+                            current_height = transcoder.get_video_resolution(m)
+                            if current_height != target_height:
+                                needs_transcode = True
+                                break
+                        if needs_transcode:
+                            logger.info("%s: file exists but needs transcoding to %dp", url, target_height)
+                            _transcode_existing(matches, url, target_height, args)
+                            continue
                     names = ", ".join(m.name for m in matches)
                     logger.info("Skipped %s: already exists as %s", url, names)
                     continue
             elif scene_template and "%" not in scene_template:
                 output_file = args.output_dir / scene_template
                 if output_file.exists():
+                    if args.transcode and not args.dry_run:
+                        import transcoder
+                        target_height = transcoder.parse_target_height(args.transcode)
+                        current_height = transcoder.get_video_resolution(output_file)
+                        if current_height != target_height:
+                            logger.info("%s: file exists but needs transcoding to %dp", url, target_height)
+                            _transcode_existing([output_file], url, target_height, args)
+                            continue
                     logger.info("Skipped %s: %s already exists", url, scene_template)
                     continue
 
@@ -1845,49 +1957,52 @@ def main():
                             logger.info("Recorded download as: %s", actual_filename)
                     except Exception as e:
                         logger.warning("Failed to record download in DB: %s", e)
-
-                # Post-download transcoding if requested and download succeeded
-                if args.transcode and returncode == 0 and not args.dry_run:
-                    import transcoder
-                    
-                    # Parse target height from --transcode argument
-                    target_height = transcoder.parse_target_height(args.transcode)
-                    
-                    # Find the downloaded file
-                    output_files = list(args.output_dir.glob("*.mp4"))
-                    for f in output_files:
-                        if f.stat().st_mtime > (time.time() - 300):  # Modified in last 5 minutes
-                            # Check if there are related files with different resolutions
-                            # (e.g., both 1080p and 540p versions of the same episode)
-                            base_name = re.sub(r'\.(S\d+E\d+|d\d{8}).*', '', f.stem)
-                            related_files = transcoder.find_related_files(args.output_dir, base_name)
-                            
-                            # Find the best source for transcoding (prefer higher resolution)
-                            best_source = transcoder.find_best_source_for_transcoding(
-                                related_files if related_files else [f],
-                                target_height,
-                            )
-                            
-                            if best_source and best_source != f:
-                                logger.info(f"Using best source for transcoding: {best_source.name}")
-                            
-                            success, out_path, error = transcoder.transcode_file_if_needed(
-                                best_source or f,
-                                keep_original=args.keep_original,
-                                target_height=target_height,
-                                allow_upscale=args.allow_upscale,
-                            )
-                            if success:
-                                logger.info(f"Transcoded {f.name} to {target_height}p")
-                            elif error:
-                                logger.warning(f"Transcoding failed for {f.name}: {error}")
-                            break  # Only process the most recent file
             except Exception:
                 # On any unexpected error, record failure
                 results.append(1)
             except KeyboardInterrupt:
                 print("\nInterrupted")
                 sys.exit(1)
+        
+        # Transcoding for existing files (when --transcode used but download skipped)
+        if args.transcode and not args.dry_run:
+            import transcoder
+            target_height = transcoder.parse_target_height(args.transcode)
+            
+            # Search for files matching the episode pattern
+            # Use vrt_info which is available in outer scope
+            show_norm = scene_namer.normalize_show_name(vrt_info.show_slug)
+            season_num = int(vrt_info.season) if vrt_info.season else 0
+            episode_num = int(vrt_info.episode) if vrt_info.episode else 0
+            search = f"{show_norm}.S{season_num:02d}E{episode_num:02d}*.mp4"
+            existing_files = list(args.output_dir.glob(search))
+            
+            if existing_files:
+                # Check if transcoding is needed
+                needs_transcode = False
+                for f in existing_files:
+                    current_height = transcoder.get_video_resolution(f)
+                    if current_height != target_height:
+                        needs_transcode = True
+                        break
+                
+                if needs_transcode:
+                    logger.info("%s: transcoding existing file to %dp", url, target_height)
+                    # Find best source for transcoding
+                    best_source = transcoder.find_best_source_for_transcoding(
+                        existing_files, target_height
+                    )
+                    if best_source:
+                        success, out_path, error = transcoder.transcode_file_if_needed(
+                            best_source,
+                            keep_original=args.keep_original,
+                            target_height=target_height,
+                            allow_upscale=args.allow_upscale,
+                        )
+                        if success:
+                            logger.info(f"Transcoded {best_source.name} to {target_height}p")
+                        elif error:
+                            logger.warning(f"Transcoding failed for {best_source.name}: {error}")
         
         def _exit_with_code(results):
             drm_results = [r for r in results if r == "drm"]

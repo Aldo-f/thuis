@@ -102,7 +102,9 @@ class TestDownloadDBIntegration:
         # Mock WatchlistDB to track calls
         with patch("thuis.main.watchlist.WatchlistDB") as mock_db_class:
             mock_db = MagicMock()
+            mock_db.any_file_for_url.return_value = False  # Not in DB, proceed
             mock_db.file_was_downloaded.return_value = False  # Not in DB, proceed
+            mock_db.get_last_episode.return_value = None  # No last seen episode
             mock_db_class.return_value = mock_db
 
             rc = self._run_main(["--output-dir", str(self.output_dir), self.test_url])
@@ -124,7 +126,9 @@ class TestDownloadDBIntegration:
         # Mock WatchlistDB to return True for file_was_downloaded
         with patch("thuis.main.watchlist.WatchlistDB") as mock_db_class:
             mock_db = MagicMock()
+            mock_db.any_file_for_url.return_value = False  # Not in DB, proceed to next check
             mock_db.file_was_downloaded.return_value = True  # Already in DB, skip
+            mock_db.get_last_episode.return_value = None  # No last seen episode
             mock_db_class.return_value = mock_db
 
             rc = self._run_main(["--output-dir", str(self.output_dir), self.test_url])
@@ -161,7 +165,9 @@ class TestDownloadDBIntegration:
         # Mock WatchlistDB to return False for file_was_downloaded (not in DB)
         with patch("thuis.main.watchlist.WatchlistDB") as mock_db_class:
             mock_db = MagicMock()
+            mock_db.any_file_for_url.return_value = False  # Not in DB, proceed
             mock_db.file_was_downloaded.return_value = False  # Not in DB
+            mock_db.get_last_episode.return_value = None  # No last seen episode
             mock_db_class.return_value = mock_db
 
             rc = self._run_main(["--output-dir", str(self.output_dir), self.test_url])
@@ -192,7 +198,9 @@ class TestDownloadDBIntegration:
         # Mock WatchlistDB to track calls
         with patch("thuis.main.watchlist.WatchlistDB") as mock_db_class:
             mock_db = MagicMock()
+            mock_db.any_file_for_url.return_value = False  # Not in DB
             mock_db.file_was_downloaded.return_value = False  # Not in DB
+            mock_db.get_last_episode.return_value = None  # No last seen episode
             mock_db_class.return_value = mock_db
 
             rc = self._run_main(["--dry-run", "--output-dir", str(self.output_dir), self.test_url])
@@ -222,7 +230,9 @@ class TestDownloadDBIntegration:
         # Mock WatchlistDB to track calls
         with patch("thuis.main.watchlist.WatchlistDB") as mock_db_class:
             mock_db = MagicMock()
+            mock_db.any_file_for_url.return_value = False  # Not in DB
             mock_db.file_was_downloaded.return_value = False  # Not in DB
+            mock_db.get_last_episode.return_value = None  # No last seen episode
             mock_db_class.return_value = mock_db
 
             rc = self._run_main(["--output-dir", str(self.output_dir), self.test_url])
