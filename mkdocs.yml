@@ -1,0 +1,46 @@
+site_name: Thuis v5
+site_url: https://aldo-f.github.io/thuis-v5/
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+
+markdown_extensions:
+  - attr_list
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - tables
+
+nav:
+  - Overview: intro.md
+  - Getting started: getting-started.md
+  - Usage: usage.md
+  - Architecture: architecture.md
+  - API reference: api-reference.md
+  - Credential vault: credential-vault.md
+  - Provider adapter: provider-adapter.md
+  - Search service: search-service.md
+
+plugins:
+  - search
