@@ -637,24 +637,6 @@ def _run_ytdlp_with_drm_detection(url_args_list: list[str]) -> tuple[int, str]:
     os.close(master_fd)
     return returncode, stderr_text
 
-def is_season_url(url: str) -> bool:
-    """Detect if *url* points to a season page rather than a single episode.
-    Covers two patterns used by VRT MAX:
-    1. Query parameter ``?seizoen=seizoen-<num>``
-    2. Path ending with the season number (e.g. ``/.../2``) under /a-z/
-    """
-    if "seizoen=" in url:
-        return True
-    # Path ending with a slash‑separated integer (e.g. …/2/ or …/2)
-    path = urlparse(url).path.rstrip("/")
-    # Check if path ends with a digit and contains /a-z/
-    if path.endswith(tuple("0123456789")) and "/a-z/" in path:
-        # Extract the last segment (the number)
-        last_segment = path.split("/")[-1]
-        if last_segment.isdigit():
-            return int(last_segment) > 0
-    return False
-
 def is_valid_vrt_url(url: str) -> bool:
     """Check if URL has no # fragment (fragments cause processing errors)."""
     return '#' not in url
@@ -1234,15 +1216,18 @@ def _run_watchlist(args) -> None:
         if not _Path(wl_path).is_file():
             sys.exit(f"Error: watchlist file not found: {wl_path}")
         wl = parse_watchlist_file(wl_path)
-        out_dir = resolve_output_dir(wl.output_dir)
-        print(f"Watchlist {wl_path} → output: {out_dir}")
+        file_out_dir = resolve_output_dir(wl.output_dir)
+        print(f"Watchlist {wl_path} → output: {file_out_dir}")
         for entry in wl.entries:
             # Determine schedule label for logging
             schedule = entry.schedule or "manual"
+            # Resolve per-entry output dir: entry.output_dir comes from [dir] overrides,
+            # falling back to the file-level output_dir when empty.
+            entry_out_dir = resolve_output_dir(entry.output_dir or wl.output_dir)
             # If --now flag is set, treat all entries (scheduled or not) as due.
             if args.now:
                 print(f"  [due now] [{schedule}] {entry.url}")
-                due.append((entry.url, schedule, out_dir))
+                due.append((entry.url, schedule, entry_out_dir))
                 continue
             # Otherwise, only process manual entries when --now is present and scheduled entries per their schedule.
             if entry.schedule is None:
@@ -1257,7 +1242,7 @@ def _run_watchlist(args) -> None:
                 print(f"  [skip] DRM protected: [{schedule}] {entry.url}")
                 continue
             print(f"  [due ] [{schedule}] {entry.url}")
-            due.append((entry.url, schedule, out_dir))
+            due.append((entry.url, schedule, entry_out_dir))
 
     if not due:
         print("Nothing to do — all entries already handled.")
@@ -2031,6 +2016,17 @@ def main():
         sys.exit(1)
     finally:
         db.close()
+
+
+# ---------------------------------------------------------------------------
+# Compatibility aliases – re-export watchlist helpers for tests that import
+# them from ``thuis.main`` (they live in ``thuis.cli.watchlist_helpers`` now).
+# ---------------------------------------------------------------------------
+from thuis.cli.watchlist_helpers import (  # noqa: E402,F401
+    is_season_url,
+    expand_season,
+    process_watchlist_file,
+)
 
 
 if __name__ == "__main__":

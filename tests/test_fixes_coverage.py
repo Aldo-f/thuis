@@ -54,6 +54,80 @@ class TestDryRunNoPersist:
             _run_watchlist(args)
 
 
+class TestWatchlistDirOverride:
+    """Per-entry [dir] overrides must be used when building download commands.
+
+    Regression: _run_watchlist resolved the file-level output dir once and
+    used it for every entry, so [dir] overrides in podcast.txt were silently
+    ignored and all episodes downloaded to the same directory.
+    """
+
+    def test_dir_override_used_for_download_command(self, tmp_path, monkeypatch):
+        import argparse
+        from thuis.main import _run_watchlist
+
+        wl = tmp_path / "podcast.txt"
+        wl.write_text(
+            "# Podcasts\n"
+            "/default/dir\n"
+            "[dir] /podcasts/de-gifmenger\n"
+            "[weekly] https://www.vrt.be/vrtmax/podcasts/radio-1/d/de-gifmenger\n"
+            "[dir] /podcasts/waanzinnig\n"
+            "[weekly] https://www.vrt.be/vrtmax/podcasts/ketnet/w/waanzinnig-maar-waar--/\n",
+            encoding="utf-8",
+        )
+
+        captured = []
+
+        def fake_run(cmd, *a, **kw):
+            captured.append(cmd)
+            rc = argparse.Namespace(returncode=0)
+            return rc
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        monkeypatch.setattr("thuis.watchlist.WatchlistDB", _FakeDB)
+
+        args = argparse.Namespace(
+            watchlist=[str(wl)], now=True, dry_run=True, profile=None,
+        )
+        with pytest.raises(SystemExit):
+            _run_watchlist(args)
+
+        # Two entries → two download invocations, each with its own --output-dir
+        assert len(captured) == 2
+        dirs = []
+        for cmd in captured:
+            oi = cmd.index("--output-dir")
+            dirs.append(cmd[oi + 1])
+        assert "/podcasts/de-gifmenger" in dirs[0]
+        assert "/podcasts/waanzinnig" in dirs[1]
+
+
+class _FakeDB:
+    """Minimal stub so _run_watchlist doesn't touch a real SQLite file."""
+
+    def __init__(self, *a, **kw):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        pass
+
+    def set_last_run(self, *a, **kw):
+        pass
+
+    def close(self):
+        pass
+
+    def get_last_run(self, url):
+        return None
+
+    def get_last_status(self, url):
+        return None
+
+
 class TestOutputDirCreation:
     """resolve_output_dir + deep mkdir behaviour."""
 
