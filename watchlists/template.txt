@@ -1,6 +1,6 @@
 # First line: output directory for downloaded files
 # Supports: ~/path (home-relative), /absolute/path, relative/path
-# ~/downloads/thuis  or  /mnt/HDD1/nextcloud/data/aldo/files/Media/tv/_seed
+# ~/downloads/thuis  or  /mnt/HDD1/services/nextcloud/data/aldo/files/Media/tv/_seed
 
 # Lines starting with # are comments
 # Format: [schedule] URL  # optional comment

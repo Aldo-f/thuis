@@ -298,10 +298,83 @@ class TestFileExistenceCheck:
         output_dir = tmp_path / "downloads"
         output_dir.mkdir()
         filename = "Show.S01E01.1080p.WEB-DL.AAC.x264.mp4"
-        
+
         (output_dir / filename).write_text("complete")
         (output_dir / (filename + ".part")).write_text("partial")
-        
+
         # Final exists → should be detected as existing
         exists = check_file_exists(str(output_dir), filename)
         assert exists is True
+
+
+class TestWatchlistDirOverride:
+    """Tests for [dir] output directory override in watchlist files."""
+
+    def test_dir_override_single(self, tmp_path):
+        """[dir] overrides output dir for following entries."""
+        wl_file = tmp_path / "test.txt"
+        wl_file.write_text("""/default/dir
+[weekly] https://example.com/show1
+[dir] /override/dir
+[weekly] https://example.com/show2
+""")
+        result = parse_watchlist_file(str(wl_file))
+        assert result.output_dir == "/default/dir"
+        assert len(result.entries) == 2
+        # First entry uses default dir (empty string means use file-level)
+        assert result.entries[0].output_dir == "/default/dir"
+        # Second entry uses override
+        assert result.entries[1].output_dir == "/override/dir"
+
+    def test_dir_override_multiple_shows(self, tmp_path):
+        """Multiple [dir] blocks for different shows."""
+        wl_file = tmp_path / "test.txt"
+        wl_file.write_text("""/default/dir
+[dir] /podcasts/de-gifmenger
+[weekly] https://www.vrt.be/vrtmax/podcasts/radio-1/d/de-gifmenger
+[dir] /podcasts/waanzinnig-maar-waar
+[weekly] https://www.vrt.be/vrtmax/podcasts/ketnet/w/waanzinnig-maar-waar--/
+""")
+        result = parse_watchlist_file(str(wl_file))
+        assert len(result.entries) == 2
+        assert result.entries[0].output_dir == "/podcasts/de-gifmenger"
+        assert result.entries[1].output_dir == "/podcasts/waanzinnig-maar-waar"
+
+    def test_dir_with_comments_and_blanks(self, tmp_path):
+        """[dir] works with comments and blank lines."""
+        wl_file = tmp_path / "test.txt"
+        wl_file.write_text("""# Podcast downloads
+/dir1
+[weekly] https://example.com/show1
+
+[dir] /dir2
+# Comment between dir and entry
+[weekly] https://example.com/show2
+""")
+        result = parse_watchlist_file(str(wl_file))
+        assert len(result.entries) == 2
+        assert result.entries[0].output_dir == "/dir1"
+        assert result.entries[1].output_dir == "/dir2"
+
+    def test_dir_without_first_line(self, tmp_path):
+        """[dir] as first line becomes output_dir (backward compatibility)."""
+        wl_file = tmp_path / "test.txt"
+        wl_file.write_text("""# No explicit default dir
+[dir] /absolute/dir
+[weekly] https://example.com/show1
+""")
+        result = parse_watchlist_file(str(wl_file))
+        # [dir] as first line is parsed and extracts the path
+        assert result.output_dir == "/absolute/dir"
+        # Entry uses that as its dir
+        assert result.entries[0].output_dir == "/absolute/dir"
+
+    def test_dir_case_insensitive(self, tmp_path):
+        """[DIR] and [Dir] should also work."""
+        wl_file = tmp_path / "test.txt"
+        wl_file.write_text("""media
+[DIR] /override
+[weekly] https://example.com/show1
+""")
+        result = parse_watchlist_file(str(wl_file))
+        assert result.entries[0].output_dir == "/override"

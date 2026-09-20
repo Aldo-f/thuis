@@ -2,9 +2,6 @@
 
 Fetches video metadata from VRT MAX / any yt-dlp-compatible URL
 using a lightweight subprocess call to yt-dlp --print.
-
-Standalone module — CODEC_MAP is duplicated here intentionally
-(they will be refactored into a shared location in a later commit).
 """
 
 from __future__ import annotations
@@ -13,50 +10,24 @@ import json
 import subprocess
 import sys
 
-# ---------------------------------------------------------------------------
-# Codec mapping — standalone copy (will be consolidated later)
-# ---------------------------------------------------------------------------
+try:
+    from .codec_map import lookup_codec, parse_resolution
+except ImportError:
+    # Standalone execution (e.g. `python src/thuis/metadata_fetcher.py`)
+    import importlib, os as _os
+    _src = _os.path.join(_os.path.dirname(__file__))
+    if _src not in sys.path:
+        sys.path.insert(0, _src)
+    from codec_map import lookup_codec, parse_resolution
 
-CODEC_MAP: dict[str, str] = {
-    "avc1": "x264",
-    "hev1": "x265",
-    "hvc1": "x265",
-    "vp09": "VP9",
-    "av01": "AV1",
-    "mp4a": "AAC",
-    "ac-3": "AC3",
-    "ec-3": "EAC3",
-    "opus": "Opus",
-    "dts": "DTS",
-}
-
-
-def lookup_codec(codec_str: str) -> str:
-    """Map a raw codec string to a human-readable label via CODEC_MAP.
-
-    Matches on ``codec_str.startswith(key)`` so that e.g.
-    ``avc1.64002A`` → ``x264``.
-
-    Returns the mapped label, or the original *codec_str* unchanged if
-    no key matches.
-    """
-    for key, label in CODEC_MAP.items():
-        if codec_str.startswith(key):
-            return label
-    return codec_str
-
-
-def parse_resolution(height_str: str | None) -> str | None:
-    """Normalise a numeric height string to a resolution label.
-
-    Examples:
-        ``"1080"`` → ``"1080p"``
-        ``"720"``  → ``"720p"``
-        ``None`` / ``""`` / ``"NA"`` → ``None``
-    """
-    if not height_str or height_str == "NA":
-        return None
-    return f"{height_str}p"
+# Backward-compatibility alias — CODEC_MAP was previously defined locally
+CODEC_MAP: dict[str, str] = lookup_codec.__module__  # type: ignore[misc]
+# Re-export the original CODEC_MAP for tests that import it
+try:
+    from .codec_map import CODEC_MAP as _CODEC_MAP  # noqa: F401
+    CODEC_MAP = _CODEC_MAP
+except ImportError:
+    pass
 
 
 # ---------------------------------------------------------------------------

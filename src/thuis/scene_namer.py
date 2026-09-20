@@ -7,47 +7,22 @@ Builds filenames following scene release naming conventions:
 import re
 from typing import Optional
 
-CODEC_MAP: dict[str, str] = {
-    "avc1": "x264",
-    "hev1": "x265",
-    "hvc1": "x265",
-    "vp09": "VP9",
-    "av01": "AV1",
-    "mp4a": "AAC",
-    "ac-3": "AC3",
-    "ec-3": "EAC3",
-    "opus": "Opus",
-    "dts": "DTS",
-    "h264": "x264",
-    "hevc": "x265",
-    "vp9": "VP9",
-    "av1": "AV1",
-    "aac": "AAC",
-    "mp3": "MP3",
-    "ac3": "AC3",
-    "eac3": "EAC3",
-    "flac": "FLAC",
-}
+try:
+    from .codec_map import lookup_codec
+except ImportError:
+    # Standalone execution
+    import sys as _sys, os as _os
+    _src = _os.path.join(_os.path.dirname(__file__))
+    if _src not in _sys.path:
+        _sys.path.insert(0, _src)
+    from codec_map import lookup_codec
 
-
-def lookup_codec(codec_str: str) -> str:
-    """Look up a codec string in CODEC_MAP using prefix matching.
-
-    Matches the start of *codec_str* against each CODEC_MAP key (e.g.
-    ``avc1.64002A`` → ``x264``, ``mp4a.40.2`` → ``AAC``).
-
-    Args:
-        codec_str: Raw codec string from yt-dlp or other source.
-
-    Returns:
-        Mapped scene-style label, or *codec_str* unchanged if no match.
-    """
-    if not codec_str:
-        return codec_str
-    for key, label in CODEC_MAP.items():
-        if codec_str.startswith(key):
-            return label
-    return codec_str
+# Backward-compatibility alias — CODEC_MAP was previously defined locally
+try:
+    from .codec_map import CODEC_MAP as _CODEC_MAP  # noqa: F401
+    CODEC_MAP = _CODEC_MAP
+except ImportError:
+    pass
 
 
 def normalize_show_name(name: str) -> str:

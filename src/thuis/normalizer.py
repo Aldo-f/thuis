@@ -66,7 +66,7 @@ def run_normalize(
     )
 
     if not files:
-        print("No media files found.")
+        print("Geen media-bestanden gevonden.")
         return
 
     # ------------------------------------------------------------------
@@ -138,21 +138,23 @@ def run_normalize(
         # Collision with an already-existing file on disk
         if new_path.exists():
             print(
-                f"WARNING: '{new_name}' already exists — "
-                f"skipping '{path.name}'"
+                f"WAARSCHUWING: '{new_name}' bestaat al — "
+                f"overslaan '{path.name}'"
             )
             continue
 
         # Collision with another file that was renamed earlier in this run
         if new_name in claimed:
             print(
-                f"WARNING: '{new_name}' is also used by another "
-                f"file — skipping '{path.name}'"
+                f"WAARSCHUWING: '{new_name}' wordt ook gebruikt door "
+                f"een ander bestand — overslaan '{path.name}'"
             )
             continue
 
         if dry_run:
-            print(f"[DRY RUN] Hernoem: '{path.name}' → '{new_name}'")
+            print(
+                f"[DRY RUN] Hernoem: '{path.name}' → '{new_name}'"
+            )
         else:
             path.rename(new_path)
             print(f"Renamed: '{path.name}' -> '{new_name}'")
@@ -215,8 +217,4 @@ def run_normalize(
     # ------------------------------------------------------------------
     # 8. Report
     # ------------------------------------------------------------------
-    print(
-        f"{renamed} files renamed, "
-        f"{duplicates_removed} duplicates removed, "
-        f"{part_removed} part files cleaned up"
-    )
+    print(f"{renamed} bestanden hernoemd, {duplicates_removed} duplicates verwijderd, {part_removed} part files opgeruimd")

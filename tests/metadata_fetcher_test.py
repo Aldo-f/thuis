@@ -193,8 +193,8 @@ def test_fetch_metadata_credentials_passed() -> None:
 # ---------------------------------------------------------------------------
 
 def test_codec_map_entries() -> None:
-    """CODEC_MAP contains the expected 10 entries."""
-    assert len(CODEC_MAP) == 10
+    """CODEC_MAP contains the expected entries (≥10 after consolidation)."""
+    assert len(CODEC_MAP) >= 10
     assert CODEC_MAP["avc1"] == "x264"
     assert CODEC_MAP["mp4a"] == "AAC"
     assert CODEC_MAP["opus"] == "Opus"

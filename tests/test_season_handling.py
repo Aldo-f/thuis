@@ -1,5 +1,5 @@
 import pytest
-from src.thuis.main import canonical_slug, is_season_url, fetch_season_episodes, _get_list_id, _guess_episode_urls, _is_not_found
+from thuis.main import canonical_slug, is_season_url, fetch_season_episodes, _get_list_id, _guess_episode_urls, _is_not_found
 from unittest.mock import patch, MagicMock
 
 def test_canonical_slug():
@@ -15,8 +15,8 @@ def test_is_season_url():
     assert is_season_url("https://www.vrt.be/vrtmax/a/show/123/") == False
     assert is_season_url("https://www.vrt.be/vrtmax/a/show/123") == False
 
-@patch('src.thuis.main._get_list_id')
-@patch('src.thuis.main._execute_graphql_query')
+@patch('thuis.main._get_list_id')
+@patch('thuis.main._execute_graphql_query')
 def test_fetch_season_episodes_graphql_success(mock_execute, mock_get_list_id):
     # Mock the GraphQL responses with the new cursor-based format
     mock_get_list_id.return_value = "listid123"
@@ -50,11 +50,11 @@ def test_fetch_season_episodes_graphql_success(mock_execute, mock_get_list_id):
         "https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/episode-2/"
     ]
 
-@patch('src.thuis.main._get_list_id')
+@patch('thuis.main._get_list_id')
 def test_fetch_season_episodes_graphql_fallback(mock_get_list_id):
     # GraphQL returns no listId, so fallback to guessing
     mock_get_list_id.return_value = None
-    with patch('src.thuis.main._guess_episode_urls') as mock_guess:
+    with patch('thuis.main._guess_episode_urls') as mock_guess:
         mock_guess.return_value = ["http://example.com/ep1"]
         episodes = fetch_season_episodes("https://www.vrt.be/vrtmax/a-z/fc-de-kampioenen/2/")
         assert episodes == ["http://example.com/ep1"]
@@ -93,7 +93,7 @@ def test_guess_episode_urls(mock_urlopen):
 
 def test_guess_episode_urls_max_episodes():
     """max_episodes limit is respected during HEAD-guess fallback."""
-    with patch('src.thuis.main.urllib.request.urlopen') as mock_urlopen:
+    with patch('thuis.main.urllib.request.urlopen') as mock_urlopen:
         def side_effect(request, *args, **kwargs):
             url = request.full_url
             from urllib.error import HTTPError
@@ -118,7 +118,7 @@ def test_guess_episode_urls_max_episodes():
         ]
 
 def test_get_list_id_failure():
-    with patch('src.thuis.main._execute_graphql_query') as mock_exec:
+    with patch('thuis.main._execute_graphql_query') as mock_exec:
         mock_exec.return_value = None
         result = _get_list_id("some-show", 1)
         assert result is None
@@ -126,7 +126,7 @@ def test_get_list_id_failure():
 
 def test_get_list_id_by_title():
     """_get_list_id matches tiles by title containing season number."""
-    with patch('src.thuis.main._execute_graphql_query') as mock_exec:
+    with patch('thuis.main._execute_graphql_query') as mock_exec:
         mock_exec.return_value = {
             'data': {
                 'page': {

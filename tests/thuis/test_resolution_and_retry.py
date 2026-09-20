@@ -274,7 +274,7 @@ class TestRetrySkip:
 
             # Verify the skip log message
             skip_messages = [
-                r.message for r in caplog.records if "bestaat al als" in r.message
+                r.message for r in caplog.records if "already exists as" in r.message
             ]
             assert any(test_url in m for m in skip_messages), (
                 f"Expected skip log for {test_url}, got: {skip_messages}"

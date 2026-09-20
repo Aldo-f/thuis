@@ -73,7 +73,13 @@ class TestValidateWvd:
         """Returns False with message when pywidevine not installed."""
         # Simulate pywidevine not being available
         import extract_cdm
-        monkeypatch.setattr(extract_cdm, "PYWIDEVINE_AVAILABLE", False)
+        # Patch the internal implementation module, not the wrapper
+        import sys as _sys
+        impl_mod = _sys.modules.get('_extract_cdm_impl')
+        if impl_mod is None:
+            # Re-import to get the internal module reference
+            from extract_cdm import _impl as impl_mod  # type: ignore
+        monkeypatch.setattr(impl_mod, "PYWIDEVINE_AVAILABLE", False)
 
         wvd_path = tmp_path / "test.wvd"
         wvd_path.write_bytes(b"fake")
@@ -176,8 +182,12 @@ class TestValidateCache:
         wvd_file = cache_dir / "device.wvd"
         wvd_file.write_bytes(b"valid")
 
-        # Mock validate_wvd to return valid
-        monkeypatch.setattr("extract_cdm.validate_wvd", lambda p: (True, "Valid L3 ANDROID CDM"))
+        # Mock validate_wvd in the internal implementation module
+        import sys as _sys
+        impl_mod = _sys.modules.get('_extract_cdm_impl')
+        if impl_mod is None:
+            from extract_cdm import _impl as impl_mod  # type: ignore
+        monkeypatch.setattr(impl_mod, "validate_wvd", lambda p: (True, "Valid L3 ANDROID CDM"))
 
         exit_code, valid_wvd = validate_cache(cache_dir, verbose=True)
         captured = capsys.readouterr()
@@ -193,8 +203,12 @@ class TestValidateCache:
         wvd_file = cache_dir / "invalid.wvd"
         wvd_file.write_bytes(b"invalid")
 
-        # Mock validate_wvd to return invalid
-        monkeypatch.setattr("extract_cdm.validate_wvd", lambda p: (False, "Validation error: corrupt"))
+        # Mock validate_wvd in the internal implementation module
+        import sys as _sys
+        impl_mod = _sys.modules.get('_extract_cdm_impl')
+        if impl_mod is None:
+            from extract_cdm import _impl as impl_mod  # type: ignore
+        monkeypatch.setattr(impl_mod, "validate_wvd", lambda p: (False, "Validation error: corrupt"))
 
         exit_code, valid_wvd = validate_cache(cache_dir, verbose=True)
         captured = capsys.readouterr()
@@ -225,7 +239,12 @@ class TestMain:
         wvd_file.write_bytes(b"valid")
 
         monkeypatch.setenv("WVD_CDM_PATH", str(cache_dir))
-        monkeypatch.setattr("extract_cdm.validate_wvd", lambda p: (True, "Valid L3 ANDROID CDM"))
+        # Patch validate_wvd in internal implementation module
+        import sys as _sys
+        impl_mod = _sys.modules.get('_extract_cdm_impl')
+        if impl_mod is None:
+            from extract_cdm import _impl as impl_mod  # type: ignore
+        monkeypatch.setattr(impl_mod, "validate_wvd", lambda p: (True, "Valid L3 ANDROID CDM"))
 
         with patch.object(sys, "argv", ["extract_cdm.py"]):
             exit_code = main()
@@ -257,7 +276,12 @@ class TestMain:
         wvd_file.write_bytes(b"invalid")
 
         monkeypatch.setenv("WVD_CDM_PATH", str(cache_dir))
-        monkeypatch.setattr("extract_cdm.validate_wvd", lambda p: (False, "Validation error"))
+        # Patch validate_wvd in internal implementation module
+        import sys as _sys
+        impl_mod = _sys.modules.get('_extract_cdm_impl')
+        if impl_mod is None:
+            from extract_cdm import _impl as impl_mod  # type: ignore
+        monkeypatch.setattr(impl_mod, "validate_wvd", lambda p: (False, "Validation error"))
 
         with patch.object(sys, "argv", ["extract_cdm.py"]):
             exit_code = main()
@@ -293,7 +317,12 @@ class TestMain:
         (cache_dir2 / DEFAULT_CDM_FILENAME).write_bytes(b"valid")
 
         monkeypatch.setenv("WVD_CDM_PATH", str(cache_dir1))
-        monkeypatch.setattr("extract_cdm.validate_wvd", lambda p: (True, "Valid L3 ANDROID CDM") if "cdm2" in str(p) else (False, "Invalid"))
+        # Patch validate_wvd in internal implementation module
+        import sys as _sys
+        impl_mod = _sys.modules.get('_extract_cdm_impl')
+        if impl_mod is None:
+            from extract_cdm import _impl as impl_mod  # type: ignore
+        monkeypatch.setattr(impl_mod, "validate_wvd", lambda p: (True, "Valid L3 ANDROID CDM") if "cdm2" in str(p) else (False, "Invalid"))
 
         with patch.object(sys, "argv", ["extract_cdm.py", "--cache-dir", str(cache_dir2)]):
             exit_code = main()

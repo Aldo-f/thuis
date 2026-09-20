@@ -38,6 +38,7 @@ class WatchlistEntry:
     """Single entry in a watchlist file."""
     url: str
     schedule: Optional[str] = None  # e.g. "daily 08:30", "monday,wednesday", None
+    output_dir: str = ""  # directory for this entry, optional override
 
 
 @dataclass
@@ -61,6 +62,9 @@ def parse_watchlist_file(path: str) -> WatchlistFile:
     entries: list[WatchlistEntry] = []
     output_dir_found = False
 
+    # current_dir tracks the directory for entries; defaults to the file-level output_dir
+    current_dir = ""
+
     with open(path, "r") as f:
         for line in f:
             stripped = line.strip()
@@ -73,15 +77,30 @@ def parse_watchlist_file(path: str) -> WatchlistFile:
             if stripped.startswith("#"):
                 continue
 
-            # First non-comment, non-blank line is the output directory
+            # First non-comment, non-blank line is the file-level output directory
             if not output_dir_found:
-                output_dir = stripped
+                # Check if it's a [dir] line - treat as both output_dir and current_dir
+                dir_match = re.match(r"^\[\s*dir\s*\]\s+(.+)$", stripped, re.IGNORECASE)
+                if dir_match:
+                    output_dir = dir_match.group(1).strip()
+                    current_dir = output_dir
+                else:
+                    output_dir = stripped
+                    current_dir = output_dir
                 output_dir_found = True
+                continue
+
+            # Handle optional [dir] override for following entries
+            dir_match = re.match(r"^\[\s*dir\s*\]\s+(.+)$", stripped, re.IGNORECASE)
+            if dir_match:
+                current_dir = dir_match.group(1).strip()
                 continue
 
             # Parse entry lines
             entry = _parse_entry_line(stripped)
             if entry:
+                # Assign the directory that applies to this entry (fallback to file-level if not set)
+                entry.output_dir = current_dir
                 entries.append(entry)
 
     return WatchlistFile(path=path, output_dir=output_dir, entries=entries)
