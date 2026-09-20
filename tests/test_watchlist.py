@@ -143,13 +143,18 @@ class TestResolveOutputDir:
         assert result == str(tmp_path / "media")
 
     def test_resolve_empty_falls_back_to_env(self, monkeypatch):
-        """Empty output_dir falls back to OUTPUT_DIR env."""
+        """Empty output_dir falls back to OUTPUT_DIR env (config.yaml not present)."""
+        # Patch get_config to return an empty dict so it doesn't find config.yaml output_dir
+        from thuis import config as _cfg
+        monkeypatch.setattr(_cfg, "get_config", lambda: {})
         monkeypatch.setenv("OUTPUT_DIR", "/env/override")
         result = resolve_output_dir("")
         assert result == "/env/override"
 
     def test_resolve_empty_falls_back_to_media(self, monkeypatch):
         """Empty output_dir with no env falls back to 'media'."""
+        from thuis import config as _cfg
+        monkeypatch.setattr(_cfg, "get_config", lambda: {})
         monkeypatch.delenv("OUTPUT_DIR", raising=False)
         result = resolve_output_dir("")
         assert result == "media"

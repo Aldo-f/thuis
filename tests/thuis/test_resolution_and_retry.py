@@ -117,7 +117,7 @@ class TestResolutionValidation:
              patch("thuis.main.os.access", return_value=True):
 
             mock_parse.return_value = MagicMock(
-                show_slug="thuisow", season="1", episode="1",
+                show_slug="thuisow", season=1, episode=1,
                 path="/vrt/thuisow/1/thuisow-s01e01/",
             )
             mock_fetch.return_value = {}
@@ -258,7 +258,7 @@ class TestRetrySkip:
              patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run:
 
             mock_parse.return_value = MagicMock(
-                show_slug="thuisow", season="1", episode="1",
+                show_slug="thuisow", season=1, episode=1,
                 path="/vrt/thuisow/1/thuisow-s01e01/",
             )
             mock_fetch.return_value = {"series": "Test Show"}
@@ -299,7 +299,7 @@ class TestRetrySkip:
              patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run:
 
             mock_parse.return_value = MagicMock(
-                show_slug="thuisow", season="1", episode="1",
+                show_slug="thuisow", season=1, episode=1,
                 path="/vrt/thuisow/1/thuisow-s01e01/",
             )
             mock_fetch.return_value = {}
@@ -330,7 +330,7 @@ class TestRetrySkip:
              patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run:
 
             mock_parse.return_value = MagicMock(
-                show_slug="thuisow", season="1", episode="1",
+                show_slug="thuisow", season=1, episode=1,
                 path="/vrt/thuisow/1/thuisow-s01e01/",
             )
             mock_fetch.return_value = {}

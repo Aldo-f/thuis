@@ -125,11 +125,20 @@ except ImportError:
     import scene_namer
     import transcoder
 
-# Import DRM decrypt worker
+# Import DRM decrypt worker (optional, via external plugin)
 try:
     from . import drm_decrypt
 except ImportError:
     drm_decrypt = None  # DRM not available; enable with separate repo using --enable-drm flag
+
+# Import config loader
+try:
+    from . import config as thuis_config
+except ImportError:
+    import config as thuis_config
+
+# Load configuration
+_cfg = thuis_config.get_config()
 
 # Import watchlist database for download tracking
 try:
@@ -148,8 +157,8 @@ DEFAULT_PASSWORD = "Els123456"
 # This is configured by setup_logging() when the app starts
 logger = logging.getLogger('thuis')
 
-# Default output directory (can be overridden via OUTPUT_DIR env var / .env)
-DEFAULT_OUTPUT_DIR = os.getenv("OUTPUT_DIR", "media")
+# Default output directory (can be overridden via config.yaml, OUTPUT_DIR env var / .env)
+DEFAULT_OUTPUT_DIR = _cfg.get("output_dir", os.getenv("OUTPUT_DIR", "media"))
 
 # Valid video resolutions for --profile validation
 VALIDATIONS = [720, 1080, 1440, 2160]
@@ -1728,7 +1737,7 @@ def main():
                             ep_name = episode_slug.replace('-', '.').title()
                             res = f".{resolution}p" if resolution else ""
                             codecs = scene_namer._codec_tags(audio_codec, video_codec)
-                            season_int = int(vrt_info.season) if vrt_info.season else 0
+                            season_int = int(vrt_info.season) if vrt_info.season and str(vrt_info.season).isdigit() else 0
                             scene_template = f"{show_name}.S{season_int:02d}.{ep_name}{res}.WEB-DL{codecs}.mp4"
                         else:
                             scene_template = scene_namer.build_special_filename(

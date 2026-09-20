@@ -286,7 +286,7 @@ def test_double_slashes_still_process_successfully(monkeypatch):
 
 def test_metadata_all_none_falls_back_to_unknown(monkeypatch):
     """When metadata_fetcher returns all None/NA, classifier returns UNKNOWN
-    and fallback template is used (when URL has no season/episode)."""
+    and a scene-style special filename is built (when URL has no episode slug)."""
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
@@ -300,11 +300,11 @@ def test_metadata_all_none_falls_back_to_unknown(monkeypatch):
 
         mock_run.return_value = (0, "")
 
-        # URL has no season/episode info (special-like)
+        # URL has no season/episode info AND no episode slug (just show slug)
         mock_parse.return_value = MagicMock(
             show_slug="test-show", season=0, episode=0,
-            path="/vrtmax/a-z/test-show/extra-s/test-show-extra",
-            url="https://www.vrt.be/vrtmax/a-z/test-show/extra-s/test-show-extra/"
+            path="/vrtmax/a-z/test-show",
+            url="https://www.vrt.be/vrtmax/a-z/test-show/"
         )
         # Metadata returns empty dict (simulating yt-dlp failure or missing data)
         mock_fetch.return_value = {}
@@ -312,7 +312,7 @@ def test_metadata_all_none_falls_back_to_unknown(monkeypatch):
         mock_classify.return_value = ContentType.UNKNOWN
         mock_build.return_value = "Test.Show.S01E01.mp4"
 
-        test_url = "https://www.vrt.be/vrtmax/a-z/test-show/extra-s/test-show-extra/"
+        test_url = "https://www.vrt.be/vrtmax/a-z/test-show/"
         original_argv = sys.argv
         try:
             sys.argv = ["poc.py", test_url]
@@ -327,9 +327,9 @@ def test_metadata_all_none_falls_back_to_unknown(monkeypatch):
         args = mock_run.call_args[0][0]
         idx_o = args.index("-o")
         output_arg = args[idx_o + 1]
-        # Should use fallback because classifier returned UNKNOWN
-        assert "%(title)s.%(ext)s" in output_arg, \
-            f"Expected fallback template for UNKNOWN content type, got: {output_arg}"
+        # Should build a scene-style special filename for UNKNOWN with no episode slug
+        assert output_arg.endswith("Test.Show.Special.WEB-DL.mp4"), \
+            f"Expected scene special filename, got: {output_arg}"
 
 
 def test_metadata_all_na_values_from_fetcher(monkeypatch):
@@ -456,8 +456,8 @@ def test_high_episode_number_in_pipeline(monkeypatch):
 # ===================================================================
 
 def test_metadata_fetch_network_failure_uses_fallback(monkeypatch):
-    """When metadata_fetcher fails (returns {}), fallback template is used
-    for URLs that lack season/episode structure (classifier -> UNKNOWN)."""
+    """When metadata_fetcher fails (returns {}), a scene-style special filename
+    is built for URLs that lack season/episode structure but have an episode slug."""
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
@@ -471,7 +471,7 @@ def test_metadata_fetch_network_failure_uses_fallback(monkeypatch):
 
         mock_run.return_value = (0, "")
 
-        # URL has no season/episode
+        # URL has no season/episode but HAS an episode slug (extra-s/...)
         mock_parse.return_value = MagicMock(
             show_slug="test-show", season=0, episode=0,
             path="/vrtmax/a-z/test-show/extra-s/test-show-extra",
@@ -498,8 +498,9 @@ def test_metadata_fetch_network_failure_uses_fallback(monkeypatch):
         args = mock_run.call_args[0][0]
         idx_o = args.index("-o")
         output_arg = args[idx_o + 1]
-        assert "%(title)s.%(ext)s" in output_arg, \
-            f"Expected fallback template after network failure, got: {output_arg}"
+        # Should build descriptive filename using episode slug from URL
+        assert output_arg.endswith("Test.Show.S00.Test.Show.Extra.WEB-DL.mp4"), \
+            f"Expected descriptive filename with episode slug, got: {output_arg}"
 
 
 def test_ytdlp_subprocess_nonzero_exit(monkeypatch, capsys):
@@ -556,7 +557,8 @@ def test_ytdlp_subprocess_nonzero_exit(monkeypatch, capsys):
 # ===================================================================
 
 def test_classifier_unknown_triggers_fallback(monkeypatch):
-    """When classifier returns UNKNOWN, fallback template '%(title)s.%(ext)s' is used."""
+    """When classifier returns UNKNOWN, a descriptive filename is built from
+    the URL path (episode slug) instead of using the yt-dlp fallback template."""
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
@@ -594,9 +596,10 @@ def test_classifier_unknown_triggers_fallback(monkeypatch):
         args = mock_run.call_args[0][0]
         idx_o = args.index("-o")
         output_arg = args[idx_o + 1]
-        assert "%(title)s.%(ext)s" in output_arg, \
-            f"Expected fallback template for UNKNOWN content type, got: {output_arg}"
-        # The scene namer output should NOT appear since UNKNOWN skips scene naming
+        # Should build descriptive filename using episode slug from URL
+        assert output_arg.endswith("Unknown.Content.S00.Test.Show.Unknown.WEB-DL.mp4"), \
+            f"Expected descriptive filename with episode slug, got: {output_arg}"
+        # The scene namer output should NOT appear since UNKNOWN uses build_special_filename
         assert "Should.Not.Be.Used" not in output_arg, \
             "Scene namer output should not be used for UNKNOWN content type"
 
@@ -738,7 +741,8 @@ def test_parse_failure_skips_url_no_subprocess(monkeypatch):
 
 
 def test_fallback_template_after_unknown_classification(monkeypatch):
-    """When classifier returns UNKNOWN, fallback '%(title)s.%(ext)s' must be used."""
+    """When classifier returns UNKNOWN, a descriptive filename is built from
+    the URL path (episode slug) instead of using the yt-dlp fallback template."""
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
@@ -775,8 +779,9 @@ def test_fallback_template_after_unknown_classification(monkeypatch):
         args = mock_run.call_args[0][0]
         idx_o = args.index("-o")
         output_arg = args[idx_o + 1]
-        assert output_arg.endswith("%(title)s.%(ext)s"), \
-            f"Expected fallback template for UNKNOWN, got: {output_arg}"
+        # Should build descriptive filename using episode slug from URL
+        assert output_arg.endswith("Something.S00.Unclassified.Show.Uncl.WEB-DL.mp4"), \
+            f"Expected descriptive filename with episode slug, got: {output_arg}"
 
 
 # ===================================================================
@@ -1002,13 +1007,15 @@ def test_unknown_with_date_slug_uses_dated_filename(monkeypatch, capsys):
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
+    # Need to patch the already-imported module
+    import thuis.watchlist as watchlist_module
     with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
          patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
          patch("thuis.main.classifier.classify") as mock_classify, \
-         patch("thuis.main.watchlist.WatchlistDB") as mock_db_cls:
+         patch.object(watchlist_module, "WatchlistDB") as mock_db_cls:
 
         mock_run.return_value = (0, "")
         mock_parse.return_value = MagicMock(
@@ -1035,7 +1042,7 @@ def test_unknown_with_date_slug_uses_dated_filename(monkeypatch, capsys):
         test_url = "https://www.vrt.be/vrtmax/a-z/het-weer/2026/het-weer-d20260903/"
         original_argv = sys.argv
         try:
-            sys.argv = ["poc.py", test_url]
+            sys.argv = ["poc.py", "--force", test_url]
             try:
                 main()
             except SystemExit as e:
@@ -1106,13 +1113,15 @@ def test_download_started_message_in_real_run(monkeypatch, capsys):
     monkeypatch.setenv("VRT_EMAIL", "test@example.com")
     monkeypatch.setenv("VRT_PASSWORD", "testpass")
 
+    # Need to patch the already-imported module
+    import thuis.watchlist as watchlist_module
     with patch("thuis.main._run_ytdlp_with_drm_detection") as mock_run, \
          patch("thuis.main.get_yt_dlp_location", return_value="/fake/yt_dlp"), \
          patch("thuis.main.patch_ytdlp_if_needed"), \
          patch("thuis.main.url_parser.parse_vrt_url") as mock_parse, \
          patch("thuis.main.metadata_fetcher.fetch_metadata") as mock_fetch, \
          patch("thuis.main.classifier.classify") as mock_classify, \
-         patch("thuis.main.watchlist.WatchlistDB") as mock_db_cls:
+         patch.object(watchlist_module, "WatchlistDB") as mock_db_cls:
 
         mock_run.return_value = (0, "")
         mock_parse.return_value = MagicMock(
@@ -1134,7 +1143,7 @@ def test_download_started_message_in_real_run(monkeypatch, capsys):
         test_url = "https://www.vrt.be/vrtmax/a-z/test-show/1/test-show-s01e01/"
         original_argv = sys.argv
         try:
-            sys.argv = ["poc.py", test_url]
+            sys.argv = ["poc.py", "--force", test_url]
             try:
                 main()
             except SystemExit as e:

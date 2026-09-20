@@ -136,10 +136,19 @@ def resolve_output_dir(output_dir: str) -> str:
     - ~/path → expands to home directory
     - /absolute/path → used as-is
     - relative/path → relative to cwd
-    - empty → falls back to OUTPUT_DIR env var or 'media'
+    - empty → falls back to config.yaml output_dir or OUTPUT_DIR env var or 'media'
     """
     if not output_dir or output_dir.strip() == "":
-        # Try .env / environment variable
+        # Try config.yaml first
+        try:
+            from . import config as _cfg
+        except ImportError:
+            import config as _cfg
+        cfg = _cfg.get_config()
+        cfg_dir = cfg.get("output_dir", "")
+        if cfg_dir:
+            return resolve_output_dir(cfg_dir)
+        # Fallback to environment variable
         env_dir = os.getenv("OUTPUT_DIR", "")
         if env_dir:
             return resolve_output_dir(env_dir)

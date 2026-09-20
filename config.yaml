@@ -1,0 +1,49 @@
+# thuis configuration
+# Copy this file to config.local.yaml for local overrides (gitignored)
+
+# Output directory for downloaded media (relative to project root or absolute)
+# Default: media/
+output_dir: "media"
+
+# Watchlist directory containing watchlist files
+# Default: watchlists/
+watchlist_dir: "watchlists"
+
+# Log directory
+# Default: logs/
+log_dir: "logs"
+
+# Database path for watchlist tracking
+# Default: data/watchlist.db
+database_path: "data/watchlist.db"
+
+# DRM settings
+drm:
+  # Enable DRM decryption (requires separate plugin)
+  enabled: false
+  # Path to WVD/CDM file
+  cdm_path: ""
+  # Default decryption policy: yes | no | prompt
+  decrypt_policy: "no"
+
+# yt-dlp settings
+ytdlp:
+  # Default format profile
+  default_profile: "best"
+  # Preferred video resolutions
+  resolutions: [720, 1080, 1440, 2160]
+  # Extra arguments
+  extra_args: []
+
+# Network settings
+network:
+  # Timeout for metadata fetch (seconds)
+  metadata_timeout: 30
+  # Timeout for yt-dlp (seconds)
+  download_timeout: 3600
+
+# Logging
+logging:
+  level: "INFO"
+  # Format: json | text
+  format: "text"
