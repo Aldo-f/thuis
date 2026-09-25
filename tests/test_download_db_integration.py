@@ -188,6 +188,92 @@ class TestDownloadDBIntegration:
         mock_db.record_download.assert_not_called()
 
     # -------------------------------------------------------------------------
+    # Test 3b: glob fallback ignores yt-dlp intermediate files (fMPEG_DASH)
+    # -------------------------------------------------------------------------
+    def test_glob_fallback_ignores_intermediate_files(self, monkeypatch):
+        """A yt-dlp intermediate file (fMPEG_DASH-video=...) should NOT count as
+        a completed download. The episode should be re-downloaded."""
+        # Mock yt-dlp to return success
+        self.mocks['run_ytdlp'].return_value = (0, "")
+
+        # Create an intermediate yt-dlp file (not a final merged .mp4)
+        intermediate_file = self.output_dir / "Thuis.S01E14.1080p.WEB-DL.AAC.x264.fMPEG_DASH-video=5000000.mp4"
+        intermediate_file.write_text("partial")
+
+        # Mock WatchlistDB to return False (not in DB)
+        with patch("thuis.main.watchlist.WatchlistDB") as mock_db_class:
+            mock_db = MagicMock()
+            mock_db.any_file_for_url.return_value = False
+            mock_db.file_was_downloaded.return_value = False
+            mock_db.get_last_episode.return_value = None
+            mock_db_class.return_value = mock_db
+
+            rc = self._run_main(["--output-dir", str(self.output_dir), self.test_url])
+
+        # Verify successful exit
+        assert rc == 0
+
+        # Verify yt-dlp WAS called (download should proceed despite intermediate file)
+        self.mocks['run_ytdlp'].assert_called_once()
+
+    # -------------------------------------------------------------------------
+    # Test 3d: glob fallback ignores .temp.mp4 intermediate files
+    # -------------------------------------------------------------------------
+    def test_glob_fallback_ignores_temp_files(self, monkeypatch):
+        """A yt-dlp .temp.mp4 intermediate file should NOT count as a completed
+        download. The episode should be re-downloaded."""
+        # Mock yt-dlp to return success
+        self.mocks['run_ytdlp'].return_value = (0, "")
+
+        # Create a .temp.mp4 intermediate file (not a final merged .mp4)
+        temp_file = self.output_dir / "Thuis.S01E82.1080p.WEB-DL.AAC.x264.temp.mp4"
+        temp_file.write_text("partial")
+
+        # Mock WatchlistDB to return False (not in DB)
+        with patch("thuis.main.watchlist.WatchlistDB") as mock_db_class:
+            mock_db = MagicMock()
+            mock_db.any_file_for_url.return_value = False
+            mock_db.file_was_downloaded.return_value = False
+            mock_db.get_last_episode.return_value = None
+            mock_db_class.return_value = mock_db
+
+            rc = self._run_main(["--output-dir", str(self.output_dir), self.test_url])
+
+        # Verify successful exit
+        assert rc == 0
+
+        # Verify yt-dlp WAS called (download should proceed despite .temp.mp4)
+        self.mocks['run_ytdlp'].assert_called_once()
+
+    # -------------------------------------------------------------------------
+    # Test 3c: --force still respects filesystem glob (final .mp4 exists = skip)
+    # -------------------------------------------------------------------------
+    def test_force_still_checks_glob(self, monkeypatch):
+        """--force skips DB but still checks filesystem: existing final .mp4 = skip."""
+        # Mock yt-dlp to return success
+        self.mocks['run_ytdlp'].return_value = (0, "")
+
+        # Create a final-looking .mp4 file
+        existing_file = self.output_dir / "Thuis.S01E01.1080p.WEB-DL.AAC.x264.mp4"
+        existing_file.write_text("dummy")
+
+        # Mock WatchlistDB to return False (not in DB)
+        with patch("thuis.main.watchlist.WatchlistDB") as mock_db_class:
+            mock_db = MagicMock()
+            mock_db.any_file_for_url.return_value = False
+            mock_db.file_was_downloaded.return_value = False
+            mock_db.get_last_episode.return_value = None
+            mock_db_class.return_value = mock_db
+
+            rc = self._run_main(["--force", "--output-dir", str(self.output_dir), self.test_url])
+
+        # Verify successful exit
+        assert rc == 0
+
+        # Verify yt-dlp was NOT called (glob found existing final .mp4)
+        self.mocks['run_ytdlp'].assert_not_called()
+
+    # -------------------------------------------------------------------------
     # Test 4: record_download NOT called for dry-run
     # -------------------------------------------------------------------------
     def test_no_record_for_dry_run(self, monkeypatch):

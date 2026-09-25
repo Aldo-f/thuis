@@ -1281,7 +1281,13 @@ def _run_watchlist(args) -> None:
             cmd.append("--dry-run")
         if args.profile is not None:
             cmd += ["--profile", str(args.profile)]
-        cmd += ["--retry"]
+        # --force and --retry are opposites: --force re-downloads missing
+        # files ignoring DB state, --retry skips when the file exists.
+        # Forward whichever the caller asked for (default: --retry).
+        if args.force:
+            cmd.append("--force")
+        else:
+            cmd.append("--retry")
         cmd += urls
         completed = subprocess.run(cmd)
         if completed.returncode != 0:
@@ -1520,10 +1526,12 @@ def main():
                 vrt_info = url_parser.parse_vrt_url(url)
                 logger.debug("URL parse: %.2fs", time.time() - _t_parse)
                 
-                # Optimization: Skip episodes older than what we've already seen
+                # Optimization: Skip episodes older than what we've already seen.
+                # --force bypasses DB state: if the file is actually missing on
+                # disk we still want to download it, so don't trust last_seen.
                 if vrt_info.season > 0 and vrt_info.episode > 0:
                     last_seen = db.get_last_episode(vrt_info.show_slug, vrt_info.season)
-                    if isinstance(last_seen, int) and vrt_info.episode <= last_seen:
+                    if isinstance(last_seen, int) and vrt_info.episode <= last_seen and not args.force:
                         # If transcoding is requested, check if we should transcode before skipping
                         if args.transcode and not args.dry_run:
                             import transcoder
@@ -1821,33 +1829,36 @@ def main():
                  continue
             logger.debug("DB dedup: %.3fs", time.time() - _t_db)
 
-            # Fallback: filesystem glob check (existing logic)
+            # Fallback: filesystem glob check
+            # With --force, skip DB but still check filesystem for existing files.
             if content_type == classifier.ContentType.TV:
                 show_norm = scene_namer.normalize_show_name(show_name)
                 res_part = f".{resolution}p" if resolution else ""
                 search = f"{show_norm}.S{season_num:02d}E{episode_num:02d}{res_part}*.mp4"
                 logger.debug("Glob fallback: %s", search)
                 matches = list(args.output_dir.glob(search))
-                if matches:
+                # Filter out yt-dlp intermediate files (fMPEG_DASH, .part, .temp.mp4)
+                final_matches = [m for m in matches if "fMPEG_DASH" not in m.name and not m.name.endswith(".part") and ".temp." not in m.name]
+                if final_matches:
                     if args.transcode and not args.dry_run:
                         import transcoder
                         target_height = transcoder.parse_target_height(args.transcode)
                         needs_transcode = False
-                        for m in matches:
+                        for m in final_matches:
                             current_height = transcoder.get_video_resolution(m)
                             if current_height != target_height:
                                 needs_transcode = True
                                 break
                         if needs_transcode:
                             logger.info("%s: file exists but needs transcoding to %dp", url, target_height)
-                            _transcode_existing(matches, url, target_height, args)
+                            _transcode_existing(final_matches, url, target_height, args)
                             continue
-                    names = ", ".join(m.name for m in matches)
+                    names = ", ".join(m.name for m in final_matches)
                     logger.info("Skipped %s: already exists as %s", url, names)
                     continue
             elif scene_template and "%" not in scene_template:
                 output_file = args.output_dir / scene_template
-                if output_file.exists():
+                if output_file.exists() and "fMPEG_DASH" not in output_file.name and not output_file.name.endswith(".part") and ".temp." not in output_file.name:
                     if args.transcode and not args.dry_run:
                         import transcoder
                         target_height = transcoder.parse_target_height(args.transcode)
