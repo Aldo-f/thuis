@@ -364,7 +364,7 @@ def _get_list_id(show_slug: str, season: int) -> str | None:
             return True
         except ValueError:
             pass
-        return True
+        return False
 
     filtered = [(t, lid) for t, lid in candidates if _is_season_list(t)]
 
@@ -845,6 +845,9 @@ def fetch_season_episodes(url: str, max_episodes: int | None = None) -> list[str
             db = watchlist.WatchlistDB()
             cached = db.get_cached_episodes(cache_key, max_age_hours=24)
             if cached:
+                if max_episodes is not None and len(cached) > max_episodes:
+                    cached = cached[:max_episodes]
+                    logger.debug(f"Truncated cached episodes for {slug} season {season} to {max_episodes}")
                 logger.debug(f"Using cached episodes for {slug} season {season}: {len(cached)} episodes")
                 db.close()
                 return cached
@@ -1119,7 +1122,7 @@ def fetch_all_seasons(url: str, max_episodes: int | None = None) -> list[str]:
             return True
         except ValueError:
             pass
-        return True
+        return False
 
     season_lists = [(t, lid) for t, lid in candidates if _is_season_list(t)]
 
@@ -1970,44 +1973,44 @@ def main():
                 sys.exit(1)
         
         # Transcoding for existing files (when --transcode used but download skipped)
-        if args.transcode and not args.dry_run:
-            import transcoder
-            target_height = transcoder.parse_target_height(args.transcode)
+                if args.transcode and not args.dry_run and 'vrt_info' in locals():
+                    import transcoder
+                    target_height = transcoder.parse_target_height(args.transcode)
             
-            # Search for files matching the episode pattern
-            # Use vrt_info which is available in outer scope
-            show_norm = scene_namer.normalize_show_name(vrt_info.show_slug)
-            season_num = int(vrt_info.season) if vrt_info.season else 0
-            episode_num = int(vrt_info.episode) if vrt_info.episode else 0
-            search = f"{show_norm}.S{season_num:02d}E{episode_num:02d}*.mp4"
-            existing_files = list(args.output_dir.glob(search))
+                    # Search for files matching the episode pattern
+                    # Use vrt_info which is available in outer scope
+                    show_norm = scene_namer.normalize_show_name(vrt_info.show_slug)
+                    season_num = int(vrt_info.season) if vrt_info.season else 0
+                    episode_num = int(vrt_info.episode) if vrt_info.episode else 0
+                    search = f"{show_norm}.S{season_num:02d}E{episode_num:02d}*.mp4"
+                    existing_files = list(args.output_dir.glob(search))
             
-            if existing_files:
-                # Check if transcoding is needed
-                needs_transcode = False
-                for f in existing_files:
-                    current_height = transcoder.get_video_resolution(f)
-                    if current_height != target_height:
-                        needs_transcode = True
-                        break
+                    if existing_files:
+                        # Check if transcoding is needed
+                        needs_transcode = False
+                        for f in existing_files:
+                            current_height = transcoder.get_video_resolution(f)
+                            if current_height != target_height:
+                                needs_transcode = True
+                                break
                 
-                if needs_transcode:
-                    logger.info("%s: transcoding existing file to %dp", url, target_height)
-                    # Find best source for transcoding
-                    best_source = transcoder.find_best_source_for_transcoding(
-                        existing_files, target_height
-                    )
-                    if best_source:
-                        success, out_path, error = transcoder.transcode_file_if_needed(
-                            best_source,
-                            keep_original=args.keep_original,
-                            target_height=target_height,
-                            allow_upscale=args.allow_upscale,
-                        )
-                        if success:
-                            logger.info(f"Transcoded {best_source.name} to {target_height}p")
-                        elif error:
-                            logger.warning(f"Transcoding failed for {best_source.name}: {error}")
+                        if needs_transcode:
+                            logger.info("%s: transcoding existing file to %dp", url, target_height)
+                            # Find best source for transcoding
+                            best_source = transcoder.find_best_source_for_transcoding(
+                                existing_files, target_height
+                            )
+                            if best_source:
+                                success, out_path, error = transcoder.transcode_file_if_needed(
+                                    best_source,
+                                    keep_original=args.keep_original,
+                                    target_height=target_height,
+                                    allow_upscale=args.allow_upscale,
+                                )
+                                if success:
+                                    logger.info(f"Transcoded {best_source.name} to {target_height}p")
+                                elif error:
+                                    logger.warning(f"Transcoding failed for {best_source.name}: {error}")
         
         def _exit_with_code(results):
             drm_results = [r for r in results if r == "drm"]
