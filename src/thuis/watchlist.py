@@ -192,6 +192,85 @@ def should_trigger(schedule: Optional[str],
     return False
 
 
+def trigger_skip_reason(schedule: Optional[str],
+                        now: datetime,
+                        last_run: Optional[datetime]) -> str:
+    """
+    Return a human-readable reason why should_trigger returned False.
+
+    Mirrors the logic in should_trigger / _should_trigger_single but
+    explains the *why* instead of a bare False.
+    """
+    if schedule is None:
+        return "manual entry (use --now)"
+
+    sub_schedules = [s.strip().rstrip(",") for s in schedule.split(",")]
+    if len(sub_schedules) > 1:
+        return "not scheduled now"
+    return _skip_reason_single(sub_schedules[0], now, last_run)
+
+
+def _skip_reason_single(schedule: str,
+                        now: datetime,
+                        last_run: Optional[datetime]) -> str:
+    """Return skip reason for a single (non-comma) schedule string."""
+    parts = schedule.strip().split()
+    time_str = None
+    day_part = None
+    week_interval = 1
+
+    for p in parts:
+        if p == "daily":
+            day_part = "daily"
+        elif p == "weekly":
+            day_part = "week"
+            week_interval = 1
+        elif p in ("monday", "tuesday", "wednesday", "thursday",
+                   "friday", "saturday", "sunday"):
+            day_part = p
+        elif p in ("weekdays", "weekday"):
+            day_part = "weekdays"
+        elif p in ("weekends", "weekend"):
+            day_part = "weekends"
+        elif _is_week_interval_token(parts, p):
+            week_interval = int(p)
+            day_part = "week"
+        elif _is_time(p):
+            time_str = p
+
+    for i in range(len(parts)):
+        if _is_week_interval_token(parts, parts[i]):
+            week_interval = int(parts[i])
+            day_part = "week"
+            break
+
+    if day_part is None:
+        day_part = "daily"
+        time_str = parts[0] if parts and _is_time(parts[0]) else None
+
+    target_days = _get_target_days(day_part, now.weekday())
+
+    if now.weekday() not in target_days:
+        return f"not scheduled today ({now.strftime('%A')})"
+
+    if last_run is not None:
+        if day_part == "week":
+            interval_days = week_interval * 7
+            if (now - last_run).days <= interval_days:
+                return f"already run ({last_run.strftime('%Y-%m-%d %H:%M')})"
+        else:
+            if _same_day(last_run, now):
+                return f"already run today ({last_run.strftime('%H:%M')})"
+
+    if time_str:
+        target_hour, target_minute = _parse_time(time_str)
+        if now.hour < target_hour or (now.hour == target_hour
+                                      and now.minute < target_minute):
+            return f"before scheduled time ({time_str})"
+
+    return "not scheduled now"
+
+
 def _should_trigger_single(schedule: str,
                            now: datetime,
                            last_run: Optional[datetime]) -> bool:

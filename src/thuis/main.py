@@ -1217,6 +1217,7 @@ def _run_watchlist(args) -> None:
         resolve_output_dir,
         WatchlistDB,
         should_trigger,
+        trigger_skip_reason,
     )
     from datetime import datetime
 
@@ -1245,8 +1246,10 @@ def _run_watchlist(args) -> None:
             if entry.schedule is None:
                 # Manual-only entries require --now flag; skip otherwise
                 continue
-            if not should_trigger(entry.schedule, now, db.get_last_run(entry.url)):
-                print(f"  [skip] not scheduled: [{schedule}] {entry.url}")
+            last_run = db.get_last_run(entry.url)
+            if not should_trigger(entry.schedule, now, last_run):
+                reason = trigger_skip_reason(entry.schedule, now, last_run)
+                print(f"  [skip] {reason}: [{schedule}] {entry.url}")
                 continue
             # Skip DRM entries on scheduled runs (unless --now is used)
             last_status = db.get_last_status(entry.url)
