@@ -57,6 +57,7 @@ def load_config(config_dir: Optional[Path] = None) -> Dict[str, Any]:
         "drm.decrypt_policy": os.getenv("DECRYPT_DRM"),
     }
     apply_env_overrides(config, env_overrides)
+    config.setdefault("plugins", {})
 
     return config
 
