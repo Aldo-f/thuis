@@ -3,8 +3,17 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+LOCK_FILE="/run/lock/thuis-watchlist.lock"
 CRON_TAG="# HOME: thuis-watchlist"
 CRON_LINE="0 * * * * /usr/local/bin/run-serial.sh thuis-watchlist --max-wait=7200 -- $REPO_DIR/scripts/watchlist-runner.sh >> $REPO_DIR/logs/watchlist.log 2>&1"
+
+# Prevent concurrent invocations: acquire flock with 0s wait (non-blocking).
+# If the lock is already held, skip this run entirely.
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+    echo "[watchlist] SKIP: another instance is already running (lock held)" >&2
+    exit 0
+fi
 
 ensure_cron_entry() {
     if ! crontab -l 2>/dev/null | grep -q "$CRON_TAG"; then
