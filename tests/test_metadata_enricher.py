@@ -8,9 +8,10 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
 import pytest
+import requests
 from unittest.mock import patch, MagicMock
 
-from thuis.plugins.metadata_enricher import TMDBClient
+from thuis.plugins.metadata_enricher import TMDBClient, ImgBBUploader
 
 
 # ---------------------------------------------------------------------------
@@ -336,6 +337,34 @@ def test_fetch_poster_image_network_error() -> None:
 
 
 # ---------------------------------------------------------------------------
+# TMDBClient initialization
+# ---------------------------------------------------------------------------
+
+def test_init_stores_api_key() -> None:
+    """The API key is stored on the instance."""
+    client = TMDBClient(api_key="my-secret-key")
+    assert client._api_key == "my-secret-key"
+
+
+def test_init_creates_session() -> None:
+    """A requests.Session is created on init."""
+    client = TMDBClient(api_key="key")
+    assert client._session is not None
+
+
+def test_init_sets_accept_header() -> None:
+    """Session headers include Accept: application/json."""
+    client = TMDBClient(api_key="key")
+    assert client._session.headers.get("Accept") == "application/json"
+
+
+def test_init_includes_api_key_in_params() -> None:
+    """Session params carry the api_key so every request includes it."""
+    client = TMDBClient(api_key="key123")
+    assert client._session.params.get("api_key") == "key123"
+
+
+# ---------------------------------------------------------------------------
 # Integration-style: full happy path with real-looking data
 # ---------------------------------------------------------------------------
 
@@ -369,3 +398,80 @@ def test_full_show_lookup_with_episode_chain() -> None:
     assert result["overview"] == "日常生活 drama."
     assert len(result["episodes"]) == 1
     assert result["episodes"][0]["episode_number"] == 6108
+
+
+# ---------------------------------------------------------------------------
+# ImgBBUploader
+# ---------------------------------------------------------------------------
+
+class TestImgBBUploader:
+    def test_upload_success(self) -> None:
+        """Successful upload returns display_url."""
+        resp_json = {
+            "success": True,
+            "data": {
+                "display_url": "https://i.ibb.co/abc123/test.png",
+                "url": "https://i.ibb.co/abc123/test.png",
+            },
+        }
+        with patch("thuis.plugins.metadata_enricher.requests.post") as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.json.return_value = resp_json
+            uploader = ImgBBUploader(api_key="test-key")
+            result = uploader.upload(b"fake-png-data", name="test")
+        assert result == "https://i.ibb.co/abc123/test.png"
+
+    def test_upload_empty_bytes_returns_none(self) -> None:
+        """Uploading empty bytes returns None without calling the API."""
+        uploader = ImgBBUploader(api_key="test-key")
+        result = uploader.upload(b"")
+        assert result is None
+
+    def test_upload_api_error_returns_none(self) -> None:
+        """HTTP errors on upload return None."""
+        with patch("thuis.plugins.metadata_enricher.requests.post") as mock_post:
+            mock_post.side_effect = requests.exceptions.RequestException("boom")
+            uploader = ImgBBUploader(api_key="test-key")
+            result = uploader.upload(b"fake-data")
+        assert result is None
+
+    def test_upload_failure_response_returns_none(self) -> None:
+        """ImgBB success=false response returns None."""
+        resp_json = {
+            "success": False,
+            "error": {"message": "Invalid key", "code": 101},
+        }
+        with patch("thuis.plugins.metadata_enricher.requests.post") as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.json.return_value = resp_json
+            uploader = ImgBBUploader(api_key="bad-key")
+            result = uploader.upload(b"fake-data")
+        assert result is None
+    mock_post.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# get_season_episode_count
+# ---------------------------------------------------------------------------
+
+class TestSeasonEpisodeCount:
+    """TMDBClient.get_season_episode_count() returns expected episode count."""
+
+    def test_returns_episode_count(self):
+        """get_season_episode_count returns int for valid show/season."""
+        from thuis.plugins.metadata_enricher import TMDBClient
+        client = TMDBClient(api_key="d21283b34416ede4cf71abdc3e0f4672")
+        # FC De Kampioenen — look up season 1
+        count = client.get_season_episode_count("FC De Kampioenen", season=1)
+        assert count is not None
+        assert isinstance(count, int)
+        assert count > 0
+        # Season 1 has 13 episodes per Wikipedia
+        assert count == 13, f"Expected 13 episodes, got {count}"
+
+    def test_returns_none_for_invalid_show(self):
+        """get_season_episode_count returns None for unknown show."""
+        from thuis.plugins.metadata_enricher import TMDBClient
+        client = TMDBClient(api_key="d21283b34416ede4cf71abdc3e0f4672")
+        count = client.get_season_episode_count("NONEXISTENT_SHOW_XYZ123", season=1)
+        assert count is None

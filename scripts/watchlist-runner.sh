@@ -31,6 +31,7 @@ ensure_cron_entry() {
 ensure_cron_entry
 cd "$REPO_DIR"
 ./thuis.sh \
+  --auto-upload \
   --watchlist watchlists/Fc_De_Kampioenen.txt \
   --watchlist watchlists/Flikken.txt \
   --watchlist watchlists/Flikken_Maastricht.txt \

@@ -1,6 +1,7 @@
 """TMDB metadata enrichment plugin.
 
-Provides :class:`TMDBClient` for querying The Movie Database (TMDB) API v3.
+Provides :class:`TMDBClient` for querying The Movie Database (TMDB) API v3
+and :class:`ImgBBUploader` for hosting poster images.
 Used as a postprocess plugin to enrich downloaded files with metadata
 (titles, overviews, poster paths, and season/episode information).
 """
@@ -127,6 +128,44 @@ class TMDBClient:
         except Exception:
             return None
 
+    def get_season_episode_count(
+        self, series: str, season: int = 1
+    ) -> int | None:
+        """Return the number of episodes in a season for a TV series.
+
+        Uses TMDB API: search/tv → tv/{id}/season/{season}.
+
+        Parameters
+        ----------
+        series:
+            Show name to search for.
+        season:
+            Season number (default 1).
+
+        Returns
+        -------
+        int or None
+            Episode count for the season, or None on any error.
+        """
+        try:
+            search_data = self._get_json("search/tv", params={"query": series})
+            if search_data is None:
+                return None
+            results = search_data.get("results", [])
+            if not results:
+                return None
+            show_id = results[0].get("id")
+            if show_id is None:
+                return None
+            season_data = self._get_json(f"tv/{show_id}/season/{season}")
+            if season_data is None:
+                return None
+            # TMDB returns episodes list — count is len(episodes)
+            episodes = season_data.get("episodes", [])
+            return len(episodes) if episodes else None
+        except Exception:
+            return None
+
     def lookup_movie(
         self,
         title: str,
@@ -223,4 +262,37 @@ class TMDBClient:
         try:
             return int(date_str[:4])
         except (ValueError, IndexError):
+            return None
+
+
+class ImgBBUploader:
+    """Uploads images to ImgBB and returns public URLs."""
+
+    UPLOAD_URL = "https://api.imgbb.com/1/upload"
+
+    def __init__(self, api_key: str) -> None:
+        self._api_key = api_key
+
+    def upload(self, image_bytes: bytes, name: str = "") -> str | None:
+        """Upload *image_bytes* to ImgBB and return the direct image URL.
+
+        Returns ``None`` on any error (network failure, HTTP error, or
+        missing URL in response).
+        """
+        if not image_bytes:
+            return None
+        try:
+            resp = requests.post(
+                self.UPLOAD_URL,
+                data={"key": self._api_key, "name": name},
+                files={"image": ("upload.jpg", image_bytes, "image/jpeg")},
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            if not data.get("success"):
+                logger.warning("ImgBB upload failed: %s", data.get("error", {}).get("message", "unknown"))
+                return None
+            return data["data"]["display_url"] or data["data"]["url"]
+        except Exception:
             return None

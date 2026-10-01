@@ -47,3 +47,63 @@ logging:
   level: "INFO"
   # Format: json | text
   format: "text"
+
+# Plugin system
+# Each plugin can be enabled here; plugin-specific options live under the same key.
+plugins:
+  # List of enabled plugins (e.g. torrent_uploader, metadata_enricher)
+  enabled:
+    - torrent_uploader
+  # torrent_uploader options
+  torrent_uploader:
+    # Announce URLs for the torrent — configured in the trackers list below
+    # (was empty, now uses public trackers further down)
+    piece_size: 262144
+    # Optional comment embedded in the torrent metadata
+    comment: ""
+    # Optional creator/source string embedded in the torrent
+    source: "thuis"
+    # ext.to upload credentials
+    ext_to:
+      username: "cymave6507"
+      password: ""  # Set via EXT_TO_PASSWORD env var or config.local.yaml
+    # Tribler anonymous seeding
+    tribler:
+      enabled: false  # Set to true after Tribler is installed
+      api_port: 8085
+      api_key: ""
+      anon_hops: 3
+      safe_seeding: true
+    # Public tracker announce URLs — fetched from:
+    #   https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt
+    #   https://newtrackon.com/api/stable
+    # Merged + deduped, top 20 best stable trackers:
+    trackers:
+      - "udp://tracker.opentrackr.org:1337/announce"
+      - "udp://open.stealth.si:80/announce"
+      - "udp://tracker.torrent.eu.org:451/announce"
+      - "udp://open.demonii.com:1337/announce"
+      - "udp://tracker.qu.ax:6969/announce"
+      - "udp://tracker.gmi.gd:6969/announce"
+      - "udp://tracker.corpscorp.online:80/announce"
+      - "udp://tracker.ducks.party:1984/announce"
+      - "udp://tracker.dler.com:6969/announce"
+      - "udp://tracker.dler.org:6969/announce"
+      - "udp://tracker-udp.gbitt.info:80/announce"
+      - "udp://tracker.nyaa.vc:6969/announce"
+      - "udp://tracker.ilibr.org:6969/announce"
+      - "udp://tracker.opentrackr.com:6969/announce"
+      - "udp://evan.im:6969/announce"
+      - "udp://tr4ck3r.duckdns.org:6969/announce"
+      - "udp://opentracker.lain.moscow:6969/announce"
+      - "udp://tracker.willy.pro:6969/announce"
+      - "http://tracker.dler.com:6969/announce"
+      - "http://tracker.renfei.net:8080/announce"
+  # metadata_enricher options
+  metadata_enricher:
+    # TMDB API key — get one free at https://www.themoviedb.org/settings/api
+    # Can also be set via the TMDB_KEY environment variable
+    tmdb_key: "d21283b34416ede4cf71abdc3e0f4672"
+    # ImgBB API key — get one at https://imgbb.com/dashboard/api
+    # Required for poster image uploads; leave empty to skip
+    imgbb_api_key: "bec6efa34f30741d30ea7374ab0acef0"
