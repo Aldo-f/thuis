@@ -226,6 +226,39 @@ class TestBuildYtDlpArgs:
         assert "--password" in args
         assert "secret" in args
 
+    def test_concurrent_fragments_added(self):
+        """Non-podcast downloads include --concurrent-fragments 3."""
+        args = build_yt_dlp_args(
+            ["https://example.com/video"],
+            dry_run=False,
+            output_dir=Path("output"),
+            email="a@b.com",
+            password="pw",
+            resolution=None,
+        )
+        assert "--concurrent-fragments" in args, (
+            f"Expected --concurrent-fragments in args: {args}"
+        )
+        idx = args.index("--concurrent-fragments")
+        assert args[idx + 1] == "3", (
+            f"Expected '3' after --concurrent-fragments, got {args[idx + 1]}"
+        )
+
+    def test_concurrent_fragments_not_in_podcast(self):
+        """Podcast (audio-only) downloads do NOT include --concurrent-fragments."""
+        args = build_yt_dlp_args(
+            ["https://example.com/podcast"],
+            dry_run=False,
+            output_dir=Path("output"),
+            output_template="podcast_episode.%(ext)s",
+            email="a@b.com",
+            password="pw",
+            resolution=None,
+        )
+        assert "--concurrent-fragments" not in args, (
+            f"Podcast args should NOT contain --concurrent-fragments: {args}"
+        )
+
 
 # ===========================================================================
 # Retry skip logic

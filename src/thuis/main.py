@@ -520,6 +520,7 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), 
         args += [
             "-f", fmt,
             "--merge-output-format", "mp4",
+            "--concurrent-fragments", "3",
             "--no-warnings",
             "--no-color",
         ]
@@ -1193,6 +1194,84 @@ options:
 """
 
 
+_VIDEO_EXTENSIONS = {".mp4", ".mkv", ".avi", ".mov", ".webm"}
+
+_TORRENT_UPLOAD_HELP = """\
+usage: thuis torrent-upload [-h] [--dry-run] directory
+
+Scan a directory for video files and run postprocess plugins on each.
+
+positional arguments:
+  directory   Directory to scan for video files
+
+options:
+  -h, --help  Show this help and exit
+  --dry-run   Show what would be done without creating .torrent files
+"""
+
+
+def torrent_upload_subcommand(args) -> int:
+    """Scan *args.directory* for video files and run postprocess plugins on each."""
+    from pathlib import Path
+    from thuis.plugin_host import PluginManager, PostprocessContext
+
+    logger = setup_logging(getattr(args, "log_level", None))
+
+    directory = Path(args.directory)
+    if not directory.is_dir():
+        logger.error("Directory not found: %s", directory)
+        return 1
+
+    dry_run = getattr(args, "dry_run", False)
+    output_dir = getattr(args, "output_dir", None) or directory
+
+    files = sorted(
+        p for p in directory.rglob("*")
+        if p.is_file() and p.suffix.lower() in _VIDEO_EXTENSIONS
+    )
+
+    if not files:
+        logger.info("No video files found in %s", directory)
+        return 0
+
+    config: dict = {}  # ponytail: empty config; real plugin config comes from ~/.thuis/config.json
+    pm = PluginManager(config)
+
+    success_count = 0
+    fail_count = 0
+
+    for filepath in files:
+        ctx = PostprocessContext(
+            filepath=filepath,
+            metadata={},
+            output_dir=Path(output_dir),
+            dry_run=dry_run,
+        )
+        try:
+            results = pm.run_plugins(ctx)
+            all_ok = all(results.values()) if results else True
+            if all_ok:
+                success_count += 1
+                status = "dry-run ✓" if dry_run else "ok"
+                logger.info("%s: plugins ran [%s]", filepath.name, status)
+            else:
+                fail_count += 1
+                logger.error(
+                    "%s: plugin(s) failed: %s",
+                    filepath.name,
+                    {k: v for k, v in results.items() if not v},
+                )
+        except Exception as exc:
+            fail_count += 1
+            logger.error("%s: run_plugins raised: %s", filepath.name, exc)
+
+    logger.info(
+        "torrent-upload: %d file(s) scanned, %d ok, %d failed",
+        len(files), success_count, fail_count,
+    )
+    return 1 if fail_count else 0
+
+
 def _run_normalize_from_argv(argv: list[str]) -> None:
     """Parse normalize arguments from *argv* and execute."""
     if not argv or argv[0] in ("-h", "--help"):
@@ -1329,6 +1408,7 @@ def main():
     g_dl.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")
     g_dl.add_argument("--key-file", type=Path, default=None, help="JSON file with KID:KEY pairs for DRM decryption (alternative to CDM)")
     g_dl.add_argument("--key", action="append", default=[], metavar="KID:KEY", help="Direct KID:KEY pair for DRM decryption (repeatable, overrides CDM)")
+    g_dl.add_argument("--auto-upload", action="store_true", help="Run postprocess plugins on each successfully downloaded file")
     g_dl.add_argument("--key-provider", type=str, choices=["cdm", "file", "cli"], default="cdm", help="Key source: cdm (pywidevine), file (--key-file), cli (--key)")
 
     # Transcode options
@@ -1372,6 +1452,18 @@ def main():
         _doc_parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
         _doc_args = _doc_parser.parse_args(sys.argv[2:])
         sys.exit(run_doctor(fix_mode=_doc_args.fix, verbose=_doc_args.verbose))
+        return
+
+    # Handle torrent-upload subcommand
+    if len(sys.argv) > 1 and sys.argv[1] == "torrent-upload":
+        import argparse as _ap
+        _tu_parser = _ap.ArgumentParser()
+        _tu_parser.add_argument("directory", help="Directory to scan for video files")
+        _tu_parser.add_argument("--dry-run", action="store_true", help="Show what would be done without creating .torrent files")
+        _tu_parser.add_argument("--output-dir", type=Path, default=None, help="Output directory (default: same as scanned directory)")
+        _tu_parser.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None)
+        _tu_args = _tu_parser.parse_args(sys.argv[2:])
+        sys.exit(torrent_upload_subcommand(_tu_args))
         return
 
     args = parser.parse_args()
@@ -1968,6 +2060,31 @@ def main():
                             logger.info("Recorded download as: %s", actual_filename)
                     except Exception as e:
                         logger.warning("Failed to record download in DB: %s", e)
+
+                    if args.auto_upload:
+                        from thuis.plugin_host import PluginManager, PostprocessContext
+                        try:
+                            filepath = Path(actual_filename) if actual_filename else None
+                            if filepath and filepath.exists():
+                                ctx = PostprocessContext(
+                                    filepath=filepath,
+                                    metadata=metadata,
+                                    output_dir=args.output_dir,
+                                    dry_run=False,
+                                )
+                                cfg = thuis_config.get_config()
+                                pm = PluginManager(cfg)
+                                logger.info("Auto-upload: running postprocess plugins for %s", filepath.name)
+                                plugin_results = pm.run_plugins(ctx)
+                                failed = {k: v for k, v in plugin_results.items() if not v}
+                                if failed:
+                                    logger.warning("Auto-upload: plugin(s) failed for %s: %s", filepath.name, failed)
+                                else:
+                                    logger.info("Auto-upload: all plugins succeeded for %s", filepath.name)
+                            else:
+                                logger.warning("Auto-upload: file not found for %s, skipping plugins", url)
+                        except Exception as e:
+                            logger.warning("Auto-upload: plugin hook failed for %s: %s", url, e)
             except Exception:
                 # On any unexpected error, record failure
                 results.append(1)
