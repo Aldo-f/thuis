@@ -1,6 +1,13 @@
-# First line: output directory for downloaded files
+# Watchlist Template & Documentation
+# -------------------------------------------------------------
+# First non-comment line can be the output directory or a directive:
 # Supports: ~/path (home-relative), /absolute/path, relative/path
-# ~/downloads/thuis  or  /mnt/HDD1/services/nextcloud/data/aldo/files/Media/tv/_seed
+# Example: /mnt/HDD1/services/nextcloud/data/aldo/files/Media/tv/_seed
+
+# Directives:
+#   [cat] Category/Subcategory   - sets the qBittorrent category for following entries (e.g., Media/Tv)
+#   [category] Category/Sub      - alias for [cat]
+#   [dir] /path/to/output        - sets or changes the download output directory for following entries
 
 # Lines starting with # are comments
 # Format: [schedule] URL  # optional comment
@@ -17,10 +24,12 @@
 #
 # Without [schedule], entry runs every time --now is used
 
-# Example entries:
+# Example configuration:
+# [cat] Media/Tv
+# [dir] /mnt/HDD1/services/nextcloud/data/aldo/files/Media/tv/Some Show
 # [daily 08:30] https://www.vrt.be/vrtmax/a-z/thuis/31/thuis-s31a6105/
 # [weekly] https://www.vrt.be/vrtmax/a-z/some-show/season/2/
 # [monday,wednesday,friday 19:00] https://www.vrt.be/vrtmax/a-z/daily-show/3/episode/
 
-# No tag = runs every time --now is called
+# No tag = manual entry, runs every time --now is called
 # https://www.vrt.be/vrtmax/a-z/special/1/episode/

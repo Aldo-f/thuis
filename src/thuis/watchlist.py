@@ -39,6 +39,7 @@ class WatchlistEntry:
     url: str
     schedule: Optional[str] = None  # e.g. "daily 08:30", "monday,wednesday", None
     output_dir: str = ""  # directory for this entry, optional override
+    category: Optional[str] = None  # qBittorrent category, optional override
 
 
 @dataclass
@@ -46,6 +47,7 @@ class WatchlistFile:
     """Parsed watchlist file with output dir and entries."""
     path: str
     output_dir: str
+    default_category: Optional[str] = None
     entries: list[WatchlistEntry] = field(default_factory=list)
 
 
@@ -55,7 +57,7 @@ def parse_watchlist_file(path: str) -> WatchlistFile:
     """
     Parse a watchlist file.
 
-    First non-comment, non-blank line = output directory.
+    First non-comment, non-blank line = output directory (or [dir] / [cat] directive).
     Subsequent lines: optional [schedule] tag + URL, comments and blanks skipped.
     """
     output_dir = ""
@@ -64,6 +66,8 @@ def parse_watchlist_file(path: str) -> WatchlistFile:
 
     # current_dir tracks the directory for entries; defaults to the file-level output_dir
     current_dir = ""
+    default_category: Optional[str] = None
+    current_category: Optional[str] = None
 
     with open(path, "r") as f:
         for line in f:
@@ -75,6 +79,14 @@ def parse_watchlist_file(path: str) -> WatchlistFile:
 
             # Skip pure comments (first non-whitespace char is #)
             if stripped.startswith("#"):
+                continue
+
+            # Check for category directive: [cat] or [category]
+            cat_match = re.match(r"^\[\s*(?:cat|category)\s*\]\s+(.+)$", stripped, re.IGNORECASE)
+            if cat_match:
+                current_category = cat_match.group(1).strip()
+                if default_category is None:
+                    default_category = current_category
                 continue
 
             # First non-comment, non-blank line is the file-level output directory
@@ -101,9 +113,10 @@ def parse_watchlist_file(path: str) -> WatchlistFile:
             if entry:
                 # Assign the directory that applies to this entry (fallback to file-level if not set)
                 entry.output_dir = current_dir
+                entry.category = current_category
                 entries.append(entry)
 
-    return WatchlistFile(path=path, output_dir=output_dir, entries=entries)
+    return WatchlistFile(path=path, output_dir=output_dir, default_category=default_category, entries=entries)
 
 
 def _parse_entry_line(line: str) -> Optional[WatchlistEntry]:
@@ -478,10 +491,13 @@ class WatchlistDB:
             return datetime.fromisoformat(row[0])
         return None
 
-    def get_last_status(self, url: str) -> Optional[str]:
-        """Get the last status for a URL."""
+    def get_filename_for_url(self, url: str, output_dir: str) -> Optional[str]:
+        """Get the recorded filename for a URL and output_dir, if any."""
         cursor = self.conn.cursor()
-        cursor.execute("SELECT last_status FROM entries WHERE url = ?", (url,))
+        cursor.execute(
+            "SELECT filename FROM downloaded_files WHERE url = ? AND output_dir = ? LIMIT 1",
+            (url, output_dir),
+        )
         row = cursor.fetchone()
         return row[0] if row else None
 

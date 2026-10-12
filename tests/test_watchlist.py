@@ -121,6 +121,56 @@ media
         result = parse_watchlist_file(str(wl_file))
         assert result.entries[0].schedule == "monday 8:00, wednesday 7:00, weekend 8:00"
 
+    def test_parse_cat_directive(self, tmp_path):
+        """[cat] directive sets category for following entries."""
+        wl_file = tmp_path / "test.txt"
+        wl_file.write_text("""[cat] Media/Tv
+/mnt/HDD1/media
+[weekly] https://www.example.com/ep1
+https://www.example.com/ep2
+""")
+        result = parse_watchlist_file(str(wl_file))
+        assert result.output_dir == "/mnt/HDD1/media"
+        assert result.default_category == "Media/Tv"
+        assert len(result.entries) == 2
+        assert result.entries[0].category == "Media/Tv"
+        assert result.entries[1].category == "Media/Tv"
+
+    def test_parse_category_alias(self, tmp_path):
+        """[category] is an alias for [cat]."""
+        wl_file = tmp_path / "test.txt"
+        wl_file.write_text("""media
+[category] Media/Podcasts
+https://www.example.com/ep1
+""")
+        result = parse_watchlist_file(str(wl_file))
+        assert result.default_category == "Media/Podcasts"
+        assert result.entries[0].category == "Media/Podcasts"
+
+    def test_parse_cat_override(self, tmp_path):
+        """Second [cat] directive overrides the first for following entries."""
+        wl_file = tmp_path / "test.txt"
+        wl_file.write_text("""media
+[cat] Media/Tv
+https://www.example.com/ep1
+[cat] Media/Podcasts
+https://www.example.com/ep2
+""")
+        result = parse_watchlist_file(str(wl_file))
+        assert result.default_category == "Media/Tv"
+        assert result.entries[0].category == "Media/Tv"
+        assert result.entries[1].category == "Media/Podcasts"
+
+    def test_parse_no_category(self, tmp_path):
+        """Entries without [cat] directive have category=None."""
+        wl_file = tmp_path / "test.txt"
+        wl_file.write_text("""media
+https://www.example.com/ep1
+""")
+        result = parse_watchlist_file(str(wl_file))
+        assert result.default_category is None
+        assert result.entries[0].category is None
+
 
 class TestResolveOutputDir:
     """Tests for output directory path resolution."""
