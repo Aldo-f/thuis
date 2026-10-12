@@ -55,6 +55,14 @@ network:
   # Timeout for yt-dlp (seconds)
   download_timeout: 3600
 
+# Subtitle settings
+subtitles:
+  # Download + mux all source subtitle tracks into the MP4 as mov_text
+  # (toggleable track). Missing section = enabled.
+  embed: true
+  # Which languages to write: "all" = every language the source provides
+  langs: "all"
+
 # Logging
 logging:
   level: "INFO"
