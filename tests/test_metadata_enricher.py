@@ -446,8 +446,8 @@ class TestImgBBUploader:
             mock_post.return_value.json.return_value = resp_json
             uploader = ImgBBUploader(api_key="bad-key")
             result = uploader.upload(b"fake-data")
-        assert result is None
-    mock_post.assert_called_once()
+            assert result is None
+            mock_post.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

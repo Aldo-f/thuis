@@ -8,7 +8,7 @@ episode, and resolution information.
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -32,6 +32,27 @@ class ParsedFilename:
     is_part: bool
     original_path: Path
 
+    def get(self, key: str, default: Any = None) -> Any:
+        """Dict-style accessor for backward compatibility.
+
+        Maps old metadata-dict keys to the new dataclass attributes.
+        """
+        mapping = {
+            "series": self.show_slug,
+            "season": self.season,
+            "episode": self.episode,
+            "height": self.resolution,
+            "resolution": self.resolution,
+            "is_duplicate": self.is_duplicate,
+            "is_part": self.is_part,
+            "title": None,
+            "vcodec_label": None,
+            "vcodec_raw": None,
+            "acodec_label": None,
+            "acodec_raw": None,
+        }
+        return mapping.get(key, default)
+
 
 #: Primary regex for scene-style filenames.
 #: Matches: ``Show.Name.s01e12.1080p.mp4``,
@@ -49,48 +70,20 @@ _RE_STANDARD = re.compile(
 )
 
 #: Fallback regex for a single dot-separated part.
-#: Only used when the primary regex fails — matches ``s01e12`` or ``S21E12``.
+#: Only used when the primary regex fails -- matches ``s01e12`` or ``S21E12``.
 _RE_FALLBACK = re.compile(r'^[sS](\d+)[eE](\d+)$')
 
 #: Regex to detect a resolution tag (digits followed by *p* / *P*).
 _RE_RESOLUTION = re.compile(r'^(\d+)[pP]$')
 
 
-def parse_filename(path: Path) -> Optional[ParsedFilename]:
+def parse_filename(path: Path | str) -> Optional[ParsedFilename]:
     """Parse a video filename into structured components.
 
-    Handles scene naming conventions, ``.part`` partial downloads, and
-    ``_1`` duplicate markers.
-
-    Parser pipeline:
-
-    1. Check if the filename ends with ``.part`` — mark and strip it.
-    2. Separate the stem (everything before the last ``.``).
-    3. Check for a trailing ``_1`` — mark and strip it.
-    4. Try the primary scene-style regex.
-    5. If that fails, fall back to dot-splitting and scanning for a
-       ``sXXeYY`` part.
-    6. Return ``None`` only for completely unrecognisable filenames.
-
-    Args:
-        path: Path to the video file.
-
-    Returns:
-        A :class:`ParsedFilename` instance if the filename could be parsed,
-        or ``None`` if no recognisable media pattern was found.
-
-    Example:
-        >>> from pathlib import Path
-        >>> p = parse_filename(Path("fc.de.kampioenen.s01e12.1080p.mp4"))
-        >>> p.show_slug
-        'fc.de.kampioenen'
-        >>> p.season
-        1
-        >>> p.episode
-        12
-        >>> p.resolution
-        '1080'
+    Handles scene naming conventions, .part partial downloads, and duplicate markers.
     """
+    path = Path(path)
+
     name = path.name
     if not name:
         return None
@@ -104,7 +97,7 @@ def parse_filename(path: Path) -> Optional[ParsedFilename]:
     # --- Step 2: Separate stem from extension ----------------------------------
     dot = name.rfind('.')
     if dot <= 0:
-        # No identifiable extension — e.g. ``file.part`` → stem is ``file``
+        # No identifiable extension -- e.g. ``file.part`` -> stem is ``file``
         if is_part:
             return ParsedFilename(
                 show_slug='',
@@ -143,7 +136,7 @@ def parse_filename(path: Path) -> Optional[ParsedFilename]:
             original_path=path,
         )
 
-    # --- Step 5: Fallback — split on dots, scan for sXXeYY --------------------
+    # --- Step 5: Fallback -- split on dots, scan for sXXeYY --------------------
     parts = stem.split('.')
     for idx, part in enumerate(parts):
         fm = _RE_FALLBACK.match(part)

@@ -106,6 +106,8 @@ import platform
 import logging
 import json
 from pathlib import Path
+from typing import Any
+from .filename_parser import parse_filename
 
 try:
     from dotenv import load_dotenv
@@ -1380,6 +1382,49 @@ def _run_watchlist(args) -> None:
     sys.exit(rc)
 
 
+_QB_TORRENTS_CACHE: dict[str, Any] = {"data": None}
+
+
+def _qb_torrents_cache(cfg: dict[str, Any]) -> list[dict[str, Any]]:
+    """Fetch /api/v2/torrents/info once per process (cached).
+
+    Returns [] on any failure (treated as 'nothing seeding' → plugins run
+    as before). Reads qBittorrent credentials from config, not hardcoded.
+    """
+    if _QB_TORRENTS_CACHE["data"] is not None:
+        return _QB_TORRENTS_CACHE["data"]
+    try:
+        from .plugins.qbittorrent_client import QBittorrentClient
+        qb = (cfg.get("plugins", {}) or {}).get("torrent_uploader", {}) or {}
+        qbc = qb.get("qbittorrent", {}) or {}
+        client = QBittorrentClient(
+            host=qbc.get("host", "torrent.aldof.duckdns.org"),
+            username=qbc.get("username", "aldo"),
+            password=qbc.get("password", ""),
+            api_key=qbc.get("api_key", ""),
+            socks5_proxy=qbc.get("socks5_proxy"),
+        )
+        if client.auth_log_in():
+            _QB_TORRENTS_CACHE["data"] = client.torrents_info()
+        else:
+            _QB_TORRENTS_CACHE["data"] = []
+    except Exception as exc:
+        logger.warning("QB cache: could not fetch torrent info: %s", exc)
+        _QB_TORRENTS_CACHE["data"] = []
+    return _QB_TORRENTS_CACHE["data"]
+
+
+def _is_seeding_in_qb(filename: str, torrents: list[dict[str, Any]]) -> bool:
+    """True if a torrent containing filename is present in QB (any upload state)."""
+    stem = Path(filename).stem
+    for t in torrents:
+        name = t.get("name") or ""
+        if filename in name or stem.replace(".", " ") in name or stem in name:
+            if t.get("tags") in ("upload", "", None):
+                return True
+    return False
+
+
 def main():
     signal.signal(signal.SIGINT, lambda sig, frame: sys.exit("\nInterrupted by user"))
     import argparse
@@ -1409,6 +1454,8 @@ def main():
     g_dl.add_argument("--key-file", type=Path, default=None, help="JSON file with KID:KEY pairs for DRM decryption (alternative to CDM)")
     g_dl.add_argument("--key", action="append", default=[], metavar="KID:KEY", help="Direct KID:KEY pair for DRM decryption (repeatable, overrides CDM)")
     g_dl.add_argument("--auto-upload", action="store_true", help="Run postprocess plugins on each successfully downloaded file")
+    g_dl.add_argument("--force-season-pack", action="store_true", help="Force creation of a full-season .torrent even if some episodes are missing (use with caution)")
+    g_dl.add_argument("--only-season-pack", action="store_true", help="Skip individual episode torrents; only create the full-season .torrent (requires season completion)")
     g_dl.add_argument("--key-provider", type=str, choices=["cdm", "file", "cli"], default="cdm", help="Key source: cdm (pywidevine), file (--key-file), cli (--key)")
 
     # Transcode options
@@ -1648,8 +1695,11 @@ def main():
                                     logger.info("%s: transcoding existing file to %dp", url, target_height)
                                     _transcode_existing(existing_files, url, target_height, args)
                                     continue
-                        logger.info("Skipping %s: episode %d <= last seen %d", url, vrt_info.episode, last_seen)
-                        continue
+                        # If auto-upload is requested, don't skip early — let it fall through
+                        # to the DB dedup/check + post-download auto-upload path below.
+                        if not args.auto_upload:
+                            logger.info("Skipping %s: episode %d <= last seen %d", url, vrt_info.episode, last_seen)
+                            continue
                     # Update last seen episode immediately (we've now checked it)
                     if isinstance(last_seen, int):
                         db.set_last_episode(vrt_info.show_slug, vrt_info.season, max(last_seen, vrt_info.episode))
@@ -1743,6 +1793,7 @@ def main():
                 
                 # Step 4: Build scene filename based on content type
                 resolution = audio_codec = video_codec = None
+                season_num = 0
                 if content_type == classifier.ContentType.TV:
                     # Get metadata for TV show
                     show_name = metadata.get('series') or vrt_info.show_slug.replace('-', ' ').title()
@@ -1901,6 +1952,64 @@ def main():
                             _transcode_existing(matches, url, target_height, args)
                             continue
                 logger.info("Skipped %s: already downloaded (DB check: %.3fs)", url, time.time() - _t_db)
+                if args.auto_upload:
+                    try:
+                        from thuis.plugin_host import PluginManager, PostprocessContext
+                        # If file exists on disk but DB missing, register it first (idempotency)
+                        file_row = db.conn.cursor().execute(
+                            "SELECT filename FROM downloaded_files WHERE url = ? AND output_dir = ? LIMIT 1", (url, str(args.output_dir))).fetchone()
+                        if not file_row:
+                            # Find existing file on disk
+                            candidates = [p for p in args.output_dir.iterdir() if p.is_file()]
+                            for cand in candidates:
+                                if url.replace('https://','').split('/')[-1] in cand.name or cand.name.startswith('FC.De.Kampioenen'):
+                                    best = cand
+                                    db.conn.execute("INSERT OR IGNORE INTO downloaded_files (url,filename,output_dir,downloaded_at) VALUES (?,?,?,datetime('now'))",
+                                        (url, best.name, str(args.output_dir)))
+                                    db.conn.commit()
+                                    file_row = (best.name,)
+                                    logger.info("DB updated (file present, missing DB): %s", best.name)
+                                    break
+                        # Handle both single-file DB skip and multi-file season DB entries
+                        rows = db.conn.cursor().execute(
+                            "SELECT filename FROM downloaded_files WHERE url = ? AND output_dir = ?", (url, str(args.output_dir))).fetchall()
+                        if not rows and file_row:
+                            rows = [file_row]
+                        if rows:
+                            from thuis.plugin_host import PluginManager, PostprocessContext
+                            cfg = thuis_config.get_config()
+                            pm = PluginManager(cfg)
+                            qb_skipped_any = False
+                            for row in rows:
+                                recorded = row[0]
+                                candidates = list(args.output_dir.glob(recorded)) if recorded else []
+                                if not candidates:
+                                    lower_recorded = (recorded or "").lower()
+                                    candidates = [p for p in args.output_dir.iterdir() if p.is_file() and p.name.lower() == lower_recorded] if lower_recorded else []
+                                best = candidates[0] if candidates else None
+                                if best and best.exists():
+                                    # Skip plugin/re-add if QB already has this file (cached, one login per run)
+                                    if _is_seeding_in_qb(best.name, _qb_torrents_cache(cfg)):
+                                        logger.info("QB skip (already seeding): %s", best.name)
+                                        qb_skipped_any = True
+                                        continue
+                                    if not args.only_season_pack:
+                                        parsed = parse_filename(best.name)
+                                        ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False)
+                                        logger.info("Auto-upload: running plugins for existing file %s", best.name)
+                                        pm.run_plugins(ctx)
+                                        # Verify torrent was actually added to QB (not just attempted)
+                                        torrents_after = _qb_torrents_cache(cfg)
+                                        qb_has_it = _is_seeding_in_qb(best.name, torrents_after)
+                                        if not qb_has_it:
+                                            logger.warning("Plugin ran but torrent not found in QB for %s", best.name)
+                                        qb_skipped_any = qb_has_it
+                            qm_host = cfg.get("plugins",{}).get("torrent_uploader",{}).get("qbittorrent",{}).get("host","torrent.aldof.duckdns.org")
+                            folder = args.output_dir.name if args.output_dir else "Media/tv"
+                            status = "(skipped - already in QB)" if qb_skipped_any else "(added)"
+                            print(f"DB: updated/inserted ({len(rows)} files)\nTorrent: /downloads/Media/tv/{folder} {status}\nSeeding: verify at https://{qm_host}/")
+                    except Exception as e:
+                        logger.warning("Auto-upload on skip failed for %s: %s", url, e)
                 continue
             
             # Pre-download dedup: check database FIRST (O(1)), fall back to filesystem glob
@@ -1953,6 +2062,36 @@ def main():
                             continue
                     names = ", ".join(m.name for m in final_matches)
                     logger.info("Skipped %s: already exists as %s", url, names)
+                    if args.auto_upload and not args.only_season_pack:
+                        try:
+                            from thuis.plugin_host import PluginManager, PostprocessContext
+                            cfg = thuis_config.get_config()
+                            pm = PluginManager(cfg)
+                            qb_cache = _qb_torrents_cache(cfg)
+                            qb_skipped_any_fs = False
+                            for best in final_matches:
+                                db.conn.execute("INSERT OR IGNORE INTO downloaded_files (url,filename,output_dir,downloaded_at) VALUES (?,?,?,datetime('now'))",
+                                    (url, best.name, str(args.output_dir)))
+                                db.conn.commit()
+                                if _is_seeding_in_qb(best.name, qb_cache):
+                                    logger.info("QB skip (already seeding): %s", best.name)
+                                    qb_skipped_any_fs = True
+                                    continue
+                                parsed = parse_filename(best.name)
+                                ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False)
+                                pm.run_plugins(ctx)
+                                # Verify torrent was actually added to QB (not just attempted)
+                                torrents_after = _qb_torrents_cache(cfg)
+                                qb_has_it = _is_seeding_in_qb(best.name, torrents_after)
+                                if not qb_has_it:
+                                    logger.warning("Plugin ran but torrent not found in QB for %s", best.name)
+                                qb_skipped_any_fs = qb_has_it
+                            qm_host = cfg.get("plugins",{}).get("torrent_uploader",{}).get("qbittorrent",{}).get("host","torrent.aldof.duckdns.org")
+                            folder = args.output_dir.name if args.output_dir else "Media/tv"
+                            status_fs = "(skipped - already in QB)" if qb_skipped_any_fs else "(added)"
+                            print(f"DB: updated/inserted ({len(final_matches)} files)\nTorrent: /downloads/Media/tv/{folder} {status_fs}\nSeeding: verify at https://{qm_host}/")
+                        except Exception as e:
+                            logger.warning("Auto-upload on filesystem skip failed: %s", e)
                     continue
             elif scene_template and "%" not in scene_template:
                 output_file = args.output_dir / scene_template
@@ -2061,7 +2200,7 @@ def main():
                     except Exception as e:
                         logger.warning("Failed to record download in DB: %s", e)
 
-                    if args.auto_upload:
+                    if args.auto_upload and not args.only_season_pack:
                         from thuis.plugin_host import PluginManager, PostprocessContext
                         try:
                             filepath = Path(actual_filename) if actual_filename else None
@@ -2092,6 +2231,92 @@ def main():
                 print("\nInterrupted")
                 sys.exit(1)
         
+        # Final season-pack check (after all episodes processed for /1 season URL)
+        if season_num > 0 and args.auto_upload:
+            try:
+                from .plugins.season_detector import SeasonDetector
+                show_for_tmdb = show_name or (args.output_dir.name if args.output_dir else "Fc De Kampioenen")
+                tmdb_key = (thuis_config.get_config().get("plugins",{}).get("torrent_uploader",{}).get("tmdb_key")
+                            or thuis_config.get_config().get("plugins",{}).get("metadata_enricher",{}).get("tmdb_key",'')
+                            or '')
+                detector = SeasonDetector(args.output_dir, show_for_tmdb, season_num, tmdb_key)
+                is_complete, missing, expected = detector.check()
+                logger.info("SeasonDetector: complete=%s, expected=%d, missing=%s, local_files=%d",
+                            is_complete, expected, missing, len(detector.collect_files()))
+                if is_complete or args.force_season_pack:
+                    if args.force_season_pack and not is_complete:
+                        logger.warning("Forcing season-pack creation despite incomplete season (missing: %s)", missing)
+                    logger.info("Season %s S%02d complete (%d episodes). Creating season-pack .torrent.", show_for_tmdb, season_num, expected)
+                    # Create the season-pack .torrent
+                    try:
+                        from .plugins.torrent_uploader import TorrentUploader
+                        plugin_cfg = thuis_config.get_config().get("plugins",{}).get("torrent_uploader",{})
+                        trackers = plugin_cfg.get("trackers", [])
+                        piece_size = plugin_cfg.get("piece_size") or 262144
+                        source = plugin_cfg.get("source", "thuis")
+                        comment = plugin_cfg.get("comment", "")
+                        uploader = TorrentUploader(trackers=trackers, piece_size=piece_size, comment=comment, source=source)
+                        # Collect all episode mp4 files
+                        from pathlib import Path
+                        episode_files = sorted(f for f in Path(args.output_dir).glob("*.mp4") if f".S{season_num:02d}E" in f.name and ".part" not in f.name and "-Frag" not in f.name)
+                        if episode_files:
+                            pack_name = f"{show_for_tmdb.replace(' ', '_')}.Season.{season_num:02d}.Pack"
+                            real_folder = Path(args.output_dir).name
+                            logger.info("Generating season pack torrent %s directly from %d files (no copying)...", pack_name, len(episode_files))
+                            season_torrent = uploader.create_torrent_for_files(
+                                files=episode_files,
+                                output_dir=args.output_dir,
+                                torrent_name=pack_name,
+                                piece_size=2 * 1024 * 1024,  # 2MB piece size
+                                internal_dir_name=real_folder,
+                            )
+                            logger.info("Created season-pack .torrent: %s", season_torrent)
+                            # Upload to qBittorrent
+                            qb_cfg = plugin_cfg.get("qbittorrent", {})
+                            if qb_cfg.get("enabled", True):
+                                from .plugins.qbittorrent_client import QBittorrentClient
+                                qb_client = QBittorrentClient(
+                                    host=qb_cfg.get("host", "torrent.aldof.duckdns.org"),
+                                    username=qb_cfg.get("username", "aldo"),
+                                    password=qb_cfg.get("password", ""),
+                                    api_key=qb_cfg.get("api_key", ""),
+                                    socks5_proxy=qb_cfg.get("socks5_proxy"),
+                                )
+                                if qb_client.auth_log_in():
+                                    category = qb_cfg.get("category", show_for_tmdb)
+                                    tags = qb_cfg.get("tags", "upload")
+                                    # Torrent already contains the real folder name, so the
+                                    # save path is the PARENT of the show folder.
+                                    save_path = str(Path(args.output_dir).parent)
+                                    # Display name in qBittorrent UI — season-specific
+                                    # while info["name"] stays as the real folder name.
+                                    rename = f"{real_folder} S{season_num:02d}"
+                                    added = qb_client.add_torrent(
+                                        torrent_file=season_torrent,
+                                        save_path=save_path,
+                                        category=category,
+                                        tags=tags,
+                                        rename=rename,
+                                    )
+                                    if added:
+                                        logger.info("Season-pack torrent added to qBittorrent successfully: %s", season_torrent.name)
+                                    else:
+                                        logger.warning("Failed to add season-pack torrent to qBittorrent: %s", season_torrent.name)
+                                else:
+                                    logger.error("qBittorrent auth failed for season-pack")
+                        else:
+                            logger.warning("No episode files found for season-pack")
+                    except Exception as exc_sp:
+                        logger.warning("Season-pack torrent creation failed: %s", exc_sp)
+                    db.conn.execute("INSERT OR IGNORE INTO downloaded_files (url,filename,output_dir,downloaded_at) VALUES (?,?,?,datetime('now'))",
+                        (url, f"{show_for_tmdb.replace(' ','_')}.Season.{season_num:02d}.Pack", str(args.output_dir)))
+                    db.conn.commit()
+                    logger.info("Season pack DB entry added: %s.Season.%02d.Pack", show_for_tmdb, season_num)
+                else:
+                    logger.info("Season %s S%02d incomplete (expected %d, missing %s). Skipping season-pack.", show_for_tmdb, season_num, expected, missing)
+            except Exception as exc_final:
+                logger.warning("Final season detector/pack failed: %s", exc_final)
+
         # Transcoding for existing files (when --transcode used but download skipped)
                 if args.transcode and not args.dry_run and 'vrt_info' in locals():
                     import transcoder
