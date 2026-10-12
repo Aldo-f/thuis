@@ -6,3 +6,8 @@ build-backend = "setuptools.backends._legacy:_Backend"
 name = "thuis"
 version = "4.1.0"
 description = "VRT MAX downloader using yt-dlp"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
