@@ -515,3 +515,96 @@ def batch_transcode_directory(
     
     stats["skipped"] = stats["total"] - stats["transcoded"] - stats["failed"]
     return stats
+
+SUBTITLE_EXTS = (".vtt", ".srt")
+
+
+def find_subtitle_files(video: Path) -> list[Path]:
+    """Sibling subtitle files belonging to ``video`` (stem-scoped, sorted)."""
+    video = Path(video).resolve()
+    stem = video.name[: -len(video.suffix)]
+    out = []
+    try:
+        entries = sorted(video.parent.iterdir())
+    except OSError:
+        return out
+    for f in entries:
+        if f.suffix.lower() not in SUBTITLE_EXTS:
+            continue
+        base = f.name[: -len(f.suffix)]
+        if base == stem or base.startswith(stem + "."):
+            out.append(f)
+    return out
+
+
+def video_has_subtitle_stream(video: Path) -> bool:
+    """True if the container already contains at least one subtitle stream."""
+    try:
+        r = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-print_format", "json",
+             "-show_streams", "-select_streams", "s", str(video)],
+            capture_output=True, text=True, timeout=15)
+        return r.returncode == 0 and len(json.loads(r.stdout).get("streams", [])) > 0
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError, json.JSONDecodeError):
+        return False
+
+
+def _subtitle_lang_tag(sub: Path) -> str:
+    """3-letter language tag from yt-dlp naming; 'nld' for nl, 'und' fallback."""
+    name = sub.name
+    for ext in SUBTITLE_EXTS:
+        if name.lower().endswith(ext.lower()):
+            name = name[: -len(ext)]
+            break
+    tail = name.rsplit(".", 1)[-1]
+    if re.fullmatch(r"[a-zA-Z]{2,3}(-[a-zA-Z]{2,4})?", tail):
+        tag = tail.split("-")[0].lower()
+        return {"nl": "nld", "en": "eng", "fr": "fra", "de": "ger"}.get(tag, tag[:3])
+    return "und"
+
+
+def embed_subtitles(video: Path, dry_run: bool = False) -> tuple[bool, str]:
+    """Mux all sibling subtitle files into the MP4 as mov_text (toggleable).
+
+    Video/audio are copied, never re-encoded. Atomic: writes
+    ``<name>.submux.mp4`` then replaces. Returns (ok, message);
+    no subtitle files is a success no-op.
+    """
+    video = Path(video).resolve()
+    subs = find_subtitle_files(video)
+    if not subs:
+        return True, "no subtitle files found"
+    if video_has_subtitle_stream(video):
+        if not dry_run:
+            for s in subs:
+                s.unlink(missing_ok=True)
+        return True, "subtitles already embedded"
+    if not check_ffmpeg():
+        return False, "ffmpeg not available"
+    if dry_run:
+        logger.info("[DRY-RUN] would embed %d subtitle(s) into %s", len(subs), video.name)
+        return True, "dry-run"
+
+    tmp_out = video.with_name(video.name + ".submux.mp4")
+    cmd = ["ffmpeg", "-y", "-v", "error", "-i", str(video)]
+    for s in subs:
+        cmd += ["-i", str(s)]
+    cmd += ["-map", "0"] + [f"{i + 1}:0" for i in range(len(subs))]
+    cmd += ["-c", "copy", "-c:s", "mov_text"]
+    for i, s in enumerate(subs):
+        cmd += ["-metadata", f"s:t:{i}:language={_subtitle_lang_tag(s)}"]
+    cmd.append(str(tmp_out))
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+    except subprocess.TimeoutExpired:
+        tmp_out.unlink(missing_ok=True)
+        return False, "ffmpeg timed out"
+    if r.returncode != 0:
+        tmp_out.unlink(missing_ok=True)
+        last = (r.stderr or "").strip().splitlines()
+        return False, last[-1] if last else "ffmpeg failed"
+    tmp_out.replace(video)
+    for s in subs:
+        s.unlink(missing_ok=True)
+    logger.info("Embedded %d subtitle track(s) into %s", len(subs), video.name)
+    return True, ""
