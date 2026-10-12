@@ -558,6 +558,30 @@ def _subs_embed_enabled() -> bool:
         return True
 
 
+def _embed_subtitles_for(filepath, args):
+    """Embed sibling VTT subtitles into ``filepath`` (MP4) before upload.
+
+    Only runs for real (non-dry-run) runs, on ``.mp4`` files, when subtitles
+    are enabled (config + not ``--no-subtitles``). Never raises — a failure
+    is logged as a warning so the torrent can still be uploaded (sub-less).
+    """
+    if getattr(args, "dry_run", False):
+        return
+    if getattr(args, "no_subtitles", False):
+        return
+    if not getattr(filepath, "suffix", "") or str(filepath.suffix).lower() != ".mp4":
+        return
+    try:
+        from thuis import transcoder as _trans
+        ok, msg = _trans.embed_subtitles(filepath, dry_run=False)
+        if ok:
+            logger.info("Subtitles: %s (%s)", filepath.name, msg)
+        else:
+            logger.warning("Subtitle embedding failed for %s: %s", filepath.name, msg)
+    except Exception as e:
+        logger.warning("Subtitle embedding error for %s: %s", filepath.name, e)
+
+
 def _find_downloaded_file(output_dir: Path, template: str, url: str) -> str | None:
     """Find the actual file created by yt-dlp given a template and URL.
 
@@ -2057,6 +2081,7 @@ def main():
                                         qb_skipped_any = True
                                         continue
                                     if not args.only_season_pack:
+                                        _embed_subtitles_for(best, args)
                                         parsed = parse_filename(best.name)
                                         ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False, category=category, default_tag=default_tag)
                                         logger.info("Auto-upload: running plugins for existing file %s", best.name)
@@ -2140,6 +2165,7 @@ def main():
                                     logger.info("QB skip (already seeding): %s", best.name)
                                     qb_skipped_any_fs = True
                                     continue
+                                _embed_subtitles_for(best, args)
                                 parsed = parse_filename(best.name)
                                 ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False, category=category, default_tag=default_tag)
                                 pm.run_plugins(ctx)
@@ -2269,6 +2295,7 @@ def main():
                         try:
                             filepath = Path(actual_filename) if actual_filename else None
                             if filepath and filepath.exists():
+                                _embed_subtitles_for(filepath, args)
                                 ctx = PostprocessContext(
                                     filepath=filepath,
                                     metadata=metadata,
