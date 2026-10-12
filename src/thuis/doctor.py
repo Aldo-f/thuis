@@ -3,12 +3,12 @@
 C7 Doctor Module for VRT MAX downloader.
 
 System health checks and auto-fix for the DRM pipeline:
-- Python dependencies (yt-dlp, pywidevine, pymp4, python-dotenv)
+- Python dependencies (yt-dlp, pywidevine, pymp4)
 - Decryption engines (mp4decrypt, shaka-packager, ffmpeg)
 - N_m3u8DL-RE binary
 - Widevine CDM (.wvd file)
 - Environment variables (VRT_EMAIL, VRT_PASSWORD, DECRYPT_DRM, WVD_CDM_PATH)
-- .env file existence and content
+- config.local.yaml existence (secrets live here; gitignored)
 """
 
 import os
@@ -76,7 +76,7 @@ class Doctor:
             self.check_n_m3u8dl_re(),
             self.check_cdm(),
             self.check_env_vars(),
-            self.check_env_file(),
+            self.check_local_config(),
         ]
         return self.results
 
@@ -86,7 +86,6 @@ class Doctor:
             "yt_dlp": "yt-dlp (from fork)",
             "pywidevine": "pywidevine",
             "pymp4": "pymp4.parser",
-            "dotenv": "python-dotenv",
         }
         missing = []
         for module, display in required.items():
@@ -195,40 +194,30 @@ class Doctor:
                 passed=False,
                 message="; ".join(issues),
                 fixable=True,
-                fix_hint="Set vars in .env or export: VRT_EMAIL, VRT_PASSWORD, DECRYPT_DRM=yes, WVD_CDM_PATH",
+                fix_hint="Set vars as environment variables or add to config.local.yaml: VRT_EMAIL, VRT_PASSWORD, DECRYPT_DRM=yes, WVD_CDM_PATH",
             )
         return CheckResult(name="Environment Variables", passed=True, message="All DRM env vars configured")
 
-    def check_env_file(self) -> CheckResult:
-        env_path = Path(".env")
+    def check_local_config(self) -> CheckResult:
+        env_path = Path("config.local.yaml")
         if not env_path.exists():
             return CheckResult(
-                name=".env File",
+                name="Local Config",
                 passed=False,
-                message="No .env file found in project root",
+                message="No config.local.yaml found in project root",
                 fixable=True,
-                fix_hint="Create .env from .env.template: cp .env.template .env",
+                fix_hint="Create config.local.yaml from config.yaml.example and fill in your secrets",
             )
-        expected_keys = ["VRT_EMAIL", "VRT_PASSWORD", "DECRYPT_DRM", "WVD_CDM_PATH"]
-        found_keys = set()
         try:
-            for line in env_path.read_text().splitlines():
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    key = line.split("=")[0].strip()
-                    found_keys.add(key)
+            env_path.read_text()
         except Exception as e:
-            return CheckResult(name=".env File", passed=False, message=f"Failed to read .env: {e}", fixable=False)
-        missing = [k for k in expected_keys if k not in found_keys]
-        if missing:
             return CheckResult(
-                name=".env File",
+                name="Local Config",
                 passed=False,
-                message=f"Missing keys: {', '.join(missing)}",
-                fixable=True,
-                fix_hint="Add missing keys to .env file",
+                message=f"Failed to read config.local.yaml: {e}",
+                fixable=False,
             )
-        return CheckResult(name=".env File", passed=True, message=f"All expected keys present ({', '.join(expected_keys)})")
+        return CheckResult(name="Local Config", passed=True, message="config.local.yaml present")
 
     def format_report(self, results: List[CheckResult]) -> str:
         lines = []
@@ -305,49 +294,45 @@ class Doctor:
         return False
 
     def _fix_decrypt_drm(self) -> bool:
-        env = Path(".env")
+        env = Path("config.local.yaml")
         try:
             if env.exists():
                 lines = []
                 found = False
                 for line in env.read_text().splitlines():
                     if line.strip().startswith("DECRYPT_DRM"):
-                        lines.append("DECRYPT_DRM=yes")
+                        lines.append("DECRYPT_DRM: yes")
                         found = True
                     else:
                         lines.append(line)
                 if not found:
-                    lines.append("DECRYPT_DRM=yes")
+                    lines.append("DECRYPT_DRM: yes")
                 env.write_text("\n".join(lines) + "\n")
             else:
-                tpl = Path(".env.template")
-                if tpl.exists():
-                    env.write_text(tpl.read_text().replace("DECRYPT_DRM=no", "DECRYPT_DRM=yes"))
-                else:
-                    env.write_text("DECRYPT_DRM=yes\n")
+                env.write_text("DECRYPT_DRM: yes\n")
             return True
         except Exception as e:
-            self._log(f"Failed to update .env: {e}", "error")
+            self._log(f"Failed to update config.local.yaml: {e}", "error")
             return False
 
-    def _fix_env_file(self) -> bool:
-        env = Path(".env")
-        tpl = Path(".env.template")
+    def _fix_local_config(self) -> bool:
+        env = Path("config.local.yaml")
+        tpl = Path("config.yaml.example")
         if env.exists():
             return True
         if tpl.exists():
             try:
                 shutil.copy2(tpl, env)
-                self._log("Created .env from template")
+                self._log("Created config.local.yaml from config.yaml.example")
                 return True
             except Exception as e:
                 self._log(f"Copy failed: {e}", "error")
                 return False
         try:
-            env.write_text("# thuis environment variables\nVRT_EMAIL=\nVRT_PASSWORD=\nDECRYPT_DRM=yes\nWVD_CDM_PATH=\n")
+            env.write_text("# config.local.yaml — your secrets (gitignored)\n")
             return True
         except Exception as e:
-            self._log(f"Failed to create .env: {e}", "error")
+            self._log(f"Failed to create config.local.yaml: {e}", "error")
             return False
 
     # ---------- helper methods ----------

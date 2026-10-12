@@ -19,11 +19,9 @@ import pytest
 # Ensure src is on path (handled by conftest.py)
 from thuis.doctor import Doctor, CheckResult, Colors, run_doctor
 
-
 # =============================================================================
 # TestDoctorChecks - Unit tests for each check method
 # =============================================================================
-
 
 class TestDoctorChecks:
     """Tests for individual health check methods in Doctor class."""
@@ -43,7 +41,7 @@ class TestDoctorChecks:
         original_import = builtins.__import__
 
         def mock_import(name, *args, **kwargs):
-            if name in ("yt_dlp", "pywidevine", "pymp4", "dotenv"):
+            if name in ("yt_dlp", "pywidevine", "pymp4"):
                 return MagicMock()
             return original_import(name, *args, **kwargs)
 
@@ -352,83 +350,80 @@ class TestDoctorChecks:
         assert result.fixable is True
 
     # -------------------------------------------------------------------------
-    # check_env_file tests
+    # check_local_config tests
     # -------------------------------------------------------------------------
 
-    def test_check_env_file_exists(self, doctor, monkeypatch, tmp_path):
-        """Test check_env_file passes when .env exists with all expected keys."""
-        env_content = "VRT_EMAIL=test@example.com\nVRT_PASSWORD=secret\nDECRYPT_DRM=yes\nWVD_CDM_PATH=/path.wvd\n"
-        env_path = tmp_path / ".env"
-        env_path.write_text(env_content)
+    def test_check_local_config_exists(self, doctor, monkeypatch, tmp_path):
 
-        # Change to tmp_path for the test
+        """Test check_local_config passes when config.local.yaml exists."""
+
+        env_path = tmp_path / "config.local.yaml"
+
+        env_path.write_text("# config.local.yaml\n")
+
         monkeypatch.chdir(tmp_path)
 
-        result = doctor.check_env_file()
+        result = doctor.check_local_config()
 
-        assert result.name == ".env File"
+        assert result.name == "Local Config"
+
         assert result.passed is True
-        assert "All expected keys present" in result.message
 
-    def test_check_env_file_missing(self, doctor, monkeypatch, tmp_path):
-        """Test check_env_file fails when no .env file exists."""
+        assert "config.local.yaml present" in result.message
+
+    def test_check_local_config_missing(self, doctor, monkeypatch, tmp_path):
+
+        """Test check_local_config fails when no config.local.yaml file exists."""
+
         monkeypatch.chdir(tmp_path)
-        # Ensure no .env exists
-        env_path = tmp_path / ".env"
+
+        env_path = tmp_path / "config.local.yaml"
+
         if env_path.exists():
+
             env_path.unlink()
 
-        result = doctor.check_env_file()
+        result = doctor.check_local_config()
 
-        assert result.name == ".env File"
+        assert result.name == "Local Config"
+
         assert result.passed is False
-        assert "No .env file found" in result.message
-        assert result.fixable is True
-        assert ".env.template" in result.fix_hint
 
-    def test_check_env_file_missing_keys(self, doctor, monkeypatch, tmp_path):
-        """Test check_env_file fails when .env exists but missing expected keys."""
-        env_content = "VRT_EMAIL=test@example.com\n# Only email, missing others\n"
-        env_path = tmp_path / ".env"
-        env_path.write_text(env_content)
+        assert "No config.local.yaml found" in result.message
+
+        assert result.fixable is True
+
+        assert "config.yaml.example" in result.fix_hint
+
+    def test_check_local_config_read_error(self, doctor, monkeypatch, tmp_path):
+
+        """Test check_local_config fails gracefully when config.local.yaml cannot be read."""
+
+        env_path = tmp_path / "config.local.yaml"
+
+        env_path.write_text("# config.local.yaml\n")
 
         monkeypatch.chdir(tmp_path)
 
-        result = doctor.check_env_file()
-
-        assert result.name == ".env File"
-        assert result.passed is False
-        assert "Missing keys" in result.message
-        assert "VRT_PASSWORD" in result.message
-        assert "DECRYPT_DRM" in result.message
-        assert "WVD_CDM_PATH" in result.message
-        assert result.fixable is True
-
-    def test_check_env_file_read_error(self, doctor, monkeypatch, tmp_path):
-        """Test check_env_file fails gracefully when .env cannot be read."""
-        env_path = tmp_path / ".env"
-        env_path.write_text("VRT_EMAIL=test\n")
-
-        monkeypatch.chdir(tmp_path)
-
-        # Mock read_text to raise exception
-        def mock_read_text(self):
+        # Mock read_text to raise exception (file exists, read fails)
+        def mock_read_text(self, *args, **kwargs):
             raise PermissionError("Permission denied")
 
         monkeypatch.setattr(Path, "read_text", mock_read_text)
 
-        result = doctor.check_env_file()
+        result = doctor.check_local_config()
 
-        assert result.name == ".env File"
+        assert result.name == "Local Config"
+
         assert result.passed is False
-        assert "Failed to read .env" in result.message
-        assert result.fixable is False
 
+        assert "Failed to read config.local.yaml" in result.message
+
+        assert result.fixable is False
 
 # =============================================================================
 # TestDoctorFormat - Unit tests for format_report
 # =============================================================================
-
 
 class TestDoctorFormat:
     """Tests for the format_report method."""
@@ -539,11 +534,9 @@ class TestDoctorFormat:
         assert "=== thuis Doctor Report ===" in report
         assert "0/0 checks failed" in report or "All checks passed" in report
 
-
 # =============================================================================
 # TestDoctorAutoFix - Unit tests for auto_fix methods
 # =============================================================================
-
 
 class TestDoctorAutoFix:
     """Tests for auto-fix functionality."""
@@ -620,23 +613,34 @@ class TestDoctorAutoFix:
     # _fix_decrypt_drm tests
     # -------------------------------------------------------------------------
 
-    def test_auto_fix_creates_env_file(self, doctor, monkeypatch, tmp_path):
-        """Test _fix_decrypt_drm creates .env with DECRYPT_DRM=yes when no .env exists."""
+    def test_fix_decrypt_drm_creates_config_local(self, doctor, monkeypatch, tmp_path):
+
+        """Test _fix_decrypt_drm creates config.local.yaml with DECRYPT_DRM: yes when missing."""
+
         monkeypatch.chdir(tmp_path)
-        # No .env.template, no .env
+
+        # No config.local.yaml
 
         result = doctor._fix_decrypt_drm()
 
         assert result is True
-        env_path = tmp_path / ".env"
+
+        env_path = tmp_path / "config.local.yaml"
+
         assert env_path.exists()
-        content = env_path.read_text()
-        assert "DECRYPT_DRM=yes" in content
 
-    def test_auto_fix_updates_env_file(self, doctor, monkeypatch, tmp_path):
-        """Test _fix_decrypt_drm updates existing .env file."""
-        env_content = "VRT_EMAIL=test\nDECRYPT_DRM=no\n"
-        env_path = tmp_path / ".env"
+        content = env_path.read_text()
+
+        assert "DECRYPT_DRM: yes" in content
+
+    def test_fix_decrypt_drm_updates_config_local(self, doctor, monkeypatch, tmp_path):
+
+        """Test _fix_decrypt_drm updates existing config.local.yaml."""
+
+        env_content = "VRT_EMAIL: test\nDECRYPT_DRM: no\n"
+
+        env_path = tmp_path / "config.local.yaml"
+
         env_path.write_text(env_content)
 
         monkeypatch.chdir(tmp_path)
@@ -644,14 +648,21 @@ class TestDoctorAutoFix:
         result = doctor._fix_decrypt_drm()
 
         assert result is True
-        content = env_path.read_text()
-        assert "DECRYPT_DRM=yes" in content
-        assert "DECRYPT_DRM=no" not in content
 
-    def test_auto_fix_preserves_other_env_vars(self, doctor, monkeypatch, tmp_path):
-        """Test _fix_decrypt_drm preserves other variables in .env."""
-        env_content = "VRT_EMAIL=test@example.com\nVRT_PASSWORD=secret\nDECRYPT_DRM=no\nWVD_CDM_PATH=/path.wvd\n"
-        env_path = tmp_path / ".env"
+        content = env_path.read_text()
+
+        assert "DECRYPT_DRM: yes" in content
+
+        assert "DECRYPT_DRM: no" not in content
+
+    def test_fix_decrypt_drm_preserves_other_keys(self, doctor, monkeypatch, tmp_path):
+
+        """Test _fix_decrypt_drm preserves other keys in config.local.yaml."""
+
+        env_content = "VRT_EMAIL: test@example.com\nDECRYPT_DRM: no\nWVD_CDM_PATH: /path.wvd\n"
+
+        env_path = tmp_path / "config.local.yaml"
+
         env_path.write_text(env_content)
 
         monkeypatch.chdir(tmp_path)
@@ -659,77 +670,79 @@ class TestDoctorAutoFix:
         result = doctor._fix_decrypt_drm()
 
         assert result is True
-        content = env_path.read_text()
-        assert "VRT_EMAIL=test@example.com" in content
-        assert "VRT_PASSWORD=secret" in content
-        assert "DECRYPT_DRM=yes" in content
-        assert "WVD_CDM_PATH=/path.wvd" in content
 
-    def test_auto_fix_uses_template_when_exists(self, doctor, monkeypatch, tmp_path):
-        """Test _fix_decrypt_drm uses .env.template when creating new .env."""
-        template_content = "VRT_EMAIL=\nVRT_PASSWORD=\nDECRYPT_DRM=no\nWVD_CDM_PATH=\n"
-        template_path = tmp_path / ".env.template"
+        content = env_path.read_text()
+
+        assert "VRT_EMAIL: test@example.com" in content
+
+        assert "DECRYPT_DRM: yes" in content
+
+        assert "WVD_CDM_PATH: /path.wvd" in content
+
+    # -------------------------------------------------------------------------
+    # _fix_local_config tests
+    # -------------------------------------------------------------------------
+
+    def test_fix_local_config_creates_from_template(self, doctor, monkeypatch, tmp_path):
+
+        """Test _fix_local_config creates config.local.yaml from config.yaml.example."""
+
+        template_content = "# config template\n"
+
+        template_path = tmp_path / "config.yaml.example"
+
         template_path.write_text(template_content)
 
         monkeypatch.chdir(tmp_path)
 
-        result = doctor._fix_decrypt_drm()
+        result = doctor._fix_local_config()
 
         assert result is True
-        env_path = tmp_path / ".env"
+
+        env_path = tmp_path / "config.local.yaml"
+
         assert env_path.exists()
+
         content = env_path.read_text()
-        assert "DECRYPT_DRM=yes" in content
-        assert "VRT_EMAIL=" in content
-        assert "VRT_PASSWORD=" in content
 
-    # -------------------------------------------------------------------------
-    # _fix_env_file tests
-    # -------------------------------------------------------------------------
+        assert "# config template" in content
 
-    def test_fix_env_file_creates_from_template(self, doctor, monkeypatch, tmp_path):
-        """Test _fix_env_file creates .env from .env.template."""
-        template_content = "VRT_EMAIL=\nVRT_PASSWORD=\nDECRYPT_DRM=no\nWVD_CDM_PATH=\n"
-        template_path = tmp_path / ".env.template"
-        template_path.write_text(template_content)
+    def test_fix_local_config_creates_minimal_when_no_template(self, doctor, monkeypatch, tmp_path):
+
+        """Test _fix_local_config creates minimal config.local.yaml when no template exists."""
 
         monkeypatch.chdir(tmp_path)
 
-        result = doctor._fix_env_file()
+        result = doctor._fix_local_config()
 
         assert result is True
-        env_path = tmp_path / ".env"
+
+        env_path = tmp_path / "config.local.yaml"
+
         assert env_path.exists()
+
         content = env_path.read_text()
-        assert content == template_content
 
-    def test_fix_env_file_creates_minimal_when_no_template(self, doctor, monkeypatch, tmp_path):
-        """Test _fix_env_file creates minimal .env when no template exists."""
-        monkeypatch.chdir(tmp_path)
+        assert "config.local.yaml" in content
 
-        result = doctor._fix_env_file()
+    def test_fix_local_config_noop_when_exists(self, doctor, monkeypatch, tmp_path):
 
-        assert result is True
-        env_path = tmp_path / ".env"
-        assert env_path.exists()
-        content = env_path.read_text()
-        assert "VRT_EMAIL=" in content
-        assert "VRT_PASSWORD=" in content
-        assert "DECRYPT_DRM=yes" in content
-        assert "WVD_CDM_PATH=" in content
+        """Test _fix_local_config returns True without changes when config.local.yaml exists."""
 
-    def test_fix_env_file_noop_when_exists(self, doctor, monkeypatch, tmp_path):
-        """Test _fix_env_file returns True without changes when .env already exists."""
-        env_content = "VRT_EMAIL=existing\n"
-        env_path = tmp_path / ".env"
+        env_content = "VRT_EMAIL: existing\n"
+
+        env_path = tmp_path / "config.local.yaml"
+
         env_path.write_text(env_content)
 
         monkeypatch.chdir(tmp_path)
 
-        result = doctor._fix_env_file()
+        result = doctor._fix_local_config()
 
         assert result is True
+
         content = env_path.read_text()
+
         assert content == env_content  # Unchanged
 
     # -------------------------------------------------------------------------
@@ -778,14 +791,14 @@ class TestDoctorAutoFix:
 
         results = [
             CheckResult(
-                name=".env File",
+                name="Local Config",
                 passed=False,
                 message="No .env file found",
                 fixable=True,
                 fix_hint="Create .env"
             ),
             CheckResult(
-                name=".env File",
+                name="Local Config",
                 passed=False,
                 message="No .env file found",
                 fixable=True,
@@ -793,7 +806,7 @@ class TestDoctorAutoFix:
             ),
         ]
 
-        monkeypatch.setattr(doctor, "_fix_env_file", lambda: True)
+        monkeypatch.setattr(doctor, "_fix_local_config", lambda: True)
 
         fixed, failed = doctor.auto_fix(results)
 
@@ -804,10 +817,10 @@ class TestDoctorAutoFix:
         """Test auto_fix skips checks that already passed."""
         results = [
             CheckResult(name="Python Dependencies", passed=True, message="OK"),
-            CheckResult(name=".env File", passed=False, message="Failed", fixable=True, fix_hint="Fix"),
+            CheckResult(name="Local Config", passed=False, message="Failed", fixable=True, fix_hint="Fix"),
         ]
 
-        monkeypatch.setattr(doctor, "_fix_env_file", lambda: True)
+        monkeypatch.setattr(doctor, "_fix_local_config", lambda: True)
 
         fixed, failed = doctor.auto_fix(results)
 
@@ -841,11 +854,9 @@ class TestDoctorAutoFix:
         assert fixed == 0
         assert failed == 1
 
-
 # =============================================================================
 # TestRunDoctor - Integration tests for run_doctor entry point
 # =============================================================================
-
 
 class TestRunDoctor:
     """Integration tests for the run_doctor main entry point."""
@@ -860,7 +871,7 @@ class TestRunDoctor:
             CheckResult(name="N_m3u8DL-RE", passed=True, message="OK"),
             CheckResult(name="Widevine CDM", passed=True, message="OK"),
             CheckResult(name="Environment Variables", passed=True, message="OK"),
-            CheckResult(name=".env File", passed=True, message="OK"),
+            CheckResult(name="Local Config", passed=True, message="OK"),
         ]
         mock_doctor.run_all_checks.return_value = mock_results
         mock_doctor.format_report.return_value = "All good"

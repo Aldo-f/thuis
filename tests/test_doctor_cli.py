@@ -101,7 +101,7 @@ class TestDoctorCLI:
             "N_m3u8DL-RE",
             "Widevine CDM",
             "Environment Variables",
-            ".env File",
+            "Local Config",
         ]
         
         for check in expected_checks:

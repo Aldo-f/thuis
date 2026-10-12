@@ -32,6 +32,8 @@ class PostprocessContext:
     """If True, plugins should avoid side effects."""
     category: str = ""
     """qBittorrent category for the torrent (e.g., Media/Tv)."""
+    default_tag: str = ""
+    """Default tag applied to every torrent (e.g., Thuis). Empty = no tag."""
 
 
 def load_entry_point_plugins() -> list[dict[str, str]]:

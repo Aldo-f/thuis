@@ -1,5 +1,15 @@
-# thuis configuration
-# Copy this file to config.local.yaml for local overrides (gitignored)
+# ==============================================================================
+# config.yaml — safe defaults (tracked, no secrets)
+# ==============================================================================
+# Secrets (qBittorrent password/api_key, ext.to credentials, TMDB/ImgBB keys)
+# belong in config.local.yaml (gitignored), which is deep-merged on top of
+# this file. See config.yaml.example for the canonical template.
+#
+# Resolution order (highest wins):
+#   1. config.yaml          (this file — defaults, structure, safe values only)
+#   2. config.local.yaml    (gitignored — your secrets go here)
+#   3. Environment vars     (OUTPUT_DIR, DECRYPT_DRM, WVD_CDM_PATH, ...)
+# ==============================================================================
 
 # Output directory for downloaded media (relative to project root or absolute)
 # Default: media/
@@ -59,17 +69,25 @@ plugins:
     # Default qBittorrent category (e.g., Media/Tv, Media/Podcasts)
     # Can be overridden by --category CLI flag or watchlist [cat] directive
     category: ""
-    # Announce URLs for the torrent — configured in the trackers list below
-    # (was empty, now uses public trackers further down)
+    # Default tag applied to every torrent (e.g., "Thuis")
+    # Set to empty string to disable tagging
+    default_tag: "Thuis"
+    # Piece size for created .torrent files
     piece_size: 262144
     # Optional comment embedded in the torrent metadata
     comment: ""
     # Optional creator/source string embedded in the torrent
     source: "thuis"
-    # ext.to upload credentials
+    # qBittorrent connection — ALL values live in config.local.yaml
+    qbittorrent:
+      host: "torrent.aldof.duckdns.org"
+      username: ""
+      password: ""
+      api_key: ""
+    # ext.to upload credentials — ALL values live in config.local.yaml
     ext_to:
-      username: "cymave6507"
-      password: ""  # Set via EXT_TO_PASSWORD env var or config.local.yaml
+      username: ""
+      password: ""
     # Tribler anonymous seeding
     tribler:
       enabled: false  # Set to true after Tribler is installed
@@ -106,7 +124,7 @@ plugins:
   metadata_enricher:
     # TMDB API key — get one free at https://www.themoviedb.org/settings/api
     # Can also be set via the TMDB_KEY environment variable
-    tmdb_key: "d21283b34416ede4cf71abdc3e0f4672"
+    tmdb_key: ""
     # ImgBB API key — get one at https://imgbb.com/dashboard/api
     # Required for poster image uploads; leave empty to skip
-    imgbb_api_key: "bec6efa34f30741d30ea7374ab0acef0"
+    imgbb_api_key: ""

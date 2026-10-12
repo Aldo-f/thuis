@@ -1,0 +1,133 @@
+# ==============================================================================
+# config.yaml.example — safe template (committed, no secrets)
+# ==============================================================================
+# Copy this file to config.local.yaml and fill in your real values:
+#     cp config.yaml.example config.local.yaml
+# config.local.yaml is gitignored and is deep-merged on top of config.yaml,
+# so you only need to specify the keys you want to override.
+#
+# Resolution order (highest wins):
+#   1. config.yaml          (tracked — defaults, structure, safe values only)
+#   2. config.local.yaml    (gitignored — your secrets go here)
+#   3. Environment vars     (OUTPUT_DIR, DECRYPT_DRM, WVD_CDM_PATH, …)
+#
+# NEVER put passwords, API keys, or tokens in config.yaml.
+# ==============================================================================
+
+# Output directory for downloaded media (relative to project root or absolute)
+# Default: media/
+output_dir: "media"
+
+# Watchlist directory containing watchlist files
+# Default: watchlists/
+watchlist_dir: "watchlists"
+
+# Log directory
+# Default: logs/
+log_dir: "logs"
+
+# Database path for watchlist tracking
+# Default: data/watchlist.db
+database_path: "data/watchlist.db"
+
+# DRM settings
+drm:
+  # Enable DRM decryption (requires separate plugin)
+  enabled: false
+  # Path to WVD/CDM file
+  cdm_path: ""
+  # Default decryption policy: yes | no | prompt
+  decrypt_policy: "no"
+
+# yt-dlp settings
+ytdlp:
+  # Default format profile
+  default_profile: "best"
+  # Preferred video resolutions
+  resolutions: [720, 1080, 1440, 2160]
+  # Extra arguments
+  extra_args: []
+
+# Network settings
+network:
+  # Timeout for metadata fetch (seconds)
+  metadata_timeout: 30
+  # Timeout for yt-dlp (seconds)
+  download_timeout: 3600
+
+# Logging
+logging:
+  level: "INFO"
+  # Format: json | text
+  format: "text"
+
+# Plugin system
+# Each plugin can be enabled here; plugin-specific options live under the same key.
+plugins:
+  # List of enabled plugins (e.g. torrent_uploader, metadata_enricher)
+  enabled:
+    - torrent_uploader
+  # torrent_uploader options
+  torrent_uploader:
+    # Default qBittorrent category (e.g., Media/Tv, Media/Podcasts)
+    # Can be overridden by --category CLI flag or watchlist [cat] directive
+    category: ""
+    # Default tag applied to every torrent (e.g., "Thuis")
+    # Set to empty string to disable tagging
+    default_tag: "Thuis"
+    # Piece size for created .torrent files
+    piece_size: 262144
+    # Optional comment embedded in the torrent metadata
+    comment: ""
+    # Optional creator/source string embedded in the torrent
+    source: "thuis"
+    # qBittorrent connection — ALL values live in config.local.yaml
+    qbittorrent:
+      host: "torrent.aldof.duckdns.org"
+      username: ""
+      password: ""
+      api_key: ""
+    # ext.to upload credentials — ALL values live in config.local.yaml
+    ext_to:
+      username: ""
+      password: ""
+    # Tribler anonymous seeding
+    tribler:
+      enabled: false  # Set to true after Tribler is installed
+      api_port: 8085
+      api_key: ""
+      anon_hops: 3
+      safe_seeding: true
+    # Public tracker announce URLs — fetched from:
+    #   https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt
+    #   https://newtrackon.com/api/stable
+    # Merged + deduped, top 20 best stable trackers:
+    trackers:
+      - "udp://tracker.opentrackr.org:1337/announce"
+      - "udp://open.stealth.si:80/announce"
+      - "udp://tracker.torrent.eu.org:451/announce"
+      - "udp://open.demonii.com:1337/announce"
+      - "udp://tracker.qu.ax:6969/announce"
+      - "udp://tracker.gmi.gd:6969/announce"
+      - "udp://tracker.corpscorp.online:80/announce"
+      - "udp://tracker.ducks.party:1984/announce"
+      - "udp://tracker.dler.com:6969/announce"
+      - "udp://tracker.dler.org:6969/announce"
+      - "udp://tracker-udp.gbitt.info:80/announce"
+      - "udp://tracker.nyaa.vc:6969/announce"
+      - "udp://tracker.ilibr.org:6969/announce"
+      - "udp://tracker.opentrackr.com:6969/announce"
+      - "udp://evan.im:6969/announce"
+      - "udp://tr4ck3r.duckdns.org:6969/announce"
+      - "udp://opentracker.lain.moscow:6969/announce"
+      - "udp://tracker.willy.pro:6969/announce"
+      - "http://tracker.dler.com:6969/announce"
+      - "http://tracker.renfei.net:8080/announce"
+  # metadata_enricher options
+  metadata_enricher:
+    # TMDB API key — get one free at https://www.themoviedb.org/settings/api
+    # Can also be set via the TMDB_KEY environment variable
+    tmdb_key: ""
+    # ImgBB API key — get one at https://imgbb.com/dashboard/api
+    # Required for poster image uploads; leave empty to skip
+    imgbb_api_key: ""

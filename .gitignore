@@ -15,6 +15,8 @@ media/
 
 # Environment / credentials
 .env
+config.local.yaml
+config.local.yml
 
 # IDE / OS
 .vscode/

@@ -290,6 +290,8 @@ def postprocess(ctx: PostprocessContext) -> bool:  # type: ignore[name-defined] 
         tmdb_key = plugin_config.get("tmdb_key")
         # Category resolution: ctx.category (CLI/watchlist) > plugin config > empty
         category = ctx.category or plugin_config.get("category", "")
+        # Tag resolution: ctx.default_tag (from config) > plugin config > empty
+        default_tag = ctx.default_tag or plugin_config.get("default_tag", "")
 
         tmdb_data: dict[str, Any] | None = None
         if tmdb_key:
@@ -343,6 +345,38 @@ def postprocess(ctx: PostprocessContext) -> bool:  # type: ignore[name-defined] 
 
         out_torrent = uploader.create_torrent(filepath)
         logger.info("Created .torrent: %s", out_torrent)
+
+        # --- Upload the episode torrent to qBittorrent (with category + tags) ---
+        qb_cfg = plugin_config.get("qbittorrent", {})
+        if qb_cfg.get("enabled", True) and not ctx.dry_run:
+            try:
+                from .qbittorrent_client import QBittorrentClient
+                qb_client = QBittorrentClient(
+                    host=qb_cfg.get("host", "torrent.aldof.duckdns.org"),
+                    username=qb_cfg.get("username", "aldo"),
+                    password=qb_cfg.get("password", ""),
+                    api_key=qb_cfg.get("api_key", ""),
+                    socks5_proxy=qb_cfg.get("socks5_proxy"),
+                )
+                if qb_client.auth_log_in():
+                    # Save path = parent of the show folder; the torrent's internal
+                    # info["name"] already carries the show folder name.
+                    save_path = str(Path(ctx.filepath).parent)
+                    tags = default_tag if default_tag else ""
+                    added = qb_client.add_torrent(
+                        torrent_file=out_torrent,
+                        save_path=save_path,
+                        category=category,
+                        tags=tags,
+                    )
+                    if added:
+                        logger.info("Episode torrent added to qBittorrent: %s", out_torrent.name)
+                    else:
+                        logger.warning("Failed to add episode torrent to qBittorrent: %s", out_torrent.name)
+                else:
+                    logger.warning("qBittorrent auth failed for episode torrent")
+            except Exception as exc:
+                logger.warning("Episode torrent upload to qBittorrent failed: %s", exc)
 
         # --- Season completion check + upload ---
         season = ctx.metadata.get("season")

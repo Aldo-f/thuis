@@ -235,14 +235,7 @@ export VRT_EMAIL="your-email@example.com"
 export VRT_PASSWORD="your-password"
 ```
 
-You can also add them to a `.env` file in the project root:
-
-```
-VRT_EMAIL=your-email@example.com
-VRT_PASSWORD=your-password
-```
-
-The tool checks environment variables first, then the `.env` file (if python-dotenv is installed), and falls back to the built-in defaults.
+The tool checks environment variables first, then the built-in defaults.
 
 ## Output
 
@@ -468,8 +461,8 @@ Website documentation: `website/docs/`
 Some VRT MAX content uses Widevine DRM. To enable decryption:
 
 1. **Install a decryption engine** — one of: `N_m3u8DL-RE` (recommended), `mp4decrypt` (Bento4), or `shaka-packager`
-2. **Provide a `.wvd` file** — place your Widevine CDM file at `~/.thuis/wvd/device.wvd` (or set `WVD_CDM_PATH` in `.env`)
-3. **Enable in `.env`** — `DECRYPT_DRM=yes` (default)
+2. **Provide a `.wvd` file** — place your Widevine CDM file at `~/.thuis/wvd/device.wvd` (or set `WVD_CDM_PATH` as an environment variable)
+3. **Enable DRM** — `DECRYPT_DRM=yes` (set as an environment variable; default)
 
 Extract your CDM: `python scripts/extract_cdm.py`
 
@@ -483,7 +476,7 @@ Diagnose DRM pipeline readiness and auto-fix issues:
 # Check status
 ./thuis.sh doctor
 
-# Auto-fix installable issues (apt/brew/scoop, .env)
+# Auto-fix installable issues (apt/brew/scoop)
 ./thuis.sh doctor --fix
 
 # Show help
@@ -497,7 +490,6 @@ The doctor command checks:
 - N_m3u8DL-RE binary
 - Widevine CDM (.wvd file)
 - Environment variables (DECRYPT_DRM, WVD_CDM_PATH)
-- .env file configuration
 
 Run `./thuis.sh doctor` whenever DRM downloads fail to see what's missing.
 

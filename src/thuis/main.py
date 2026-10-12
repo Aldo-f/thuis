@@ -112,12 +112,6 @@ try:
 except ImportError:
     from filename_parser import parse_filename
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv()  # loads .env if present
-except Exception:
-    pass  # dotenv optional
-
 # Import scene naming pipeline modules
 try:
     # When used as part of a package
@@ -1673,32 +1667,6 @@ def main():
     except Exception as e:
         logger.warning("Could not apply patch: %s", e)
 
-# Resolve category for this run (priority: CLI > watchlist entry > watchlist file > config)
-    _cfg = None
-    try:
-        from . import config as _thuis_config
-        _cfg = _thuis_config.get_config()
-    except Exception:
-        pass
-    _config_category = (_cfg.get("plugins", {}) or {}).get("torrent_uploader", {}).get("category", "") if _cfg else ""
-    _wl_entry_category: str | None = None
-    _wl_file_category: str | None = None
-    if getattr(args, "watchlist", None):
-        from . import watchlist as _wl_mod
-        for _wl_path in args.watchlist:
-            try:
-                _wl = _wl_mod.parse_watchlist_file(_wl_path)
-                if _wl.default_category:
-                    _wl_file_category = _wl.default_category
-                for _e in _wl.entries:
-                    if _e.url == url and _e.category:
-                        _wl_entry_category = _e.category
-                        break
-            except Exception:
-                pass
-    category = getattr(args, "category", None) or _wl_entry_category or _wl_file_category or _config_category or ""
-    if category:
-        logger.info("Category resolved: %s", category)
     # Process each URL individually with scene naming pipeline
     results = []
     db = watchlist.WatchlistDB()
@@ -1710,7 +1678,38 @@ def main():
             _t_start = time.time()
             scene_template = None
             fallback_used = False
-            
+
+            # Resolve category for this run (priority: CLI > watchlist entry > watchlist file > config)
+            _cfg = None
+            try:
+                from . import config as _thuis_config
+                _cfg = _thuis_config.get_config()
+            except Exception:
+                pass
+            _config_category = (_cfg.get("plugins", {}) or {}).get("torrent_uploader", {}).get("category", "") if _cfg else ""
+            _config_default_tag = (_cfg.get("plugins", {}) or {}).get("torrent_uploader", {}).get("default_tag", "Thuis") if _cfg else "Thuis"
+            _wl_entry_category: str | None = None
+            _wl_file_category: str | None = None
+            if getattr(args, "watchlist", None):
+                from . import watchlist as _wl_mod
+                for _wl_path in args.watchlist:
+                    try:
+                        _wl = _wl_mod.parse_watchlist_file(_wl_path)
+                        if _wl.default_category:
+                            _wl_file_category = _wl.default_category
+                        for _e in _wl.entries:
+                            if _e.url == url and _e.category:
+                                _wl_entry_category = _e.category
+                                break
+                    except Exception:
+                        pass
+            category = getattr(args, "category", None) or _wl_entry_category or _wl_file_category or _config_category or ""
+            default_tag = _config_default_tag or ""
+            if category:
+                logger.info("Category resolved: %s", category)
+            if default_tag:
+                logger.info("Default tag resolved: %s", default_tag)
+
             try:
                 # Step 1: Parse URL
                 _t_parse = time.time()
@@ -2041,7 +2040,7 @@ def main():
                                         continue
                                     if not args.only_season_pack:
                                         parsed = parse_filename(best.name)
-                                        ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False, category=category)
+                                        ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False, category=category, default_tag=default_tag)
                                         logger.info("Auto-upload: running plugins for existing file %s", best.name)
                                         pm.run_plugins(ctx)
                                         # Verify torrent was actually added to QB (not just attempted)
@@ -2124,7 +2123,7 @@ def main():
                                     qb_skipped_any_fs = True
                                     continue
                                 parsed = parse_filename(best.name)
-                                ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False, category=category)
+                                ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False, category=category, default_tag=default_tag)
                                 pm.run_plugins(ctx)
                                 # Verify torrent was actually added to QB (not just attempted)
                                 torrents_after = _qb_torrents_cache(cfg)
@@ -2257,6 +2256,7 @@ def main():
                                     output_dir=args.output_dir,
                                     dry_run=False,
                                     category=category,
+                                    default_tag=default_tag,
                                 )
                                 cfg = thuis_config.get_config()
                                 pm = PluginManager(cfg)
@@ -2330,8 +2330,12 @@ def main():
                                     socks5_proxy=qb_cfg.get("socks5_proxy"),
                                 )
                                 if qb_client.auth_log_in():
+                                    # Category: ctx.category (CLI/watchlist) already resolved
+                                    # above; fall back to plugin config.
                                     category = category or qb_cfg.get("category", show_for_tmdb)
-                                    tags = qb_cfg.get("tags", "upload")
+                                    # default_tag is threaded through PostprocessContext
+                                    # (ctx.default_tag); empty = no tag.
+                                    tags = default_tag if default_tag else ""
                                     # Torrent already contains the real folder name, so the
                                     # save path is the PARENT of the show folder.
                                     save_path = str(Path(args.output_dir).parent)
