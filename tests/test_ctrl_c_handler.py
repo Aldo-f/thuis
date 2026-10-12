@@ -15,9 +15,11 @@ def test_ctrl_c_handler():
     The script should catch KeyboardInterrupt and print "Interrupted by user".
     No stack trace should appear in stdout.
     """
-    # Use a dummy URL; the script will start and then we interrupt it immediately.
-    dummy_url = "https://www.vrt.be/vrtmax/a-z/thuis/2/"
-    cmd = [sys.executable, "-u", str(Path('src/thuis/main.py')), dummy_url]
+    # Use a single-episode URL with --force --dry-run so the download actually
+    # starts in the processing loop (a season URL without --force would
+    # DB-skip all episodes and exit 0 before the signal can interrupt).
+    dummy_url = "https://www.vrt.be/vrtmax/a-z/thuis/02/thuis-s02a91/"
+    cmd = [sys.executable, "-u", str(Path('src/thuis/main.py')), "--force", "--dry-run", dummy_url]
 
     # Start the process
     proc = subprocess.Popen(

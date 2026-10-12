@@ -107,7 +107,10 @@ import logging
 import json
 from pathlib import Path
 from typing import Any
-from .filename_parser import parse_filename
+try:
+    from .filename_parser import parse_filename
+except ImportError:
+    from filename_parser import parse_filename
 
 try:
     from dotenv import load_dotenv
@@ -1426,7 +1429,12 @@ def _is_seeding_in_qb(filename: str, torrents: list[dict[str, Any]]) -> bool:
 
 
 def main():
-    signal.signal(signal.SIGINT, lambda sig, frame: sys.exit("\nInterrupted by user"))
+    import signal as _sig
+    import os as _os
+    def _on_sigint(signum, frame):
+        print("\nInterrupted by user", flush=True)
+        _os._exit(1)
+    _sig.signal(_sig.SIGINT, _on_sigint)
     import argparse
     from pathlib import Path
     import re
@@ -1657,6 +1665,7 @@ def main():
 # Process each URL individually with scene naming pipeline
     results = []
     db = watchlist.WatchlistDB()
+    season_num = 0  # Initialize before try block to prevent UnboundLocalError
     try:
         total = len(unique_urls)
         for idx, url in enumerate(unique_urls):

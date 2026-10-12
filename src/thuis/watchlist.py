@@ -491,6 +491,13 @@ class WatchlistDB:
             return datetime.fromisoformat(row[0])
         return None
 
+    def get_last_status(self, url: str) -> Optional[str]:
+        """Get the last run status for a URL (e.g., 'ok', 'drm', 'failed')."""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT last_status FROM entries WHERE url = ?", (url,))
+        row = cursor.fetchone()
+        return row[0] if row else None
+
     def get_filename_for_url(self, url: str, output_dir: str) -> Optional[str]:
         """Get the recorded filename for a URL and output_dir, if any."""
         cursor = self.conn.cursor()

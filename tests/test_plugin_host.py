@@ -25,7 +25,9 @@ from thuis.plugin_host import (
 class TestBaseline:
     def test_entry_points_empty_when_no_plugins(self):
         """With no plugins installed, load_entry_point_plugins returns []."""
-        result = load_entry_point_plugins()
+        with patch("importlib.metadata.entry_points") as mock_ep:
+            mock_ep.return_value.select.return_value = []
+            result = load_entry_point_plugins()
         assert isinstance(result, list)
         assert result == []
 
