@@ -481,7 +481,7 @@ def patch_ytdlp_if_needed():
     pass
 
 
-def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), output_template=None, email=None, password=None, resolution=None):
+def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), output_template=None, email=None, password=None, resolution=None, subtitles_enabled=True):
     """Build yt-dlp argument list.
 
     Args:
@@ -494,6 +494,9 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), 
         resolution: Optional video height (e.g. ``"1080p"``). When set,
             format string becomes ``bestvideo[height<=N]+bestaudio``,
             otherwise defaults to ``bestvideo+bestaudio``.
+        subtitles_enabled: When True and the content is video (not a
+            podcast), yt-dlp is asked to write all source subtitle tracks
+            as VTT (``--write-subs --sub-langs all --convert-subs vtt``).
     """
     args = []
     args.extend(get_yt_dlp_cmd())
@@ -523,6 +526,8 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), 
             "--no-warnings",
             "--no-color",
         ]
+        if subtitles_enabled:
+            args += ["--write-subs", "--sub-langs", "all", "--convert-subs", "vtt"]
     if dry_run:
         args.append("--simulate")
     # Add output template
@@ -538,6 +543,19 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), 
     # Append URLs
     args.extend(urls)
     return args
+
+
+def _subs_embed_enabled() -> bool:
+    """Top-level ``subtitles.embed`` config value; default True.
+
+    Reads the merged config (config.yaml + config.local.yaml). Missing or
+    unparseable sections behave as enabled, matching the documented default.
+    """
+    try:
+        from thuis import config as _tc
+        return bool((_tc.get_config().get("subtitles") or {}).get("embed", True))
+    except Exception:
+        return True
 
 
 def _find_downloaded_file(output_dir: Path, template: str, url: str) -> str | None:
@@ -2171,6 +2189,7 @@ def main():
                 [download_url], dry_run=args.dry_run, output_dir=args.output_dir,
                 output_template=scene_template, email=email, password=password,
                 resolution=args.profile_str,
+                subtitles_enabled=not getattr(args, "no_subtitles", False) and _subs_embed_enabled(),
             )
             if is_audio_only_stream(download_url):
                 # Audio-only: pick best audio format instead of video

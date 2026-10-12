@@ -40,6 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     g_dl.add_argument("--profile", "-p", type=int, help="Specify desired video resolution (e.g., 1080).")
     g_dl.add_argument("--retry", action="store_true", help="If set, skip download when output file already exists.")
     g_dl.add_argument("--force", action="store_true", help="Ignore DB records; download even if DB says file exists, but only if file is missing.")
+    g_dl.add_argument("--no-subtitles", action="store_true", help="Skip subtitle download/embedding (default: embed all source subtitles)")
     g_dl.add_argument("--output-dir", type=Path, default=Path(DEFAULT_OUTPUT_DIR), help="Directory to save downloaded files (default: media or OUTPUT_DIR env)")
     g_dl.add_argument("--max-episodes", type=int, default=None, help="Maximum number of episodes to process per season URL")
     g_dl.add_argument("--log-level", type=str.upper, choices=["DEBUG", "INFO", "WARNING", "ERROR"], default=None, help="Enable console logging at specified level (default: file only)")

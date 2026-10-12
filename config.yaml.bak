@@ -1,0 +1,62 @@
+output_dir: media
+watchlist_dir: watchlists
+log_dir: logs
+database_path: data/watchlist.db
+drm:
+  enabled: false
+  cdm_path: ''
+  decrypt_policy: 'no'
+ytdlp:
+  default_profile: best
+  resolutions:
+  - 720
+  - 1080
+  - 1440
+  - 2160
+  extra_args: []
+network:
+  metadata_timeout: 30
+  download_timeout: 3600
+logging:
+  level: INFO
+  format: text
+plugins:
+  enabled:
+  - torrent_uploader
+  torrent_uploader:
+    piece_size: 262144
+    comment: ''
+    source: thuis
+    ext_to:
+      username: cymave6507
+      password: ''
+    tribler:
+      enabled: true  # Set to true after Tribler is installed
+      api_port: 8085
+      api_key: ""
+      anon_hops: 3
+      safe_seeding: true
+    trackers:
+    - udp://tracker.opentrackr.org:1337/announce
+    - udp://open.stealth.si:80/announce
+    - udp://tracker.torrent.eu.org:451/announce
+    - udp://open.demonii.com:1337/announce
+    - udp://tracker.qu.ax:6969/announce
+    - udp://tracker.gmi.gd:6969/announce
+    - udp://tracker.corpscorp.online:80/announce
+    - udp://tracker.ducks.party:1984/announce
+    - udp://tracker.dler.com:6969/announce
+    - udp://tracker.dler.org:6969/announce
+    - udp://tracker-udp.gbitt.info:80/announce
+    - udp://tracker.nyaa.vc:6969/announce
+    - udp://tracker.ilibr.org:6969/announce
+    - udp://tracker.opentrackr.com:6969/announce
+    - udp://evan.im:6969/announce
+    - udp://tr4ck3r.duckdns.org:6969/announce
+    - udp://opentracker.lain.moscow:6969/announce
+    - udp://tracker.willy.pro:6969/announce
+    - http://tracker.dler.com:6969/announce
+    - http://tracker.renfei.net:8080/announce
+  metadata_enricher:
+    tmdb_key: d21283b34416ede4cf71abdc3e0f4672
+    imgbb_api_key: bec6efa34f30741d30ea7374ab0acef0
