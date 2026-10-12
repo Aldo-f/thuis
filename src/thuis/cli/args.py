@@ -46,6 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     g_dl.add_argument("--key-file", type=Path, default=None, help="JSON file with KID:KEY pairs for DRM decryption (alternative to CDM)")
     g_dl.add_argument("--key", action="append", default=[], metavar="KID:KEY", help="Direct KID:KEY pair for DRM decryption (repeatable, overrides CDM)")
     g_dl.add_argument("--key-provider", type=str, choices=["cdm", "file", "cli"], default="cdm", help="Key source: cdm (pywidevine), file (--key-file), cli (--key)")
+    g_dl.add_argument("--category", type=str, default=None, help="qBittorrent category for torrents (e.g., Media/Tv). Overrides config and watchlist [cat] directive.")
 
     # Transcode options
     g_tr = parser.add_argument_group("transcode options")

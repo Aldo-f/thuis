@@ -1251,6 +1251,7 @@ def torrent_upload_subcommand(args) -> int:
             metadata={},
             output_dir=Path(output_dir),
             dry_run=dry_run,
+            category="",
         )
         try:
             results = pm.run_plugins(ctx)
@@ -1307,7 +1308,7 @@ def _run_watchlist(args) -> None:
 
     now = datetime.now()
     db = WatchlistDB()
-    due: list[tuple[str, str, str]] = []  # (url, schedule, output_dir)
+    due: list[tuple[str, str, str, str]] = []  # (url, schedule, output_dir, category)
 
     for wl_path in args.watchlist:
         if not _Path(wl_path).is_file():
@@ -1321,10 +1322,12 @@ def _run_watchlist(args) -> None:
             # Resolve per-entry output dir: entry.output_dir comes from [dir] overrides,
             # falling back to the file-level output_dir when empty.
             entry_out_dir = resolve_output_dir(entry.output_dir or wl.output_dir)
+            # Resolve category: entry.category (from [cat] directive) or file default
+            entry_category = entry.category or wl.default_category or ""
             # If --now flag is set, treat all entries (scheduled or not) as due.
             if args.now:
                 print(f"  [due now] [{schedule}] {entry.url}")
-                due.append((entry.url, schedule, entry_out_dir))
+                due.append((entry.url, schedule, entry_out_dir, entry_category))
                 continue
             # Otherwise, only process manual entries when --now is present and scheduled entries per their schedule.
             if entry.schedule is None:
@@ -1341,7 +1344,7 @@ def _run_watchlist(args) -> None:
                 print(f"  [skip] DRM protected: [{schedule}] {entry.url}")
                 continue
             print(f"  [due ] [{schedule}] {entry.url}")
-            due.append((entry.url, schedule, entry_out_dir))
+            due.append((entry.url, schedule, entry_out_dir, entry_category))
 
     if not due:
         print("Nothing to do — all entries already handled.")
@@ -1350,15 +1353,18 @@ def _run_watchlist(args) -> None:
     # Record that these entries were triggered (per-URL last_run).
     # In dry-run mode we do NOT persist, so a real run can still pick them up.
     if not args.dry_run:
-        for url, _sched, _out in due:
+        for url, _sched, _out, _cat in due:
             db.set_last_run(url, status="triggered")
     db.close()
 
     # Re-invoke the normal download pipeline with the due URLs.
     # Each watchlist file has one output dir; group by dir.
     by_dir: dict[str, list[str]] = {}
-    for url, _sched, out_dir in due:
+    dir_category: dict[str, str] = {}  # out_dir -> category from watchlist file
+    for url, _sched, out_dir, _cat in due:
         by_dir.setdefault(out_dir, []).append(url)
+        if _cat and out_dir not in dir_category:
+            dir_category[out_dir] = _cat
 
     rc = 0
     for out_dir, urls in by_dir.items():
@@ -1378,6 +1384,11 @@ def _run_watchlist(args) -> None:
             cmd.append("--force")
         else:
             cmd.append("--retry")
+        # Forward --category (CLI override wins over watchlist [cat] directive)
+        if getattr(args, "category", None):
+            cmd += ["--category", args.category]
+        elif dir_category.get(out_dir):
+            cmd += ["--category", dir_category[out_dir]]
         cmd += urls
         completed = subprocess.run(cmd)
         if completed.returncode != 0:
@@ -1662,7 +1673,33 @@ def main():
     except Exception as e:
         logger.warning("Could not apply patch: %s", e)
 
-# Process each URL individually with scene naming pipeline
+# Resolve category for this run (priority: CLI > watchlist entry > watchlist file > config)
+    _cfg = None
+    try:
+        from . import config as _thuis_config
+        _cfg = _thuis_config.get_config()
+    except Exception:
+        pass
+    _config_category = (_cfg.get("plugins", {}) or {}).get("torrent_uploader", {}).get("category", "") if _cfg else ""
+    _wl_entry_category: str | None = None
+    _wl_file_category: str | None = None
+    if getattr(args, "watchlist", None):
+        from . import watchlist as _wl_mod
+        for _wl_path in args.watchlist:
+            try:
+                _wl = _wl_mod.parse_watchlist_file(_wl_path)
+                if _wl.default_category:
+                    _wl_file_category = _wl.default_category
+                for _e in _wl.entries:
+                    if _e.url == url and _e.category:
+                        _wl_entry_category = _e.category
+                        break
+            except Exception:
+                pass
+    category = getattr(args, "category", None) or _wl_entry_category or _wl_file_category or _config_category or ""
+    if category:
+        logger.info("Category resolved: %s", category)
+    # Process each URL individually with scene naming pipeline
     results = []
     db = watchlist.WatchlistDB()
     season_num = 0  # Initialize before try block to prevent UnboundLocalError
@@ -2004,7 +2041,7 @@ def main():
                                         continue
                                     if not args.only_season_pack:
                                         parsed = parse_filename(best.name)
-                                        ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False)
+                                        ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False, category=category)
                                         logger.info("Auto-upload: running plugins for existing file %s", best.name)
                                         pm.run_plugins(ctx)
                                         # Verify torrent was actually added to QB (not just attempted)
@@ -2087,7 +2124,7 @@ def main():
                                     qb_skipped_any_fs = True
                                     continue
                                 parsed = parse_filename(best.name)
-                                ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False)
+                                ctx = PostprocessContext(filepath=best, metadata=parsed, output_dir=args.output_dir, dry_run=False, category=category)
                                 pm.run_plugins(ctx)
                                 # Verify torrent was actually added to QB (not just attempted)
                                 torrents_after = _qb_torrents_cache(cfg)
@@ -2219,6 +2256,7 @@ def main():
                                     metadata=metadata,
                                     output_dir=args.output_dir,
                                     dry_run=False,
+                                    category=category,
                                 )
                                 cfg = thuis_config.get_config()
                                 pm = PluginManager(cfg)
@@ -2292,7 +2330,7 @@ def main():
                                     socks5_proxy=qb_cfg.get("socks5_proxy"),
                                 )
                                 if qb_client.auth_log_in():
-                                    category = qb_cfg.get("category", show_for_tmdb)
+                                    category = category or qb_cfg.get("category", show_for_tmdb)
                                     tags = qb_cfg.get("tags", "upload")
                                     # Torrent already contains the real folder name, so the
                                     # save path is the PARENT of the show folder.

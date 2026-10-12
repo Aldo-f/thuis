@@ -30,6 +30,8 @@ class PostprocessContext:
     """Directory where the file was saved."""
     dry_run: bool
     """If True, plugins should avoid side effects."""
+    category: str = ""
+    """qBittorrent category for the torrent (e.g., Media/Tv)."""
 
 
 def load_entry_point_plugins() -> list[dict[str, str]]:

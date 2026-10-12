@@ -56,6 +56,9 @@ plugins:
     - torrent_uploader
   # torrent_uploader options
   torrent_uploader:
+    # Default qBittorrent category (e.g., Media/Tv, Media/Podcasts)
+    # Can be overridden by --category CLI flag or watchlist [cat] directive
+    category: ""
     # Announce URLs for the torrent — configured in the trackers list below
     # (was empty, now uses public trackers further down)
     piece_size: 262144

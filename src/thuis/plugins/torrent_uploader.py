@@ -288,6 +288,8 @@ def postprocess(ctx: PostprocessContext) -> bool:  # type: ignore[name-defined] 
         piece_size = plugin_config.get("piece_size") or 262144
         source = plugin_config.get("source", "thuis")
         tmdb_key = plugin_config.get("tmdb_key")
+        # Category resolution: ctx.category (CLI/watchlist) > plugin config > empty
+        category = ctx.category or plugin_config.get("category", "")
 
         tmdb_data: dict[str, Any] | None = None
         if tmdb_key:
