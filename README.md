@@ -452,6 +452,132 @@ flowchart LR
     URL -->|2nd run| Cache
 ```
 
+## Complete Architecture Flow
+
+The following diagram shows the end-to-end flow from URL input through download, subtitle embedding, and auto-upload:
+
+```mermaid
+flowchart TD
+    subgraph Input["Input & Discovery"]
+        A1["URL(s) / --watchlist file(s)"]
+        A2["--now flag"]
+        A3["--auto-upload flag"]
+    end
+
+    subgraph Expand["Episode Expansion"]
+        B1["is_season_url?"] -->|Yes| B2["fetch_season_episodes<br/>(GraphQL + cache)"]
+        B1 -->|No| B3["is_show_url?"] -->|Yes| B4["fetch_all_seasons<br/>(GraphQL + cache)"]
+        B3 -->|No| B5["is_podcast_url?"] -->|Yes| B6["_fetch_podcast_episodes"]
+        B5 -->|No| B7["Single episode URL"]
+    end
+
+    subgraph Dedup["Deduplication"]
+        C1["For each episode URL"]
+        C2{"URL in downloaded_files<br/>DB table?"}
+        C3{"episode <= last_seen<br/>(per show+season)?"}
+        C4{"Final .mp4 exists<br/>on disk?"}
+        C5["Skip - already have"]
+    end
+
+    subgraph Download["Download & Process"]
+        D1["Fetch metadata<br/>(yt-dlp + VRT API)"]
+        D2["Classify content<br/>(TV / Movie / Special)"]
+        D3{"DRM protected?"}
+        D4["DECRYPT_DRM=yes?"]
+        D5["Decrypt via CDM<br/>(pywidevine + N_m3u8DL-RE)"]
+        D6["Build scene filename<br/>(scene_namer)"]
+        D7["yt-dlp download<br/>(--write-subs --sub-langs all)"]
+    end
+
+    subgraph PostDownload["Post-Download"]
+        E1["Record in downloaded_files DB"]
+        E2{"--auto-upload<br/>enabled?"}
+        E3["_auto_embed_subtitles_in_directory<br/>(scan ALL .mp4 in output dir)"]
+        E4["For each .mp4 file"]
+        E5{"video_has_subtitle_stream?"}
+        E6{"find_subtitle_files<br/>sidecars exist?"}
+        E7["embed_subtitles<br/>(mov_text, copy streams)"]
+        E8["_embed_subtitles_for<br/>(newly downloaded file)"]
+    end
+
+    subgraph AutoUpload["Auto-Upload Plugins"]
+        F1["PluginManager.run_plugins<br/>(PostprocessContext)"]
+        F2["TorrentUploader.create_torrent"]
+        F3["QBittorrentClient.add_torrent"]
+        F4{"Season complete?"}
+        F5["SeasonDetector.check"]
+        F6["Create season-pack .torrent"]
+        F7["Upload season-pack to qB"]
+    end
+
+    %% Connections
+    A1 --> B1
+    A2 --> B1
+    A3 --> E2
+    
+    B1 --> C1
+    B2 --> C1
+    B4 --> C1
+    B6 --> C1
+    B7 --> C1
+    
+    C1 --> C2
+    C2 -->|Yes| C5
+    C2 -->|No| C3
+    C3 -->|Yes| C5
+    C3 -->|No| C4
+    C4 -->|Yes| C5
+    C4 -->|No| D1
+    
+    D1 --> D2
+    D2 --> D3
+    D3 -->|Yes| D4
+    D4 -->|Yes| D5
+    D4 -->|No| D6
+    D5 --> D6
+    D3 -->|No| D6
+    D6 --> D7
+    D7 --> E1
+    
+    E1 --> E2
+    E2 -->|Yes| E3
+    E2 -->|No| F1
+    
+    E3 --> E4
+    E4 --> E5
+    E5 -->|Yes| E4
+    E5 -->|No| E6
+    E6 -->|Yes| E7
+    E6 -->|No| E4
+    E7 --> E4
+    E4 -.->|loop| E4
+    E3 --> E8
+    
+    E8 --> F1
+    F1 --> F2
+    F2 --> F3
+    F3 --> F4
+    F4 -->|Yes| F5
+    F5 --> F6
+    F6 --> F7
+    F4 -->|No| End["Done"]
+
+    %% Styles
+    classDef input fill:#e3f2fd,stroke:#1976d2,stroke-width:2px;
+    classDef expand fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+    classDef dedup fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
+    classDef download fill:#fce4ec,stroke:#c2185b,stroke-width:2px;
+    classDef post fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    classDef upload fill:#e0f2f1,stroke:#00796b,stroke-width:2px;
+    
+    class A1,A2,A3 input;
+    class B1,B2,B3,B4,B5,B6,B7 expand;
+    class C1,C2,C3,C4,C5 dedup;
+    class D1,D2,D3,D4,D5,D6,D7 download;
+    class E1,E2,E3,E4,E5,E6,E7,E8 post;
+    class F1,F2,F3,F4,F5,F6,F7 upload;
+```
+
 [Contributing Guidelines](CONTRIBUTING.md)
 
 Website documentation: `website/docs/`
