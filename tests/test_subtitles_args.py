@@ -19,8 +19,7 @@ def test_video_gets_all_subtitles_by_default(tmp_path):
     )
     assert "--write-subs" in a
     assert a[a.index("--sub-langs") + 1] == "all"
-    assert "--convert-subs" in a
-    assert a[a.index("--convert-subs") + 1] == "vtt"
+    assert "--convert-subs" not in a  # TTML→VTT handled by transcoder.embed_subtitles()
 
 
 def test_podcast_never_gets_subtitles(tmp_path):

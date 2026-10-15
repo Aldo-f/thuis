@@ -496,7 +496,8 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), 
             otherwise defaults to ``bestvideo+bestaudio``.
         subtitles_enabled: When True and the content is video (not a
             podcast), yt-dlp is asked to write all source subtitle tracks
-            as VTT (``--write-subs --sub-langs all --convert-subs vtt``).
+            as VTT (``--write-subs --sub-langs all``; TTML→VTT conversion
+            handled by ``transcoder.embed_subtitles()``).
     """
     args = []
     args.extend(get_yt_dlp_cmd())
@@ -527,7 +528,7 @@ def build_yt_dlp_args(urls, dry_run=False, output_dir=Path(DEFAULT_OUTPUT_DIR), 
             "--no-color",
         ]
         if subtitles_enabled:
-            args += ["--write-subs", "--sub-langs", "all", "--convert-subs", "vtt"]
+            args += ["--write-subs", "--sub-langs", "all"]
     if dry_run:
         args.append("--simulate")
     # Add output template
@@ -580,6 +581,71 @@ def _embed_subtitles_for(filepath, args):
             logger.warning("Subtitle embedding failed for %s: %s", filepath.name, msg)
     except Exception as e:
         logger.warning("Subtitle embedding error for %s: %s", filepath.name, e)
+
+
+def _auto_embed_subtitles_in_directory(output_dir: Path, args) -> None:
+    """Scan output directory for MP4 files missing subtitle streams and embed sidecar subtitles.
+
+    For each .mp4 file in the directory:
+    - Check if it already has a subtitle stream (video_has_subtitle_stream)
+    - If not, look for sibling subtitle files (find_subtitle_files: .vtt, .srt, .nl.mp4)
+    - If subtitle files exist, embed them (embed_subtitles)
+
+    This runs before auto-upload to ensure existing files get subtitles embedded.
+    Failures are logged as warnings and don't block the workflow.
+    """
+    if getattr(args, "dry_run", False):
+        return
+    if getattr(args, "no_subtitles", False):
+        return
+    if not _subs_embed_enabled():
+        return
+    if not output_dir.exists() or not output_dir.is_dir():
+        return
+
+    try:
+        from thuis import transcoder as _trans
+    except Exception as e:
+        logger.warning("Subtitle auto-embed: failed to import transcoder: %s", e)
+        return
+
+    try:
+        mp4_files = sorted(output_dir.glob("*.mp4"))
+    except OSError as e:
+        logger.warning("Subtitle auto-embed: cannot scan directory %s: %s", output_dir, e)
+        return
+
+    if not mp4_files:
+        logger.debug("Subtitle auto-embed: no MP4 files in %s", output_dir)
+        return
+
+    logger.info("Auto-embedding subtitles for %d MP4 file(s) in %s", len(mp4_files), output_dir)
+
+    for mp4_file in mp4_files:
+        # Skip intermediate/temporary files
+        if any(x in mp4_file.name for x in ("fMPEG_DASH", ".part", ".temp.")):
+            continue
+
+        try:
+            # Check if file already has subtitle stream
+            if _trans.video_has_subtitle_stream(mp4_file):
+                logger.debug("Subtitle auto-embed: %s already has subtitle stream, skipping", mp4_file.name)
+                continue
+
+            # Look for sibling subtitle files
+            subs = _trans.find_subtitle_files(mp4_file)
+            if not subs:
+                logger.debug("Subtitle auto-embed: no subtitle sidecars for %s", mp4_file.name)
+                continue
+
+            logger.info("Auto-embedding %d subtitle(s) into %s", len(subs), mp4_file.name)
+            ok, msg = _trans.embed_subtitles(mp4_file, dry_run=False)
+            if ok:
+                logger.info("Subtitles embedded into %s", mp4_file.name)
+            else:
+                logger.warning("Subtitle embed failed for %s: %s", mp4_file.name, msg)
+        except Exception as e:
+            logger.warning("Subtitle auto-embed error for %s: %s", mp4_file.name, e)
 
 
 def _find_downloaded_file(output_dir: Path, template: str, url: str) -> str | None:
@@ -1266,6 +1332,13 @@ def torrent_upload_subcommand(args) -> int:
     dry_run = getattr(args, "dry_run", False)
     output_dir = getattr(args, "output_dir", None) or directory
 
+    # Auto-embed subtitles for existing MP4 files before running plugins
+    # Create a minimal args-like object for the auto-embed function
+    class _AutoEmbedArgs:
+        dry_run = dry_run
+        no_subtitles = getattr(args, "no_subtitles", False)
+    _auto_embed_subtitles_in_directory(output_dir, _AutoEmbedArgs())
+
     files = sorted(
         p for p in directory.rglob("*")
         if p.is_file() and p.suffix.lower() in _VIDEO_EXTENSIONS
@@ -1709,6 +1782,11 @@ def main():
     except Exception as e:
         logger.warning("Could not apply patch: %s", e)
 
+    # Auto-embed subtitles for existing MP4 files in output directory before processing
+    # This ensures files downloaded previously (without subtitles) get them embedded before auto-upload
+    if args.auto_upload:
+        _auto_embed_subtitles_in_directory(args.output_dir, args)
+
     # Process each URL individually with scene naming pipeline
     results = []
     db = watchlist.WatchlistDB()
@@ -2150,6 +2228,8 @@ def main():
                             continue
                     names = ", ".join(m.name for m in final_matches)
                     logger.info("Skipped %s: already exists as %s", url, names)
+                    for best in final_matches:
+                        _embed_subtitles_for(best, args)
                     if args.auto_upload and not args.only_season_pack:
                         try:
                             from thuis.plugin_host import PluginManager, PostprocessContext
@@ -2286,16 +2366,42 @@ def main():
                         record_name = actual_filename or scene_template
                         db.record_download(url, record_name, str(args.output_dir))
                         if actual_filename:
-                            logger.info("Recorded download as: %s", actual_filename)
+                            logger.info(f"Recorded download as: {actual_filename}")
+
+                        # === Auto-embed subtitles for existing files missing them ===
+                        if actual_filename and (args.output_dir / actual_filename).exists():
+                            _f = args.output_dir / actual_filename
+                            try:
+                                from thuis import transcoder as _t
+                                if not _t.video_has_subtitle_stream(_f):
+                                    subs = _t.find_subtitle_files(_f)
+                                    if subs:
+                                        logger.info(f"Auto-embedding subtitles for { _f.name }")
+                                        ok, msg = _t.embed_subtitles(_f, dry_run=False)
+                                        if ok:
+                                            logger.info(f"Subtitles embedded into {_f.name}")
+                                        else:
+                                            logger.warning(f"Subtitle embed failed for {_f.name}: {msg}")
+                            except Exception as _e:
+                                logger.warning(f"Subtitle auto-embed error: {_e}")
                     except Exception as e:
-                        logger.warning("Failed to record download in DB: %s", e)
+                        logger.warning(f"Failed to record download in DB: {e}")
+
+                    # Embed subtitles (unconditional, regardless of auto_upload setting)
+                    try:
+                        filepath = args.output_dir / actual_filename if actual_filename else None
+                        if filepath and filepath.exists():
+                            _embed_subtitles_for(filepath, args)
+                        else:
+                            logger.warning("Subtitle embed: file not found for %s, skipping", url)
+                    except Exception as e:
+                        logger.warning("Subtitle embed failed for %s: %s", url, e)
 
                     if args.auto_upload and not args.only_season_pack:
-                        from thuis.plugin_host import PluginManager, PostprocessContext
                         try:
-                            filepath = Path(actual_filename) if actual_filename else None
+                            from thuis.plugin_host import PluginManager, PostprocessContext
+                            filepath = args.output_dir / actual_filename if actual_filename else None
                             if filepath and filepath.exists():
-                                _embed_subtitles_for(filepath, args)
                                 ctx = PostprocessContext(
                                     filepath=filepath,
                                     metadata=metadata,
@@ -2352,6 +2458,9 @@ def main():
                         # Collect all episode mp4 files
                         from pathlib import Path
                         episode_files = sorted(f for f in Path(args.output_dir).glob("*.mp4") if f".S{season_num:02d}E" in f.name and ".part" not in f.name and "-Frag" not in f.name)
+                        if episode_files and not getattr(args, "no_subtitles", False):
+                            for _ef in episode_files:
+                                _embed_subtitles_for(_ef, args)
                         if episode_files:
                             pack_name = f"{show_for_tmdb.replace(' ', '_')}.Season.{season_num:02d}.Pack"
                             real_folder = Path(args.output_dir).name
